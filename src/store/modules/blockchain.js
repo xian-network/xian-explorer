@@ -2,8 +2,7 @@ import axios from "axios"
 import { RpcClient } from "tendermint"
 
 const state = {
-  rpc: process.env.VUE_APP_RPC_URL,
-  //lcd: "https://gaia-seeds.interblock.io:1317",
+  rpc: "http://89.163.130.217:26657",
   status: {
     listen_addr: "",
     sync_info: {
@@ -11,12 +10,23 @@ const state = {
       latest_block_hash: ""
     },
     node_info: {
-      version: null,
       network: null,
-      moniker: null
+      version: null,
+      moniker: null,
     }
   },
-  nodes: [],
+  nodes: [{ node_info: {
+    "id": "ddb95f2db40b7a16e07d2c69c56d9d42460fba1d",
+    "listen_addr": "89.58.55.192:26656",
+    "network": "test-chain-Qk2EGZ",
+    "version": "0.34.24",
+    "channels": "40202122233038606100",
+    "moniker": "Stu",
+    "other": {
+      "tx_index": "on",
+      "rpc_address": "tcp://89.163.130.217:26657"
+    }
+  } }],
   validators: [],
   consensusState: {},
   dumpConsensusState: {},
@@ -24,7 +34,7 @@ const state = {
   roundStep: ""
 }
 
-const client = RpcClient(process.env.VUE_APP_RPC_WS_URL)
+const client = RpcClient("ws://89.163.130.217:26657")
 
 const actions = {
   subNewBlock({ commit, dispatch }) {
