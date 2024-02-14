@@ -17,7 +17,7 @@ const state = {
   },
   nodes: [{ node_info: {
     "id": "ddb95f2db40b7a16e07d2c69c56d9d42460fba1d",
-    "listen_addr": "89.58.55.192:26656",
+    "listen_addr": "89.163.130.217:26656",
     "network": "test-chain-Qk2EGZ",
     "version": "0.34.24",
     "channels": "40202122233038606100",
