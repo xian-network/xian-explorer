@@ -34,7 +34,7 @@ const state = {
   roundStep: ""
 }
 
-const client = RpcClient("ws://89.58.55.192:26657")
+const client = RpcClient("wss://89.58.55.192:26657")
 
 const actions = {
   subNewBlock({ commit, dispatch }) {
