@@ -14,18 +14,7 @@ const state = {
       moniker: null,
     }
   },
-  nodes: [{ node_info: {
-    "id": "ddb95f2db40b7a16e07d2c69c56d9d42460fba1d",
-    "listen_addr": "89.58.55.192:26656",
-    "network": "test-chain-65rUQZ",
-    "version": "0.34.24",
-    "channels": "40202122233038606100",
-    "moniker": "testnet-node",
-    "other": {
-      "tx_index": "on",
-      "rpc_address": "tcp://89.58.55.192:26657"
-    }
-  } }],
+  nodes: [],
   validators: [],
   consensusState: {},
   dumpConsensusState: {},
