@@ -1,7 +1,7 @@
 import axios from "axios"
 
 const state = {
-  rpc: "https://89.58.55.192:26657",
+  rpc: "https://testnet.xian.org",
   status: {
     listen_addr: "",
     sync_info: {
