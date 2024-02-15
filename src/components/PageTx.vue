@@ -20,7 +20,7 @@ tm-page(:title="`Transaction ${hash}`")
 <script>
 import { mapGetters } from "vuex"
 import axios from "axios"
-import { decodeTx } from "../scripts/tx"
+import { decodeTx, decodeData } from "../scripts/tx"
 import PartTxData from './PartTxData'
 import { TmListItem, TmPage, TmPart, TmToolBar } from "@tendermint/ui"
 
@@ -51,13 +51,27 @@ export default {
 
       let txObj = decodeTx(tx)
       let txHash = this.hash
+      let txResult = this.tx_result
+      txResult.success = txResult.code === 0
+      delete txResult.code
+      delete txResult.log
+      delete txResult.info
+      delete txResult.gas_wanted
+      txResult.stampsUsed = txResult.gas_used
+      delete txResult.gas_used
+      delete txResult.events
+      delete txResult.codespace
+      txResult.data = decodeData(txResult.data)
+      delete txResult.data.stamps_used
+      delete txResult.data.status
+      delete txResult.data.hash
       let block = {
         isRouterLink: true,
         title: "View block details",
         text: height,
         to: { name: "block", params: { block: height } }
       }
-      return Object.assign({ block, txHash }, txObj)
+      return Object.assign({ txResult, block, txHash }, txObj)
     },
   },
   data: () => ({
@@ -72,6 +86,7 @@ export default {
       let json = await axios.get(this.jsonUrl)
       this.height = json.data.result.height
       this.tx = json.data.result.tx
+      this.tx_result = json.data.result.tx_result
     },
   },
   async mounted() {

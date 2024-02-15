@@ -22,3 +22,11 @@ export const decodeTx = (base64str) => {
   
   return JSON.parse(binaryStr);
 };
+
+export const decodeData = (base64str) => {
+  // Decode from base64 to string
+  let hexStr = decodeBase64(base64str);
+  
+  
+  return JSON.parse(hexStr);
+}
