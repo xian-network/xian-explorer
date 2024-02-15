@@ -1,5 +1,4 @@
 import axios from "axios"
-import { RpcClient } from "tendermint"
 
 const state = {
   rpc: "http://89.58.55.192:26657",
@@ -34,45 +33,9 @@ const state = {
   roundStep: ""
 }
 
-const client = RpcClient("wss://89.58.55.192:26657")
+//const client = RpcClient("wss://89.58.55.192:26657")
 
 const actions = {
-  subNewBlock({ commit, dispatch }) {
-    client.subscribe({ query: "tm.event = 'NewBlock'" }, event => {
-      commit("addBlock", event.block)
-      // check for new nodes every 10 blocks
-      if (event.block.header.height % 10 === 0) {
-        dispatch("getNodes")
-        dispatch("getValidators")
-      }
-    })
-  },
-  subRoundStep({ commit, dispatch }) {
-    let eventName = "NewRoundStep"
-    client.subscribe({ query: `tm.event = '${eventName}'` }, event => {
-      let stepName = event.step
-      let step
-      switch (stepName) {
-        case "RoundStepPropose":
-          step = 0
-          dispatch("getDumpConsensusState")
-          break
-        case "RoundStepPrevote":
-          step = 1
-          break
-        case "RoundStepPrecommit":
-          step = 2
-          break
-        case "RoundStepCommit":
-          step = 3
-          break
-        case "RoundStepNewHeight":
-          step = 4
-          break
-      }
-      commit("setRoundStep", step)
-    })
-  },
   async getStatus({ commit }) {
     let json = await axios.get(`${state.rpc}/status`)
     let status = json.data.result
