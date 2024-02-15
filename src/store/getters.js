@@ -13,7 +13,9 @@ export const bc = state => state.blockchain
 export const latestBlock = (state, getters) => {
   let { blocks } = getters
   if (blocks && blocks.length >= 1) {
-    return blocks[0].header
+    let header = blocks[0].header
+    header.num_txs = blocks[0].data.txs.length
+    return header
   } else {
     return {
       height: 0,

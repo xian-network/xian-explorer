@@ -9,7 +9,7 @@ tm-page(:title="`Block ${block.header.height}${hasNextBlock ? '' : ' (the latest
       i.material-icons chevron_right
     a(:href="jsonUrl" target="_blank") JSON
 
-  div(v-if="block.header.num_txs > 0")
+  div(v-if="block.data.txs.length > 0")
     part-tx-data(
       v-for="(x, i) in decodedTxs"
       :data="x"
@@ -87,7 +87,7 @@ export default {
           isRouterLink: true,
           title: "View transaction details",
           text: hash,
-          to: { name: "tx", params: { hash } }
+          to: { name: "tx", params: {hash } }
         }
         return Object.assign({ txHash }, txObj)
       })
@@ -150,13 +150,14 @@ export default {
       let b64str = tx.replace(/^:base64:/, '')
       let buffer = Buffer.from(b64str, 'base64')
       let hex = createHash('sha256').update(buffer).digest('hex')
-      return hex.substr(0, 40).toUpperCase()
+      return hex.substr(0, 64).toUpperCase()
     },
     async fetchBlock() {
       this.jsonUrl = `${this.blockchain.rpc}/block?height=${this.$route.params.block}`
       let json = await axios.get(this.jsonUrl)
       this.block = json.data.result.block
       this.block.header.height = parseInt(this.block.header.height)
+      this.block.header.num_txs = this.block.data.txs.length
     },
 
     // TODO deprecate? (yes)

@@ -12,9 +12,13 @@ export const decodeBase64 = (str, encoding = 'utf-8') => {
   return new (TextDecoder || TextDecoderLite)(encoding).decode(bytes)
 }
 
+// Optimized decodeTx function
 export const decodeTx = (base64str) => {
-  let str = decodeBase64(base64str)
-  let idx = str.indexOf('{')
-  let json = str.substring(idx)
-  return JSON.parse(json)
-}
+  // Decode from base64 to string
+  let hexStr = decodeBase64(base64str);
+  
+  // Optimized conversion from hex to binary string
+  let binaryStr = hexStr.match(/.{1,2}/g).map(byte => String.fromCharCode(parseInt(byte, 16))).join('');
+  
+  return JSON.parse(binaryStr);
+};

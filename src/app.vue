@@ -12,7 +12,6 @@
 </template>
 
 <script>
-import requestInterval from "request-interval"
 import { mapGetters } from "vuex"
 import {  TmModalError } from "@tendermint/ui"
 import AppFooter from "./components/AppFooter"
@@ -32,7 +31,7 @@ export default {
     this.$store.dispatch("getLastBlock")
     this.$store.dispatch("subNewBlock")
     this.$store.dispatch("subRoundStep")
-    requestInterval(1000, () => this.$store.dispatch("getConsensusState"))
+    //requestInterval(1000, () => this.$store.dispatch("getConsensusState"))
     this.$store.dispatch("getStatus")
     //this.$store.dispatch("getNodes") // Reenable for Node Discovery
     this.$store.dispatch("getValidators")
