@@ -1,7 +1,7 @@
 import axios from "axios"
 
 const state = {
-  rpc: "http://89.58.55.192:26657",
+  rpc: "https://89.58.55.192:26657",
   status: {
     listen_addr: "",
     sync_info: {
