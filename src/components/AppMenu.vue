@@ -6,7 +6,7 @@ menu.app-menu
     //tm-list-item(to="/nodes" exact @click.native="close" :title="`Full Nodes (${nodes.length})`")
     //tm-list-item(to="/validators" @click.native="close" :title="`Validators (${votingValidators})`" v-bind:class="{ 'active': isValidatorPage }")
     //tm-list-item(to="/validators-revoked" @click.native="close" :title="`Revoked Validators (${revokedValidators})`")
-    //tm-list-item(to="/search" exact @click.native="close" title="Search")
+    tm-list-item(to="/search" exact @click.native="close" title="Search")
 </template>
 
 <script>
