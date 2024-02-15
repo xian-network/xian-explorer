@@ -20,7 +20,7 @@ tm-page(title='Blocks')
         td
           router-link(:to="`/blocks/${x.header.height}`")
             | {{ num.prettyInt(x.header.height) }}
-        td(:class="{ noTxs: parseInt(x.header.num_txs) === 0 }") {{ num.prettyInt(x.header.num_txs) }}
+        td(:class="{ noTxs: parseInt(x.data.txs.length) === 0 }") {{ num.prettyInt(x.data.txs.length) }}
         td {{ readableDate(x.header.time) }}
         td {{ x.header.last_commit_hash }}
 </template>
