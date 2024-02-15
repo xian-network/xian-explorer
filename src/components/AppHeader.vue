@@ -6,7 +6,7 @@ nav#app-header: .container
     .header-item(v-else @click="enableMenu('app')"): i.material-icons menu
 
   router-link.header-item.header-item-logo(to="/")
-    h3.LogoType Xian Explorer
+    h3.LogoType Heimdall Explorer
 
   app-menu(v-if="config.activeMenu === 'app' || config.desktop")
 
@@ -142,8 +142,11 @@ sidebar-width = 16rem
   #app-main
     flex 1
 
+  .LogoType
+    color var(--mc)
+
   .tm-page-header
-    background-color #181f38
+    background-color var(--app-bg)
 
   .tm-page-header-text
     padding-top 0
