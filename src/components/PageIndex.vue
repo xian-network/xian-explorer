@@ -1,8 +1,5 @@
 <template lang="pug">
 tm-page(title=process.env.VUE_APP_NETWORK)
-  tm-part(title='Testnet Data')
-    tm-list-item(dt='Testnet Version' :dd='bc.status.node_info.network')
-    tm-list-item(dt='Tendermint Version' :dd='bc.status.node_info.version')
 
   tm-part(title='Current Block' v-if="latestBlock.height > 0")
     tm-list-item(dt='Block Height' :dd='num.prettyInt(latestBlock.height)'
