@@ -6,16 +6,16 @@ tm-page(title='Search')
         .tm-modal-search
           tm-field#search-input(
             type="text"
-            placeholder="Search for block"
+            placeholder="Search for Block # or Transaction Hash"
             required
             v-model="query"
-            pattern=".{1,60}"
-            title="1 to 60 characters")
+            pattern=".{1,64}"
+            title="1 to 64 characters")
           tm-btn(type="submit" icon="search" value="Go")
 
   tm-part(title='Sample Queries')
-    // tm-list-item(dt='Address' dd='3HNSiAq7wFDaPsYDcUxNSRMD78qVcYKicw' @click.native="fillField('3HNSiAq7wFDaPsYDcUxNSRMD78qVcYKicw')")
-    // tm-list-item(dt='Transaction' dd='878797d16182f6ffa5e98cd88576ab973b8d6f9dfe8ff441bd3521a7d8559800' @click.native="fillField('878797d16182f6ffa5e98cd88576ab973b8d6f9dfe8ff441bd3521a7d8559800')")
+    //tm-list-item(dt='Address' dd='3HNSiAq7wFDaPsYDcUxNSRMD78qVcYKicw' @click.native="fillField('3HNSiAq7wFDaPsYDcUxNSRMD78qVcYKicw')")
+    tm-list-item(dt='Transaction Hash' dd='A99B90549116C1F11C3FB5E04D4C4454DB4A99533FB9DD23EC4C57F47EBAEF3D' @click.native="fillField('A99B90549116C1F11C3FB5E04D4C4454DB4A99533FB9DD23EC4C57F47EBAEF3D')")
     tm-list-item(dt='Block #' dd='1337' @click.native="fillField('1337')")
 </template>
 
@@ -52,10 +52,14 @@ export default {
       this.query = value
     },
     search() {
-      if (parseInt(this.query)) {
-        this.$router.push({ name: "block", params: { block: this.query } })
-      } else {
-        console.log("Only block # queries are supported right now", this.query)
+      if(this.query.length === 64) {
+        this.$router.push({ name: "tx", params: { hash: this.query } })
+      } else{
+        if (parseInt(this.query)) {
+          this.$router.push({ name: "block", params: { block: this.query } })
+        } else {
+          console.log("Only block # and tx hash queries are supported right now", this.query)
+        }
       }
     }
   }
