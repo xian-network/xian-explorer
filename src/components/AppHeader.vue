@@ -65,6 +65,7 @@ export default {
 .LogoType
   font-size 23px
   font-weight bold
+  color var(--mc)
 
 @media screen and (max-width: 1023px)
   #app-header
@@ -106,7 +107,6 @@ export default {
 
 sidebar-width = 16rem
 
-
 @media screen and (min-width: 1024px)
   #app
     padding-top 0
@@ -128,7 +128,6 @@ sidebar-width = 16rem
     .header-item-logo
       padding: 1.25rem 1rem;
       line-height: normal;
-      border-bottom: 0.0625rem solid var(--bc);
       img
         height 1.75rem
 
@@ -142,8 +141,6 @@ sidebar-width = 16rem
   #app-main
     flex 1
 
-  .LogoType
-    color var(--mc)
 
   .tm-page-header
     background-color var(--app-bg)
