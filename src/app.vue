@@ -33,7 +33,7 @@ export default {
     this.$store.dispatch("subRoundStep")
     //requestInterval(1000, () => this.$store.dispatch("getConsensusState"))
     this.$store.dispatch("getStatus")
-    //this.$store.dispatch("getNodes") // Reenable for Node Discovery
+    this.$store.dispatch("getNodes") // Reenable for Node Discovery
     this.$store.dispatch("getValidators")
   },
   store

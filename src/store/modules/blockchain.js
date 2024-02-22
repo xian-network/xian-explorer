@@ -14,18 +14,7 @@ const state = {
       moniker: null,
     }
   },
-  nodes: [{ node_info: {
-    "id": "ddb95f2db40b7a16e07d2c69c56d9d42460fba1d",
-    "listen_addr": "65.21.179.142:26656",
-    "network": "xian-testnet-1",
-    "version": "0.34.24",
-    "channels": "40202122233038606100",
-    "moniker": "testnet-node",
-    "other": {
-      "tx_index": "on",
-      "rpc_address": "tcp://65.21.179.142:26657"
-    }
-  } }],
+  nodes: [],
   validators: [],
   consensusState: {},
   dumpConsensusState: {},

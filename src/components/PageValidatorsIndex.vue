@@ -3,11 +3,11 @@ tm-page(title='Validators')
   tm-list-item(
     v-if="orderedValidators.length > 0"
     v-for="v in orderedValidators"
-    :image="v.avatarUrl"
+    
     :key="v.owner"
     :title="validatorTitle(v)"
     :subtitle="votingPower(v)"
-    :to="`/validators/${v.owner}`")
+    )
   tm-list-item(v-else title="validators are loading...")
 </template>
 
