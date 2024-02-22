@@ -15,7 +15,7 @@ tm-page(title='Transactions')
       th Transaction Hash
       th Stamps Used
     tbody
-      tr(v-for="tx in transactions" :key="x.hash")
+      tr(v-for="tx in transactions" :key="tx.hash")
         td {{ num.prettyInt(tx.height) }}
         td
           router-link(:to="`/tx/${tx.hash}`")
