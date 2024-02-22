@@ -26,6 +26,7 @@ tm-page(title='Transactions')
 
 <script>
 import axios from "axios";
+import num from "../scripts/num"
 import { mapGetters } from "vuex";
 import { TmPage, TmToolBar } from "@tendermint/ui";
 
