@@ -1,8 +1,8 @@
 {
-  "name": "tendermint-explorer",
+  "name": "xian-explorer",
   "version": "1.0.0",
-  "description": "Blockchain and transaction explorer for Tendermint.",
-  "author": "Peng Zhong <peng@nylira.com>",
+  "description": "Blockchain and transaction explorer for Xian.",
+  "author": "Xian Org, Peng Zhong <peng@nylira.com>",
   "private": true,
   "scripts": {
     "serve": "vue-cli-service serve --open",
