@@ -1,38 +1,28 @@
-<template>
-  <tm-page title="Transactions">
-    <div slot="menu">
-      <tm-tool-bar>
-        <router-link :to="{ path: '/txs', query: prevQuery }" v-if="hasPrevPage">
-          <i class="material-icons">chevron_left</i>
-          Prev. Transactions
-        </router-link>
-        <router-link :to="{ path: '/txs', query: nextQuery }" v-if="hasNextPage">
-          Next Transactions
-          <i class="material-icons">chevron_right</i>
-        </router-link>
-        <a :href="jsonUrl" target="_blank">JSON</a>
-      </tm-tool-bar>
-    </div>
+<template lang="pug">
+tm-page(title='Transactions')
+  div(slot="menu"): tm-tool-bar
+    router-link(:to="{ path: '/txs', query: prevQuery }" v-if="hasPrevPage")
+      i.material-icons chevron_left
+      | Prev. Transactions
+    router-link(:to="{ path: '/txs', query: nextQuery }" v-if="hasNextPage")
+      | Next Transactions
+      i.material-icons chevron_right
+    a(:href="jsonUrl" target="_blank") JSON
 
-    <table class="BlocksTable">
-      <thead>
-        <th>Block Height</th>
-        <th>Transaction Hash</th>
-        <th>Stamps Used</th>
-      </thead>
-      <tbody>
-        <tr v-for="tx in transactions" :key="tx.hash">
-          <td>{{ tx.height }}</td>
-          <td>
-            <router-link :to="`/tx/${tx.hash}`">{{ tx.hash }}</router-link>
-          </td>
-          
-          <td>{{ tx.gasUsed }}</td>
-        </tr>
-      </tbody>
-    </table>
-  </tm-page>
+  table.BlocksTable
+    thead
+      th Block Height
+      th Transaction Hash
+      th Stamps Used
+    tbody
+      tr(v-for="tx in transactions" :key="x.hash")
+        td {{ num.prettyInt(tx.height) }}
+        td
+          router-link(:to="`/tx/${tx.hash}`")
+            | {{ tx.hash }}
+        td {{ num.prettyInt(tx.gasUsed) }}
 </template>
+
 
 <script>
 import axios from "axios";
