@@ -42,6 +42,7 @@ export default {
     return {
       transactions: [],
       jsonUrl: "",
+      num: num,
       currentPage: 1,
       itemsPerPage: maxItemsPerPage,
     };
