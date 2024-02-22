@@ -6,6 +6,7 @@ Vue.use(Router)
 import Index from "../components/PageIndex"
 import Search from "../components/PageSearch"
 import Blocks from "../components/PageBlocks"
+import Transactions from "../components/PageTxs"
 import Block from "../components/PageBlock"
 import Tx from "../components/PageTx"
 import FullNodes from "../components/PageFullNodes"
@@ -21,6 +22,7 @@ const routes = [
   { path: "/blocks", component: Blocks },
   { path: "/blocks/:block", name: "block", component: Block },
   { path: "/tx/:hash", name: "tx", component: Tx }, // TODO rename path to /txs
+  { path: "/txs", component: Transactions },
   { path: "/nodes", component: FullNodes },
   {
     name: "node",

@@ -19,6 +19,7 @@ const state = {
   consensusState: {},
   dumpConsensusState: {},
   blocks: [],
+  transactions: [],
   roundStep: ""
 }
 
