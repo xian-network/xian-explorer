@@ -14,6 +14,7 @@ tm-page(:title="`Transaction ${hash}`")
       :includeFields="[]"
       :excludeFields="[]"
     )
+
   tm-part(v-else title="Transaction was not found")
 </template>
 
@@ -65,6 +66,15 @@ export default {
       delete txResult.data.stamps_used
       delete txResult.data.status
       delete txResult.data.hash
+      // Move everything starting with txResult.data.state to the bottom in txResult
+      let state = txResult.data.state
+      delete txResult.data.state
+      txResult.data.state = state
+      delete txObj.payload
+      delete txObj.metadata
+
+      
+
       let block = {
         isRouterLink: true,
         title: "View block details",

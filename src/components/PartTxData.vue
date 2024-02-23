@@ -101,7 +101,8 @@ export default {
         }
         return { field, value: v, path: fieldPath, isComplex, isRouterLink, isUrl }
       }).filter(x => !isNil(x))
-      return sortBy(res, x => x.isComplex)
+      let sorted = sortBy(res, x => x.isComplex)
+      return sorted
     }
   },
   methods: {
