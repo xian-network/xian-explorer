@@ -3,7 +3,8 @@
   tm-modal-error(
     v-if="nodes.length === 0"
     title="Xian Explorer is offline."
-    body="The current network is offline.")
+    body="The current network is offline."
+    btn-icon="forum" btn-value="Telegram" btn-url="https://t.me/xian_network")
   app-header
   #app-content
     router-view
