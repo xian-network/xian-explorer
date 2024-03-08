@@ -114,7 +114,6 @@ export default {
 .BlocksTable
   width 100%
   th
-    font-weight bold
     color var(--dim)
     background var(--app-fg)
   tr
