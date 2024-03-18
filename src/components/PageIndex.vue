@@ -16,7 +16,7 @@ tm-page(title='Overview')
 
   tm-part(title='Connected To')
     tm-list-item(dt='RPC Endpoint')
-      div(slot="dd")
+      div(slot="dd").node-wrapper
         tm-field.node-input(
           type="text"
           v-model="bc.rpc")
@@ -122,4 +122,9 @@ export default {
   padding 0 0.5rem
   background transparent
   df()
+
+.node-wrapper{
+  display: flex;
+  align-items: center;
+}
 </style>
