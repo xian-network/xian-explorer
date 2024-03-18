@@ -65,7 +65,7 @@ export default {
 
 .LogoType
   font-size 23px
-  font-weight bold
+  font-weight 500
   color #e4e6eb
 
 @media screen and (max-width: 1023px)
