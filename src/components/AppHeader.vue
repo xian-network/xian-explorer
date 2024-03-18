@@ -6,6 +6,7 @@ nav#app-header: .container
     .header-item(v-else @click="enableMenu('app')"): i.material-icons menu
 
   router-link.header-item.header-item-logo(to="/")
+    img(src="https://wallet.xian.org/assets/logo.png" alt="Xian Explorer")
     h3.LogoType Xian Explorer
 
   app-menu(v-if="config.activeMenu === 'app' || config.desktop")
@@ -65,7 +66,7 @@ export default {
 .LogoType
   font-size 23px
   font-weight bold
-  color var(--mc)
+  color #e4e6eb
 
 @media screen and (max-width: 1023px)
   #app-header
@@ -103,7 +104,8 @@ export default {
 
       &.header-item-logo
         img
-          height 1rem
+          height: 1.5rem;
+          margin-right: 0.5rem;
 
 sidebar-width = 16rem
 
@@ -127,6 +129,9 @@ sidebar-width = 16rem
       flex-flow: column nowrap;
     .header-item-logo
       padding: 1.25rem 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
       line-height: normal;
       img
         height 1.75rem
