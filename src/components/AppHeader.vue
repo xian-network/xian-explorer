@@ -104,7 +104,7 @@ export default {
 
       &.header-item-logo
         img
-          height: 1.5rem;
+          height: 1.75rem;
           margin-right: 0.5rem;
 
 sidebar-width = 16rem
