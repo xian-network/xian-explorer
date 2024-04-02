@@ -27,6 +27,7 @@ tm-page(title='Transactions')
 <script>
 import axios from "axios";
 import num from "../scripts/num"
+import { decodeTx, decodeData } from "../scripts/tx"
 import { mapGetters } from "vuex";
 import { TmPage, TmToolBar } from "@tendermint/ui";
 
@@ -87,7 +88,7 @@ export default {
         this.transactions = response.data.result.txs.map(tx => ({
           hash: tx.hash,
           height: tx.height,
-          gasUsed: tx.tx_result.gas_used,
+          gasUsed: decodeData(tx.tx_result.data).stamps_used,
         }));
       } catch (error) {
         console.error("Failed to fetch transactions:", error);

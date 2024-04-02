@@ -58,11 +58,11 @@ export default {
       delete txResult.log
       delete txResult.info
       delete txResult.gas_wanted
-      txResult.stampsUsed = txResult.gas_used
       delete txResult.gas_used
       delete txResult.events
       delete txResult.codespace
       txResult.data = decodeData(txResult.data)
+      txResult.stampsUsed = txResult.data.stamps_used
       delete txResult.data.stamps_used
       delete txResult.data.status
       delete txResult.data.hash
