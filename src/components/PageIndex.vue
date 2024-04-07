@@ -1,5 +1,7 @@
 <template lang="pug">
 tm-page(title='Overview')
+  tm-part(title='Blockchain')
+    tm-list-item(dt='Chain ID' :dd='latestBlock.chain_id')
 
   tm-part(title='Current Block' v-if="latestBlock.height > 0")
     tm-list-item(dt='Block Height' :dd='num.prettyInt(latestBlock.height)'
