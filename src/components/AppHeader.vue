@@ -6,7 +6,7 @@ nav#app-header: .container
     .header-item(v-else @click="enableMenu('app')"): i.material-icons menu
 
   router-link.header-item.header-item-logo(to="/")
-    img(src="https://wallet.xian.org/assets/logo.png" alt="Xian Explorer")
+    img(src="@/assets/images/logo.png")
     h3.LogoType Xian Explorer
 
   app-menu(v-if="config.activeMenu === 'app' || config.desktop")
