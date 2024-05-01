@@ -66,6 +66,10 @@ export default {
       delete txResult.data.stamps_used
       delete txResult.data.status
       delete txResult.data.hash
+      // Move everything starting with txResult.data.state to the bottom in txResult
+      let state = txResult.data.state
+      delete txResult.data.state
+      txResult.data.state = state
       // Move up tx.payload and tx.metadata
       let payload = txObj.payload
       let metadata = txObj.metadata
@@ -73,10 +77,7 @@ export default {
       delete txObj.metadata
       txObj.payload = payload
       txObj.metadata = metadata
-      // Move everything starting with txResult.data.state to the bottom in txResult
-      let state = txResult.data.state
-      delete txResult.data.state
-      txResult.data.state = state
+      
       
 
       
