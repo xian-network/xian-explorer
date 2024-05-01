@@ -70,8 +70,6 @@ export default {
       let state = txResult.data.state
       delete txResult.data.state
       txResult.data.state = state
-      delete txObj.payload
-      delete txObj.metadata
 
       
 
