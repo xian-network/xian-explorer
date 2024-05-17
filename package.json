@@ -5,7 +5,7 @@
   "author": "Xian Org, Peng Zhong <peng@nylira.com>",
   "private": true,
   "scripts": {
-    "serve": "vue-cli-service serve --open",
+    "serve": "vue-cli-service serve --host 0.0.0.0",
     "build": "vue-cli-service build",
     "lint": "vue-cli-service lint"
   },
@@ -16,6 +16,8 @@
     "create-hash": "^1.2.0",
     "no-scroll": "^2.1.0",
     "tendermint": "^3.1.11",
+    "tweetnacl": "1.0.3",
+    "tweetnacl-util": "0.15.1",
     "varint": "^5.0.0",
     "vue": "^2.5.16",
     "vue-analytics": "^5.12.2",

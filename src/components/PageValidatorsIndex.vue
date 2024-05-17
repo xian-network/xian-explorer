@@ -5,8 +5,8 @@ tm-page(title='Validators')
     v-for="v in orderedValidators"
     
     :key="v.owner"
-    :title="validatorTitle(v)"
-    :subtitle="votingPower(v)"
+    :title="getHexEncodedPublicKey(v.pub_key.value)"
+    :icon="'check_circle'"
     )
   tm-list-item(v-else title="validators are loading...")
 </template>
@@ -18,6 +18,8 @@ import validatorTitle from "../scripts/validatorTitle"
 import votingPower from "../scripts/votingPower"
 import votingValidators from "../scripts/votingValidators"
 import { TmListItem, TmPage } from "@tendermint/ui"
+import nacl from 'tweetnacl';
+import { encodeBase64, decodeBase64 } from 'tweetnacl-util';
 
 export default {
   name: "page-validators",
@@ -36,8 +38,27 @@ export default {
     },
     orderedValidators() {
       return orderedValidators(votingValidators(this.validators))
-    }
+    },
   },
+  methods: {
+    getHexEncodedPublicKey(publicKeyBase64) {
+        console.log(publicKeyBase64);
+        // Decode the Base64-encoded public key
+        const publicKeyBytes = decodeBase64(publicKeyBase64);
+
+      
+          // Step 3: Convert the Uint8Array to a hex string
+          const verifyKeyHex = this.encodeHex(publicKeyBytes);
+
+          return verifyKeyHex;
+        },
+      encodeHex(byteArray) {
+          return Array.from(byteArray)
+            .map(byte => byte.toString(16).padStart(2, '0'))
+            .join('');
+          }
+  },
+ 
   data: () => ({
     validatorTitle: validatorTitle,
     votingPower: votingPower

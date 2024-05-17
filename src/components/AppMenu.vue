@@ -3,9 +3,9 @@ menu.app-menu
   .app-menu-main
     tm-list-item(to="/" exact @click.native="close" title="Overview")
     tm-list-item(to="/blocks" exact @click.native="close" :title="`Blocks`")
-    tm-list-item(to="/txs" exact @click.native="close" title="Transactions")
-    //tm-list-item(to="/nodes" exact @click.native="close" :title="`Full Nodes (${nodes.length})`")
-    tm-list-item(to="/validators" @click.native="close" :title="`Validators`" v-bind:class="{ 'active': isValidatorPage }")
+    tm-list-item(to="/txs" exact @click.native="close" :title="`Transactions`")
+    tm-list-item(to="/nodes" exact @click.native="close" :title="`Full Nodes (${nodes.length})`")
+    tm-list-item(to="/validators" @click.native="close" :title="`Validators (${validators.length})`")
     //tm-list-item(to="/validators-revoked" @click.native="close" :title="`Revoked Validators (${revokedValidators})`")
     tm-list-item(to="/search" exact @click.native="close" title="Search")
 </template>

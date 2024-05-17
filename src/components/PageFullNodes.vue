@@ -8,9 +8,9 @@ tm-page(title='Full Nodes')
     v-for="i in orderedFullNodes"
     :key="i.node_info.listen_addr"
     :title="i.node_info.moniker"
-    :subtitle="getIp(i)"
+    :subtitle="getId(i) + ' - ' + getIp(i)"
     icon='storage'
-    :to="`/nodes/${urlsafeIp(getIp(i))}`")
+    )
 </template>
 
 <script>
@@ -53,13 +53,15 @@ export default {
       // this.$store.commit('notify', { title: 'Searching...', body: 'TODO' })
     },
     urlsafeIp(ip) {
-      return ip && ip.split(".").join("-")
+      return ip && ip.split(".").join("-") || "0.0.0.0"
     },
     getIp(fullNode) {
       return (
-        fullNode.node_info.listen_addr &&
-        fullNode.node_info.listen_addr.split(":")[0]
+        fullNode.remote_ip  || "0.0.0.0"
       )
+    },
+    getId(fullNode) {
+      return fullNode.node_info.id
     }
   }
 }
