@@ -26,7 +26,15 @@ export const decodeTx = (base64str) => {
 export const decodeData = (base64str) => {
   // Decode from base64 to string
   let hexStr = decodeBase64(base64str);
+  try {
+    return JSON.parse(hexStr);
   
-  
-  return JSON.parse(hexStr);
+  }
+  catch (e) {
+    return {"hash": "ERR",
+     "result": "",
+     "stamps_used": 0,
+    "state": [], "status": 1
+    }
+  }
 }

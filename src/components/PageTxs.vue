@@ -82,18 +82,20 @@ export default {
         page: this.currentPage.toString(),
       }).toString();
       this.jsonUrl = `https://testnet.xian.org/tx_search?${queryParams}`;
-
-      try {
-        const response = await axios.get(this.jsonUrl);
-        this.transactions = response.data.result.txs.map(tx => ({
-          hash: tx.hash,
-          height: tx.height,
-          gasUsed: decodeData(tx.tx_result.data).stamps_used,
-        }));
-      } catch (error) {
-        console.error("Failed to fetch transactions:", error);
+      const response = await axios.get(`https://testnet.xian.org/tx_search?${queryParams}`);
         this.transactions = [];
-      }
+        for (let i = 0; i < response.data.result.txs.length; i++) {
+          try {
+            let tx = response.data.result.txs[i];
+            this.transactions.push({
+              hash: tx.hash,
+              height: tx.height,
+              gasUsed: decodeData(tx.tx_result.data).stamps_used,
+            });
+          } catch (e) {
+            console.error(e);
+          }
+        }
     },
   },
   async mounted() {

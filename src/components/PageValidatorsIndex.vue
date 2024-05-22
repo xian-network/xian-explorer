@@ -6,6 +6,7 @@ tm-page(title='Validators')
     
     :key="v.owner"
     :title="getHexEncodedPublicKey(v.pub_key.value)"
+    :subtitle="votingPower(v)"
     :icon="'check_circle'"
     )
   tm-list-item(v-else title="validators are loading...")
