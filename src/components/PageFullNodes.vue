@@ -7,16 +7,16 @@ tm-page(title='Full Nodes')
   tm-list-item(
     v-for="i in orderedFullNodes"
     :key="i.node_info.listen_addr"
-    :title="i.node_info.moniker"
-    :subtitle="getId(i) + ' - ' + getIp(i)"
+    :title="getIp(i)"
     icon='storage'
-    )
+    v-if="i.node_info"
+  )
 </template>
 
 <script>
 import { mapGetters } from "vuex"
-import { orderBy } from "lodash"
 import { TmListItem, TmPage, TmTabBar, TmToolBar } from "@tendermint/ui"
+
 export default {
   name: "page-nodes",
   components: {
@@ -27,41 +27,45 @@ export default {
   },
   data() {
     return {
-      asc: true
+      asc: true,
+      isLoading: true
     }
   },
   computed: {
     ...mapGetters(["nodes"]),
     orderedFullNodes() {
       if (this.nodes) {
-        return orderBy(
-          this.nodes,
-          [n => n.node_info.moniker.toLowerCase()],
-          this.asc ? "asc" : "desc"
-        )
+        return this.nodes
       } else {
         return []
       }
     }
   },
+  async created() {
+    this.isLoading = true;
+    try {
+      await this.$store.dispatch('getNodes');
+    } catch (error) {
+      console.error("Failed to fetch nodes:", error);
+    } finally {
+      this.isLoading = false;
+    }
+  },
   methods: {
     toggleFilter() {
       this.asc = !this.asc
-      // this.$store.commit('notify', { title: 'Filtering...', body: 'TODO' })
     },
     toggleSearch() {
-      // this.$store.commit('notify', { title: 'Searching...', body: 'TODO' })
+      // Implement search toggle logic here
     },
     urlsafeIp(ip) {
-      return ip && ip.split(".").join("-") || "0.0.0.0"
+      return ip ? ip.split(".").join("-") : "0.0.0.0"
     },
     getIp(fullNode) {
-      return (
-        fullNode.remote_ip  || "0.0.0.0"
-      )
+      return fullNode.remote_ip || "0.0.0.0"
     },
     getId(fullNode) {
-      return fullNode.node_info.id
+      return fullNode.node_info.id || "Explorer Node"
     }
   }
 }
