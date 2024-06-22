@@ -64,10 +64,18 @@ export default {
       txResult.data = decodeData(txResult.data)
       txResult.stampsUsed = txResult.data.stamps_used
       txResult.rewards = {}
+      if (!txResult.data.rewards) {
+        txResult.data.rewards = {
+          foundation_reward: {},
+          masternode_reward: {},
+          developer_reward: {}
+        }
+      }
+      else{ 
       txResult.rewards.foundation_reward = Object.entries(txResult.data.rewards.foundation_reward).map(([k, v]) => ({address: k, amount: v}));
       txResult.rewards.validator_reward = Object.entries(txResult.data.rewards.masternode_reward).map(([k, v]) => ({validator: k, amount: v}));
       txResult.rewards.developer_reward = Object.entries(txResult.data.rewards.developer_reward).map(([k, v]) => ({developer: k, amount: v}));
-
+      }
       
       delete txResult.data.rewards
       delete txResult.data.stamps_used
