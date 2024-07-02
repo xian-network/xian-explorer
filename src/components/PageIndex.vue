@@ -103,6 +103,9 @@ export default {
   data: () => ({
     num: num
   }),
+  mounted() {
+    this.setMetaDescription('Xian Explorer is a blockchain explorer for the Xian blockchain. It allows you to explore the blockchain, view the latest blocks and transactions, and see the current validators.')
+  },
   methods: {
     readableDate,
     toggleBlockchainSelect() {
@@ -110,6 +113,15 @@ export default {
         "SET_CONFIG_BLOCKCHAIN_SELECT",
         !this.config.blockchainSelect
       )
+    },
+    setMetaDescription(description) {
+      let meta = document.querySelector('meta[name="description"]');
+      if (!meta) {
+        meta = document.createElement('meta');
+        meta.name = "description";
+        document.head.appendChild(meta);
+      }
+      meta.content = description;
     }
   }
 }
