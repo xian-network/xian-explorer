@@ -6,15 +6,15 @@ nav#app-header: .container
     .header-item(v-else @click="enableMenu('app')"): i.material-icons menu
 
   router-link.header-item.header-item-logo(to="/")
-    img(src="@/assets/images/logo.png")
+    img(src="@/assets/images/xian-white.svg")
     h3.LogoType Xian Explorer
 
   app-menu(v-if="config.activeMenu === 'app' || config.desktop")
 
   template(v-if="!config.desktop")
     .header-item(v-if="config.activeMenu === 'user'" @click="close")
-      i.material-icons close
-    .header-item(v-else @click="enableMenu('user')"): i.material-icons settings
+      span  
+    .header-item(v-else @click="enableMenu('user')"): span
 </template>
 
 <script>
@@ -64,9 +64,9 @@ export default {
 @import '~variables'
 
 .LogoType
-  font-size 23px
-  font-weight 500
-  color #e4e6eb
+  font-size: 1.1rem;
+  font-weight: bold;
+  color: #fff;
 
 @media screen and (max-width: 1023px)
   #app-header
@@ -92,15 +92,16 @@ export default {
       align-items center
       justify-content center
       padding 0 1rem
+      gap 1rem
 
-      color link
+      color var(--link)
       cursor pointer
 
       i.material-icons
         width 1rem
 
       &:hover
-        color link
+        color var(--link)
 
       &.header-item-logo
         img
@@ -131,7 +132,7 @@ sidebar-width = 16rem
       padding: 1.25rem 1rem;
       display: flex;
       align-items: center;
-      gap: 0.5rem;
+      gap: 1rem;
       line-height: normal;
       img
         height 1.75rem

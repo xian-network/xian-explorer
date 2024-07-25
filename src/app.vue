@@ -30,8 +30,25 @@ export default {
     this.$store.dispatch("getStatus")
     this.$store.dispatch("getNodes") // Reenable for Node Discovery
     this.$store.dispatch("getValidators")
+    this.loadFaviconFromAssetsFolder()
   },
-  store
+  methods: {
+    loadFaviconFromAssetsFolder() {
+      let favicon = document.querySelector("link[rel*='icon']")
+      if (!favicon) {
+        favicon = document.createElement("link")
+        favicon.rel = "icon"
+        favicon.type = "image/png"
+        favicon.href = require("@/assets/images/logo.png")
+        document.head.appendChild(favicon)
+      }
+      else {
+        favicon.href = require("@/assets/images/logo.png")
+      }
+    }
+  },
+  store,
+  
 }
 </script>
 
