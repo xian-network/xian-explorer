@@ -6,7 +6,7 @@ tm-page(title='Search')
         .tm-modal-search
           tm-field#search-input(
             type="text"
-            placeholder="Search for Block # or Transaction Hash"
+            placeholder="Search for Block Number, Transaction Hash, or Contracts"
             required
             v-model="query"
             pattern=".{1,64}"
@@ -17,6 +17,7 @@ tm-page(title='Search')
     //tm-list-item(dt='Address' dd='3HNSiAq7wFDaPsYDcUxNSRMD78qVcYKicw' @click.native="fillField('3HNSiAq7wFDaPsYDcUxNSRMD78qVcYKicw')")
     tm-list-item(dt='Transaction Hash' dd='A99B90549116C1F11C3FB5E04D4C4454DB4A99533FB9DD23EC4C57F47EBAEF3D' @click.native="fillField('A99B90549116C1F11C3FB5E04D4C4454DB4A99533FB9DD23EC4C57F47EBAEF3D')")
     tm-list-item(dt='Block #' dd='1337' @click.native="fillField('1337')")
+    tm-list-item(dt='Contract' dd='currency' @click.native="fillField('currency')")
 </template>
 
 <script>
@@ -58,7 +59,7 @@ export default {
         if (parseInt(this.query)) {
           this.$router.push({ name: "block", params: { block: this.query } })
         } else {
-          console.log("Only block # and tx hash queries are supported right now", this.query)
+          this.$router.push({ name: "contract", params: { contract: this.query } })
         }
       }
     }

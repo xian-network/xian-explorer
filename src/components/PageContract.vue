@@ -3,11 +3,14 @@ tm-page(:title="`Contract: ${contract.name}`")
   div(slot="menu"): tm-tool-bar
     a(:href="jsonUrl" target="_blank") JSON
 
-  tm-part(title='Contract Details')
-    tm-list-item(dt="Name" :dd="contract['name']")
+  div(v-if="contract.code")
+    tm-part(title='Contract Details')
+      tm-list-item(dt="Name" :dd="contract['name']")
 
-  tm-part(title='Code')
-    pre {{ contract['code'] }} <!-- Display the code as plain text -->
+    tm-part(title='Code')
+      pre {{ contract['code'] }} <!-- Display the code as plain text -->
+
+  tm-part(v-else title="Contract not found")
 
 </template>
 
@@ -48,7 +51,9 @@ export default {
         let decoded_resp = atob(json.data.result.response.value);
         this.contract.code = decoded_resp;
         this.contract.name = contract;
-        console.log(this.contract);
+        if (this.contract.code === "ée") {
+          this.contract.code = "";
+        }
       } catch (error) {
         console.error("Error fetching contract:", error);
       }
