@@ -63,8 +63,8 @@ export default {
 <style>
 pre {
   padding: 1rem;
-    padding-top: 0.5rem;
-    padding-bottom: 0.5rem;
-    overflow-x: scroll;
+    padding-top: .5rem;
+    padding-bottom: .5rem;
+    white-space: pre-wrap;
 }
 </style>
