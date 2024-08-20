@@ -15,6 +15,8 @@ import PageValidators from "../components/PageValidators"
 import PageValidatorsIndex from "../components/PageValidatorsIndex"
 import PageValidatorsRevoked from "../components/PageValidatorsRevoked"
 import PageValidator from "../components/PageValidator"
+import PageContracts from "../components/PageContracts"
+import PageContract from "../components/PageContract"
 
 const routes = [
   { path: "/", component: Index },
@@ -23,6 +25,8 @@ const routes = [
   { path: "/blocks/:block", name: "block", component: Block },
   { path: "/tx/:hash", name: "tx", component: Tx }, // TODO rename path to /txs
   { path: "/txs", component: Transactions },
+  { path: "/contracts", component: PageContracts },
+  { path: "/contracts/:contract", name: "contract", component: PageContract },
   { path: "/nodes", component: FullNodes },
   {
     name: "node",

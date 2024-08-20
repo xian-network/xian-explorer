@@ -1,0 +1,70 @@
+<template lang="pug">
+tm-page(:title="`Contract: ${contract.name}`")
+  div(slot="menu"): tm-tool-bar
+    a(:href="jsonUrl" target="_blank") JSON
+
+  tm-part(title='Contract Details')
+    tm-list-item(dt="Name" :dd="contract['name']")
+
+  tm-part(title='Code')
+    pre {{ contract['code'] }} <!-- Display the code as plain text -->
+
+</template>
+
+<script>
+import { mapGetters } from "vuex"
+import axios from "axios"
+import { TmListItem, TmPage, TmPart, TmToolBar } from "@tendermint/ui"
+
+export default {
+  name: "page-contract",
+  components: {
+    TmToolBar,
+    TmListItem,
+    TmPart,
+    TmPage
+  },
+  data: () => ({
+    jsonUrl: "",
+    contract: {
+      name: "",
+      code: "",
+    }
+  }),
+  computed: {
+    ...mapGetters([
+      "blockchain",
+    ]),
+    formattedCode() {
+      // Format code for safe display
+      return this.contract.code ? this.contract.code.replace(/</g, '&lt;').replace(/>/g, '&gt;') : '';
+    }
+  },
+  methods: {
+    async fetchContract(contract) {
+      this.jsonUrl = `${this.blockchain.rpc}/abci_query?path=%22/contract/${contract}%22`
+      try {
+        let json = await axios.get(this.jsonUrl);
+        let decoded_resp = atob(json.data.result.response.value);
+        this.contract.code = decoded_resp;
+        this.contract.name = contract;
+        console.log(this.contract);
+      } catch (error) {
+        console.error("Error fetching contract:", error);
+      }
+    },
+  },
+  async mounted() {
+    await this.fetchContract(this.$route.params.contract);
+  },
+}
+</script>
+
+<style>
+pre {
+  padding: 1rem;
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+    overflow-x: scroll;
+}
+</style>
