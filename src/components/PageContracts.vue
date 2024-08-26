@@ -12,11 +12,13 @@ tm-page(title='Contracts')
   table.ContractsTable
     thead
       th Contract Name
+      th Submission Date
     tbody
       tr(v-for="contract in contracts" :key="contract.name")
         td
           router-link(:to="`/contracts/${contract.name}`")
             | {{ contract.name }}
+        td {{ contract.submissionDate }}
 </template>
 
 <script>
@@ -84,10 +86,12 @@ methods: {
       const response = await axios.get(this.jsonUrl);
       let decoded_resp = atob(response.data.result.response.value);
       decoded_resp = JSON.parse(decoded_resp);
-
       // Update the contracts data
       this.contracts = decoded_resp.map(contract => ({
         name: contract.name,
+        // Remove the milliseconds from the date
+        submissionDate: contract.created.split(".")[0],
+
       }));
     } catch (error) {
       console.error("Error fetching contracts:", error);
@@ -123,6 +127,5 @@ watch: {
     &:hover
       background-color var(--hover-bg)
   th, td
-    border-bottom 0.125rem solid var(--bc-dim)
     padding 0.5rem 1rem
 </style>

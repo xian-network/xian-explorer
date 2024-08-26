@@ -123,6 +123,5 @@ export default {
     &:hover
       background-color var(--hover-bg)
   th, td
-    border-bottom 0.125rem solid var(--bc-dim)
     padding 0.5rem 1rem
 </style>
