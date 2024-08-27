@@ -136,7 +136,9 @@ export default {
   width 100%
   th
     color var(--dim)
-    background var(--app-fg)
+    background var(--box-shadow)
+    font-weight bold
+    font-size 14px
   tr
     &:hover
       background-color var(--hover-bg)
