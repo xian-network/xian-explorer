@@ -53,6 +53,8 @@ export default {
       let txObj = decodeTx(tx)
       let txHash = this.hash
       let txResult = this.tx_result
+      let txPayload = this.payload
+      let txMetadata = this.metadata
       txResult.success = txResult.code === 0
       delete txResult.code
       delete txResult.log
@@ -85,13 +87,7 @@ export default {
       let state = txResult.data.state
       delete txResult.data.state
       txResult.data.state = state
-      // Move up tx.payload and tx.metadata
-      let payload = txObj.payload
-      let metadata = txObj.metadata
-      delete txObj.payload
-      delete txObj.metadata
-      txObj.payload = payload
-      txObj.metadata = metadata
+      
       
       
 

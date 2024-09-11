@@ -102,6 +102,12 @@ export default {
         return { field, value: v, path: fieldPath, isComplex, isRouterLink, isUrl }
       }).filter(x => !isNil(x))
       let sorted = sortBy(res, x => x.isComplex)
+      // Move Payload to the second position
+      let payloadIndex = sorted.findIndex(x => x.field === 'Payload')
+      if (payloadIndex > 0) {
+        let payload = sorted.splice(payloadIndex, 2)[0]
+        sorted.splice(2, 0, payload)
+      }
       return sorted
     }
   },
