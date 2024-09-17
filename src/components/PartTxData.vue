@@ -99,6 +99,11 @@ export default {
         } else if (isComplexValue(v)) {
           isComplex = true
         }
+        // We convert the YYYY-MM-DDTHH:MM:SSZ to a human readable format
+        else if (field === 'Tx Timestamp') {
+          let date = new Date(v)
+          v = date.toLocaleString()
+        }
         return { field, value: v, path: fieldPath, isComplex, isRouterLink, isUrl }
       }).filter(x => !isNil(x))
       let sorted = sortBy(res, x => x.isComplex)
@@ -108,6 +113,13 @@ export default {
         let payload = sorted.splice(payloadIndex, 2)[0]
         sorted.splice(2, 0, payload)
       }
+      // move Tx Timestamp to Transaction Details
+      let txTimestampIndex = sorted.findIndex(x => x.field === 'Tx Timestamp')
+      if (txTimestampIndex > 0) {
+        let txTimestamp = sorted.splice(txTimestampIndex, 1)[0]
+        sorted.splice(1, 0, txTimestamp)
+      }
+      
       return sorted
     }
   },

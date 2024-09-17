@@ -52,6 +52,9 @@ export default {
 
       let txObj = decodeTx(tx)
       let txHash = this.hash
+      
+      let txTimestamp = this.timestamp
+      txObj = Object.assign({ txTimestamp }, txObj)
       let txResult = this.tx_result
       let txPayload = this.payload
       let txMetadata = this.metadata
@@ -116,8 +119,14 @@ export default {
       this.tx = json.data.result.tx
       this.tx_result = json.data.result.tx_result
     },
+    async fetchBlockTimestamp() {
+      let json = await axios.get(`${this.blockchain.rpc}/block?height=${this.height}`)
+      this.timestamp = json.data.result.block.header.time
+    }
   },
   async mounted() {
+    
+    await this.fetchBlockTimestamp()
     await this.fetchTx()
   },
   watch: {
