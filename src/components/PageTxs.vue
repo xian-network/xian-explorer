@@ -12,11 +12,13 @@ tm-page(title='Transactions')
   table.BlocksTable
     thead
       th Block Height
+      th Timestamp
       th Transaction Hash
       th Stamps Used
     tbody
       tr(v-for="tx in transactions" :key="tx.hash")
         td {{ num.prettyInt(tx.height) }}
+        td {{ tx.timestamp }}
         td
           router-link(:to="`/tx/${tx.hash}`")
             | {{ tx.hash }}
@@ -75,6 +77,7 @@ export default {
   methods: {
      async fetchTransactions(page) {
       this.currentPage = page || this.currentPage;
+      let block_timestamps = {};
       const queryParams = new URLSearchParams({
         query: '"tx.height>0"',
         per_page: this.itemsPerPage.toString(),
@@ -85,17 +88,27 @@ export default {
       const response = await axios.get(`https://testnet.xian.org/tx_search?${queryParams}`);
         this.transactions = [];
         for (let i = 0; i < response.data.result.txs.length; i++) {
+          
           try {
             let tx = response.data.result.txs[i];
+            if (block_timestamps[tx.height] === undefined) {
+              block_timestamps[tx.height] = await this.fetchBlockTimestamp(tx.height);
+            }
             this.transactions.push({
               hash: tx.hash,
               height: tx.height,
               gasUsed: decodeData(tx.tx_result.data).stamps_used,
+              timestamp: block_timestamps[tx.height]
             });
           } catch (e) {
             console.error(e);
           }
         }
+    },
+    async fetchBlockTimestamp(height) {
+      const response = await axios.get(`${this.blockchain.rpc}/block?height=${height}`);
+      let newDate = new Date(response.data.result.block.header.time);
+      return newDate.toLocaleString();
     },
   },
   async mounted() {
