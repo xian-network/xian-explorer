@@ -81,8 +81,8 @@ export default {
         order_by: '"desc"',
         page: this.currentPage.toString(),
       }).toString();
-      this.jsonUrl = `https://testnet.xian.org/tx_search?${queryParams}`;
-      const response = await axios.get(`https://testnet.xian.org/tx_search?${queryParams}`);
+      this.jsonUrl = `https://node.xian.org/tx_search?${queryParams}`;
+      const response = await axios.get(`https://node.xian.org/tx_search?${queryParams}`);
         this.transactions = [];
         for (let i = 0; i < response.data.result.txs.length; i++) {
           try {
