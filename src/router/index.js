@@ -17,6 +17,7 @@ import PageValidatorsRevoked from "../components/PageValidatorsRevoked"
 import PageValidator from "../components/PageValidator"
 import PageContracts from "../components/PageContracts"
 import PageContract from "../components/PageContract"
+import PageRichlist from "../components/PageRichlist"
 
 const routes = [
   { path: "/", component: Index },
@@ -28,6 +29,7 @@ const routes = [
   { path: "/contracts", component: PageContracts },
   { path: "/contracts/:contract", name: "contract", component: PageContract },
   { path: "/nodes", component: FullNodes },
+  { path: "/addresses", component: PageRichlist },
   {
     name: "node",
     path: "/nodes/:node",
