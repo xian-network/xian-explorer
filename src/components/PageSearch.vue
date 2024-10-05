@@ -9,15 +9,15 @@ tm-page(title='Search')
             placeholder="Search for Block Number, Transaction Hash, or Contracts"
             required
             v-model="query"
-            pattern=".{1,64}"
-            title="1 to 64 characters")
+            )
           tm-btn(type="submit" icon="search" value="Go")
 
   tm-part(title='Sample Queries')
-    //tm-list-item(dt='Address' dd='3HNSiAq7wFDaPsYDcUxNSRMD78qVcYKicw' @click.native="fillField('3HNSiAq7wFDaPsYDcUxNSRMD78qVcYKicw')")
-    tm-list-item(dt='Transaction Hash' dd='A99B90549116C1F11C3FB5E04D4C4454DB4A99533FB9DD23EC4C57F47EBAEF3D' @click.native="fillField('A99B90549116C1F11C3FB5E04D4C4454DB4A99533FB9DD23EC4C57F47EBAEF3D')")
-    tm-list-item(dt='Block #' dd='1337' @click.native="fillField('1337')")
-    tm-list-item(dt='Contract' dd='currency' @click.native="fillField('currency')")
+   
+    tm-list-item(dt='Transaction Hash' dd='tx:A99B90549116C1F11C3FB5E04D4C4454DB4A99533FB9DD23EC4C57F47EBAEF3D' @click.native="fillField('tx:A99B90549116C1F11C3FB5E04D4C4454DB4A99533FB9DD23EC4C57F47EBAEF3D')")
+    tm-list-item(dt='Block #' dd='block:1337' @click.native="fillField('block:1337')")
+    tm-list-item(dt='Contract' dd='contract:currency' @click.native="fillField('contract:currency')")
+    tm-list-item(dt='Address' dd='address:3b5623b7c38669d5c191036355cf56aa55590d89bab95d5722335f6572fbc3be' @click.native="fillField('address:3b5623b7c38669d5c191036355cf56aa55590d89bab95d5722335f6572fbc3be')")
 </template>
 
 <script>
@@ -53,14 +53,17 @@ export default {
       this.query = value
     },
     search() {
-      if(this.query.length === 64) {
-        this.$router.push({ name: "tx", params: { hash: this.query } })
-      } else{
-        if (parseInt(this.query)) {
-          this.$router.push({ name: "block", params: { block: this.query } })
-        } else {
-          this.$router.push({ name: "contract", params: { contract: this.query } })
-        }
+      if(this.query.startsWith("tx:")) {
+        this.$router.push({ name: "tx", params: { hash: this.query.replace("tx:", "") } })
+      } 
+      if (this.query.startsWith("address:")) {
+        this.$router.push({ name: "address", params: { address: this.query.replace("address:", "") } })
+      }
+      if (this.query.startsWith("block:")) {
+          this.$router.push({ name: "block", params: { block: this.query.replace("block:", "") } })
+      } 
+      if (this.query.startsWith("contract:")) {
+          this.$router.push({ name: "contract", params: { contract: this.query.replace("contract:", "") } })
       }
     }
   }

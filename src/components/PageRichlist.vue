@@ -16,7 +16,9 @@
       tbody
         tr(v-for="(wallet, index) in addresses" :key="wallet.address")
           td {{ (currentPage - 1) * itemsPerPage + index + 1 }} <!-- Rank Number -->
-          td {{ wallet.address }}
+          td
+            router-link(:to="`/addresses/${wallet.address}`")
+              | {{ wallet.address }}
           td {{ wallet.balance }}
 </template>
 
