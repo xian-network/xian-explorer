@@ -69,23 +69,29 @@ export default {
       this.currentPage = page || this.currentPage;
       const offset = (this.currentPage - 1) * this.itemsPerPage;
       const query = `
-        query RichList($limit: Int!, $offset: Int!) {
-          allStates(filter: { key: { startsWith: "currency.balances:" } }, first: $limit, offset: $offset, orderBy: VALUE_DESC) {
-            edges {
-              node {
-                key
-                value
-              }
-            }
-          }
-        }`;
+       query RichList($limit: Int!, $offset: Int!) {
+  allStates(
+    filter: {and: {key: {startsWith: "currency.balances:", notLike: "%:%:%"}}}
+    first: $limit
+    offset: $offset
+    orderBy: VALUE_DESC
+  ) {
+    edges {
+      node {
+        key
+        value
+      }
+    }
+  }
+}
+`;
 
       const variables = {
         limit: this.itemsPerPage,
         offset: offset
       };
 
-      const response = await axios.post('https://node.xian.org/graphql', {
+      const response = await axios.post(`${this.blockchain.rpc}/graphql`, {
         query,
         variables
       });
@@ -94,20 +100,14 @@ export default {
       const edges = response.data.data.allStates.edges;
       this.addresses = edges
         .map(edge => edge.node)
-        .filter(node => {
-          // Separate keys into categories
-          const parts = node.key.split(':');
-          const addressPart = parts[1];
-          // Check if it's a valid address (64-character hexadecimal)
-          return parts.length === 2 && addressRegex.test(addressPart);
-        })
+        
         .map(node => {
           // Extract the address part from the key
           const address = node.key.split(':')[1];
           return {
             address,
             // balance needs to be formated to 8 decimal places from the float value
-            balance: node.value.toFixed(8)
+            balance:  typeof node.value === 'number' ? node.value.toFixed(8) : node.value
           };
         });
     },
