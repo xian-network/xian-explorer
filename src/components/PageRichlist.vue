@@ -10,10 +10,12 @@
 
     table.BlocksTable
       thead
+        th Rank
         th Address
         th Balance
       tbody
-        tr(v-for="wallet in addresses" :key="wallet.address")
+        tr(v-for="(wallet, index) in addresses" :key="wallet.address")
+          td {{ (currentPage - 1) * itemsPerPage + index + 1 }} <!-- Rank Number -->
           td {{ wallet.address }}
           td {{ wallet.balance }}
 </template>
