@@ -45,11 +45,11 @@ export default {
   },
   methods: {
     async fetchContract(contract) {
-      this.jsonUrl = `${this.blockchain.rpc}/abci_query?path=%22/contracts/${contract}%22`
+      this.jsonUrl = `${this.blockchain.rpc}/abci_query?path=%22/contract/${contract}%22`
       try {
         let json = await axios.get(this.jsonUrl);
         let decoded_resp = atob(json.data.result.response.value);
-        this.contract.code = JSON.parse(decoded_resp)[0]["code"];
+        this.contract.code = decoded_resp;
         this.contract.name = contract;
         if (this.contract.code === "ée") {
           this.contract.code = "";
