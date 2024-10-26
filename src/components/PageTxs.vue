@@ -1,33 +1,37 @@
 <template lang="pug">
-tm-page(title='Transactions')
-  div(slot="menu"): tm-tool-bar
-    router-link(:to="{ path: '/txs', query: prevQuery }" v-if="hasPrevPage")
-      i.material-icons chevron_left
-      | Prev. Transactions
-    router-link(:to="{ path: '/txs', query: nextQuery }" v-if="hasNextPage")
-      | Next Transactions
-      i.material-icons chevron_right
-    a(:href="jsonUrl" target="_blank") JSON
+  tm-page(title='Transactions')
+    div(slot="menu"): tm-tool-bar
+      router-link(:to="{ path: '/txs', query: prevQuery }" v-if="hasPrevPage")
+        i.material-icons chevron_left
+        | Prev. Transactions
+      router-link(:to="{ path: '/txs', query: nextQuery }" v-if="hasNextPage")
+        | Next Transactions
+        i.material-icons chevron_right
+      a(:href="jsonUrl" target="_blank") JSON
 
-  table.BlocksTable
-    thead
-      th Block Height
-      th Transaction Hash
-      th Stamps Used
-    tbody
-      tr(v-for="tx in transactions" :key="tx.hash")
-        td {{ num.prettyInt(tx.height) }}
-        td
-          router-link(:to="`/tx/${tx.hash}`")
-            | {{ tx.hash }}
-        td {{ num.prettyInt(tx.gasUsed) }}
+    table.BlocksTable
+      thead
+        th Block Height
+        th Transaction Hash
+        th Contract
+        th Function
+        th Stamps Used
+      tbody
+        tr(v-for="tx in transactions" :key="tx.hash")
+         
+          td {{ tx.blockHeight }}
+          td
+            router-link(:to="`/tx/${tx.hash}`")
+              | {{ tx.hash }}
+          td {{ tx.contract }}
+          td {{ tx.function }}
+          td {{ tx.stamps }}
 </template>
-
 
 <script>
 import axios from "axios";
-import num from "../scripts/num"
-import { decodeTx, decodeData } from "../scripts/tx"
+import num from "../scripts/num";
+import { decodeData } from "../scripts/tx";
 import { mapGetters } from "vuex";
 import { TmPage, TmToolBar } from "@tendermint/ui";
 
@@ -56,7 +60,6 @@ export default {
       return this.currentPage > 1;
     },
     hasNextPage() {
-      // Assuming we don't know the total number of pages, this might need to be adjusted based on actual API response
       return this.transactions.length === this.itemsPerPage;
     },
     prevQuery() {
@@ -73,35 +76,63 @@ export default {
     },
   },
   methods: {
-     async fetchTransactions(page) {
+    async fetchTransactions(page) {
       this.currentPage = page || this.currentPage;
-      const queryParams = new URLSearchParams({
-        query: '"tx.height>0"',
-        per_page: this.itemsPerPage.toString(),
-        order_by: '"desc"',
-        page: this.currentPage.toString(),
-      }).toString();
-      this.jsonUrl = `https://node.xian.org/tx_search?${queryParams}`;
-      const response = await axios.get(`https://node.xian.org/tx_search?${queryParams}`);
-        this.transactions = [];
-        for (let i = 0; i < response.data.result.txs.length; i++) {
-          try {
-            let tx = response.data.result.txs[i];
-            this.transactions.push({
-              hash: tx.hash,
-              height: tx.height,
-              gasUsed: decodeData(tx.tx_result.data).stamps_used,
-            });
-          } catch (e) {
-            console.error(e);
+
+      // GraphQL query to fetch transactions with pagination
+      const query = `
+        query MyQuery($offset: Int!, $limit: Int!) {
+          allTransactions(
+            first: $limit
+            offset: $offset
+            orderBy: BLOCK_HEIGHT_DESC
+          ) {
+            edges {
+              node {
+                blockTime
+                blockHeight
+                hash
+                contract
+                function
+                stamps
+              }
+            }
           }
         }
+      `;
+
+      // Set JSON URL for the external link
+      this.jsonUrl = `${this.blockchain.rpc}/graphql`;
+
+      const variables = {
+        offset: (this.currentPage - 1) * this.itemsPerPage,
+        limit: this.itemsPerPage,
+      };
+
+      try {
+        const response = await axios.post(this.jsonUrl, {
+          query,
+          variables
+        });
+
+        // Map transactions and format blockTime
+        this.transactions = response.data.data.allTransactions.edges.map(edge => ({
+          hash: edge.node.hash,
+          blockHeight: edge.node.blockHeight,
+          contract: edge.node.contract,
+          function: edge.node.function,
+          stamps: edge.node.stamps,
+          formattedTime: new Date(Number(edge.node.blockTime) / 1e6).toLocaleString(),
+        }));
+      } catch (error) {
+        console.error("Error fetching transactions:", error);
+      }
     },
   },
   async mounted() {
     await this.fetchTransactions();
   },
-   watch: {
+  watch: {
     '$route': {
       immediate: true,
       handler() {
