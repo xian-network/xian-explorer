@@ -11,15 +11,14 @@
 
     table.BlocksTable
       thead
-        th Block Height
+        th Time
         th Transaction Hash
         th Contract
         th Function
         th Stamps Used
       tbody
         tr(v-for="tx in transactions" :key="tx.hash")
-         
-          td {{ tx.blockHeight }}
+          td {{ tx.formattedTime }}
           td
             router-link(:to="`/tx/${tx.hash}`")
               | {{ tx.hash }}
