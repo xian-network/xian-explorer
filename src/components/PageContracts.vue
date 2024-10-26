@@ -75,28 +75,42 @@ export default {
 
 methods: {
   async fetchContracts(offset = 0) {
-    // Set the offset, ensuring it's a valid number
-    this.offset = parseInt(offset, 10) || 0;
+  // Set the offset, ensuring it's a valid number
+  this.offset = parseInt(offset, 10) || 0;
 
-    // Construct the API URL with the current offset
-    this.jsonUrl = `${this.blockchain.rpc}/abci_query?path=%22/contracts/limit=${this.itemsPerPage}/offset=${this.offset}%22`;
-
-    try {
-      // Fetch the contracts
-      const response = await axios.get(this.jsonUrl);
-      let decoded_resp = atob(response.data.result.response.value);
-      decoded_resp = JSON.parse(decoded_resp);
-      // Update the contracts data
-      this.contracts = decoded_resp.map(contract => ({
-        name: contract.name,
-        // Remove the milliseconds from the date
-        submissionDate: contract.created.split(".")[0],
-
-      }));
-    } catch (error) {
-      console.error("Error fetching contracts:", error);
+  // Construct the GraphQL query with the current offset, limit, and order
+  const query = `
+    query MyQuery {
+      allContracts(offset: ${this.offset}, first: ${this.itemsPerPage}, orderBy: CREATED_DESC) {
+        nodes {
+          name
+          created
+        }
+      }
     }
-  },
+  `;
+
+  try {
+    // Fetch the contracts using the GraphQL endpoint
+    const response = await axios.post(`${this.blockchain.rpc}/graphql`, {
+      query: query
+    });
+
+    // Check if the response contains data
+    const contractsData = (response.data && response.data.data && response.data.data.allContracts && response.data.data.allContracts.nodes) || [];
+
+    // Update the contracts data
+    this.contracts = contractsData.map(function(contract) {
+      return {
+        name: contract.name,
+        // Convert blockTime to a date format if needed
+        submissionDate: new Date(contract.created).toLocaleString(),
+      };
+    });
+  } catch (error) {
+    console.error("Error fetching contracts:", error);
+  }
+},
 
   handlePageChange(offset) {
     // Update the route with the new offset
