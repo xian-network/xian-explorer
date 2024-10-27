@@ -137,8 +137,23 @@ export default {
   }
 };
 </script>
+<style lang="stylus">
+.BlocksTable
+  width 100%
+  th
+    color var(--dim)
+    background var(--box-shadow)
+    font-weight bold
+    font-size 14px
+  tr
+    &:hover
+      background-color var(--hover-bg)
+  th, td
+    padding 0.5rem 1rem
+</style>
 
 <style>
+
 pre {
   padding: 1rem;
   padding-top: 0.5rem;

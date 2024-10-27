@@ -146,3 +146,47 @@ menu {
 
   .tm-page-header-container 
     height 100%
+
+/* Basic table styling */
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th, td {
+  padding: 8px;
+  text-align: left;
+  
+}
+
+/* Responsive styling */
+@media screen and (max-width: 600px) {
+  table, thead, tbody, th, td, tr {
+    display: block;
+  }
+  th {
+    display: none; /* Hide table headers */
+    
+  }
+  td {
+    position: relative;
+    padding-left: 50%;
+    
+  }
+  tr{
+    border-top: 1px solid #ddd;
+  }
+  td:before {
+    content: attr(data-label);
+    position: absolute;
+    left: 0;
+    width: 50%;
+    padding-left: 10px;
+    font-weight: bold;
+  }
+  
+}
+@media screen and (max-width: 600px) {
+.tm-page-main{padding-bottom: 10rem;}
+
+}
