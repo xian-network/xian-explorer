@@ -69,40 +69,77 @@ export default {
   },
   methods: {
     async fetchTransactions() {
-      const offset = (this.page - 1) * this.itemsPerPage;
-      const query = `
-        query MyQuery($address: String!, $offset: Int!) {
-          allStateChanges(
-            filter: {key: {includes: $address}}
-            first: ${this.itemsPerPage}
-            offset: $offset
-            orderBy: CREATED_DESC
-          ) {
-            edges {
-              node {
-                transactionByTxHash{
-                  blockTime
-                  blockHeight
-                  contract
-                  stamps
-                  success
-                  function
-                  hash
-                }
+  const offset = (this.page - 1) * this.itemsPerPage;
+  const fetchBatchSize = this.itemsPerPage * 2; // Fetch more to handle duplicates
+  let uniqueTransactions = [];
+  let seenHashes = new Set(); // Track hashes to avoid duplicates
+  let currentOffset = offset;
+
+  while (uniqueTransactions.length < this.itemsPerPage) {
+    const query = `
+      query MyQuery($address: String!, $offset: Int!, $batchSize: Int!) {
+        allStateChanges(
+          filter: {key: {includes: $address}}
+          first: $batchSize
+          offset: $offset
+          orderBy: CREATED_DESC
+        ) {
+          edges {
+            node {
+              transactionByTxHash {
+                blockTime
+                blockHeight
+                contract
+                stamps
+                success
+                function
+                hash
               }
             }
           }
         }
-      `;
-      const variables = { address: this.$route.params.address, offset };
-      const response = await axios.post(`${this.blockchain.rpc}/graphql`, { query, variables });
-      
-      // Map transactions and convert blockTime to local date format
-      this.transactions = response.data.data.allStateChanges.edges.map(edge => ({
-        ...edge.node.transactionByTxHash,
-        formattedTime: new Date(Number(edge.node.transactionByTxHash.blockTime) / 1e6).toLocaleString()
-      }));
-    },
+      }
+    `;
+
+    const variables = {
+      address: this.$route.params.address,
+      offset: currentOffset,
+      batchSize: fetchBatchSize,
+    };
+
+    const response = await axios.post(`${this.blockchain.rpc}/graphql`, {
+      query,
+      variables,
+    });
+
+    const transactions = response.data.data.allStateChanges.edges
+      .map((edge) => edge.node.transactionByTxHash)
+      .filter((tx) => tx && tx.hash); // Skip null or invalid entries
+
+    // Deduplicate transactions by `hash`
+    transactions.forEach((tx) => {
+      if (!seenHashes.has(tx.hash)) {
+        uniqueTransactions.push(tx);
+        seenHashes.add(tx.hash);
+      }
+    });
+
+    // Break the loop if no more data is available
+    if (transactions.length < fetchBatchSize) {
+      break;
+    }
+
+    // Increment offset for the next batch
+    currentOffset += fetchBatchSize;
+  }
+
+  // Slice to ensure exactly `itemsPerPage` transactions are displayed
+  this.transactions = uniqueTransactions.slice(0, this.itemsPerPage).map((tx) => ({
+    ...tx,
+    formattedTime: new Date(Number(tx.blockTime) / 1e6).toLocaleString(),
+  }));
+},
+
     async fetchAddress() {
       const query = `
         query MyQuery($address: String!) {

@@ -5,7 +5,7 @@
   "author": "Xian Org, Peng Zhong <peng@nylira.com>",
   "private": true,
   "scripts": {
-    "serve": "vue-cli-service serve --host 0.0.0.0",
+    "serve": "vue-cli-service serve --host 0.0.0.0 --port 8081",
     "build": "vue-cli-service build",
     "lint": "vue-cli-service lint"
   },
