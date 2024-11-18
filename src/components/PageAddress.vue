@@ -80,13 +80,15 @@ export default {
           ) {
             edges {
               node {
-                blockTime
-                blockHeight
-                contract
-                stamps
-                success
-                function
-                hash
+                transactionByTxHash{
+                  blockTime
+                  blockHeight
+                  contract
+                  stamps
+                  success
+                  function
+                  hash
+                }
               }
             }
           }
