@@ -72,11 +72,11 @@ export default {
       const offset = (this.page - 1) * this.itemsPerPage;
       const query = `
         query MyQuery($address: String!, $offset: Int!) {
-          allTransactions(
-            filter: {sender: {equalTo: $address}}
+          allStateChanges(
+            filter: {key: {includes: $address}}
             first: ${this.itemsPerPage}
             offset: $offset
-            orderBy: BLOCK_TIME_DESC
+            orderBy: CREATED_DESC
           ) {
             edges {
               node {
