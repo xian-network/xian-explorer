@@ -98,9 +98,9 @@ export default {
       const response = await axios.post(`${this.blockchain.rpc}/graphql`, { query, variables });
       
       // Map transactions and convert blockTime to local date format
-      this.transactions = response.data.data.allTransactions.edges.map(edge => ({
-        ...edge.node,
-        formattedTime: new Date(Number(edge.node.blockTime) / 1e6).toLocaleString()
+      this.transactions = response.data.data.allStateChanges.edges.map(edge => ({
+        ...edge.node.transactionByTxHash,
+        formattedTime: new Date(Number(edge.node.transactionByTxHash.blockTime) / 1e6).toLocaleString()
       }));
     },
     async fetchAddress() {
