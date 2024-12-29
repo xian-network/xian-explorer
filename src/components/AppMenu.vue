@@ -5,7 +5,7 @@ menu.app-menu
     tm-list-item(to="/blocks" exact @click.native="close" :title="`Blocks`")
     tm-list-item(to="/txs" exact @click.native="close" :title="`Transactions`")
     tm-list-item(to="/contracts" exact @click.native="close" :title="`Contracts`")
-    tm-list-item(to="/nodes" exact @click.native="close" :title="`Full Nodes (${nodes.length})`")
+    //tm-list-item(to="/nodes" exact @click.native="close" :title="`Full Nodes (${nodes.length})`")
     tm-list-item(to="/validators" @click.native="close" :title="`Validators (${validators.length})`")
     tm-list-item(to="/addresses" @click.native="close" :title="`Addresses`")
     //tm-list-item(to="/validators-revoked" @click.native="close" :title="`Revoked Validators (${revokedValidators})`")

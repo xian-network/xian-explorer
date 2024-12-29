@@ -2,6 +2,8 @@
 tm-page(title='Overview')
   tm-part(title='Blockchain')
     tm-list-item(dt='Chain ID' :dd='latestBlock.chain_id')
+    tm-list-item(dt='Stamp Rate (Stamps/Xian)' :dd='stampRate || ""')
+    tm-list-item(dt='Total Transactions' :dd='num.prettyInt(totalTxs || 0)')
 
   tm-part(title='Current Block' v-if="latestBlock.height > 0")
     tm-list-item(dt='Block Height' :dd='num.prettyInt(latestBlock.height)'
@@ -101,10 +103,14 @@ export default {
     }
   },
   data: () => ({
-    num: num
+    num: num,
+    stampRate: null,
+    totalTxs: 0,
   }),
   mounted() {
     this.setMetaDescription('Xian Explorer is a blockchain explorer for the Xian blockchain. It allows you to explore the blockchain, view the latest blocks and transactions, and see the current validators.')
+    this.fetchStampRate();
+    this.fetchTotalTxs();
   },
   methods: {
     readableDate,
@@ -122,7 +128,36 @@ export default {
         document.head.appendChild(meta);
       }
       meta.content = description;
+    },
+    async fetchStampRate() {
+    try {
+      const response = await fetch(this.bc.rpc + '/abci_query?path="/get/stamp_cost.S:value"');
+      const data = await response.json();
+      if (data.result.response.value === "AA==") {
+        this.stampRate = null;
+      } else {
+        this.stampRate = parseInt(atob(data.result.response.value), 10);
+      }
+    } catch (error) {
+      console.error("Error fetching stamp rate:", error);
+      this.stampRate = "Error";
     }
+  },
+  async fetchTotalTxs() {
+    try {
+        const response = await fetch(`${this.bc.rpc}/tx_search?query="tx.height>0"&per_page=1&page=1`);
+        const data = await response.json();
+        if (data && data.result && data.result.total_count) {
+            this.totalTxs = parseInt(data.result.total_count, 10);
+        } else {
+            console.error("Error fetching total transactions: Invalid response format");
+            this.totalTxs = "Error";
+        }
+    } catch (error) {
+        console.error("Error fetching total transactions:", error);
+        this.totalTxs = "Error";
+    }
+}
   }
 }
 </script>
