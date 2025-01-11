@@ -4,6 +4,7 @@ tm-page(title='Overview')
     tm-list-item(dt='Chain ID' :dd='latestBlock.chain_id')
     tm-list-item(dt='Stamp Rate (Stamps/Xian)' :dd='stampRate || ""')
     tm-list-item(dt='Total Transactions' :dd='num.prettyInt(totalTxs || 0)')
+    tm-list-item(dt='Xian Holders' :dd='num.prettyInt(totalHolders || 0)')
 
   tm-part(title='Current Block' v-if="latestBlock.height > 0")
     tm-list-item(dt='Block Height' :dd='num.prettyInt(latestBlock.height)'
@@ -28,6 +29,7 @@ tm-page(title='Overview')
 </template>
 
 <script>
+import axios from "axios";
 import num from "../scripts/num"
 import { mapGetters } from "vuex"
 import { readableDate } from "../scripts/utils"
@@ -51,7 +53,7 @@ export default {
       "consensusState",
       "blocks",
       "latestBlock",
-      "totalTxs",
+      
     ]),
     validatorsActive() {
       if (this.validators && this.validators.length > 0) {
@@ -106,11 +108,13 @@ export default {
     num: num,
     stampRate: null,
     totalTxs: 0,
+    totalHolders: 0
   }),
   mounted() {
     this.setMetaDescription('Xian Explorer is a blockchain explorer for the Xian blockchain. It allows you to explore the blockchain, view the latest blocks and transactions, and see the current validators.')
     this.fetchStampRate();
     this.fetchTotalTxs();
+    this.fetchTotalHolders();
   },
   methods: {
     readableDate,
@@ -143,6 +147,37 @@ export default {
       this.stampRate = "Error";
     }
   },
+  async fetchTotalHolders() {
+    try {
+      const query = `
+       query RichList {
+  allStates(
+    filter: {and: {key: {startsWith: "currency.balances:", notLike: "%:%:%"}}}
+    orderBy: VALUE_DESC
+  ) {
+    
+    totalCount
+  }
+}
+
+`;
+
+
+      const response = await axios.post(`${this.bc.rpc}/graphql`, {
+        query
+      });
+      const data = response.data;
+      if (data && data.data && data.data.allStates && data.data.allStates.totalCount) {
+        this.totalHolders = parseInt(data.data.allStates.totalCount, 10);
+      } else {
+        console.error("Error fetching total holders: Invalid response format");
+        this.totalHolders = "Error";
+      }
+    } catch (error) {
+        console.error("Error fetching total holders:", error);
+        this.totalHolders = "Error";
+    }
+  },
   async fetchTotalTxs() {
     try {
         const response = await fetch(`${this.bc.rpc}/tx_search?query="tx.height>0"&per_page=1&page=1`);
@@ -157,7 +192,7 @@ export default {
         console.error("Error fetching total transactions:", error);
         this.totalTxs = "Error";
     }
-}
+  }
   }
 }
 </script>
