@@ -5,6 +5,7 @@ tm-page(title='Overview')
     tm-list-item(dt='Stamp Rate (Stamps/Xian)' :dd='stampRate || ""')
     tm-list-item(dt='Total Transactions' :dd='num.prettyInt(totalTxs || 0)')
     tm-list-item(dt='Xian Holders' :dd='num.prettyInt(totalHolders || 0)')
+    tm-list-item(dt='Circulating Supply' :dd='num.pretty(circulatingSupply || 0) + " XIAN"')
 
   tm-part(title='Current Block' v-if="latestBlock.height > 0")
     tm-list-item(dt='Block Height' :dd='num.prettyInt(latestBlock.height)'
@@ -108,13 +109,15 @@ export default {
     num: num,
     stampRate: null,
     totalTxs: 0,
-    totalHolders: 0
+    totalHolders: 0,
+    circulatingSupply: 0
   }),
   mounted() {
     this.setMetaDescription('Xian Explorer is a blockchain explorer for the Xian blockchain. It allows you to explore the blockchain, view the latest blocks and transactions, and see the current validators.')
     this.fetchStampRate();
     this.fetchTotalTxs();
     this.fetchTotalHolders();
+    this.fetchCirculatingSupply();
   },
   methods: {
     readableDate,
@@ -192,8 +195,50 @@ export default {
         console.error("Error fetching total transactions:", error);
         this.totalTxs = "Error";
     }
+  },
+  async fetchCirculatingSupply() {
+    this.circulatingSupply = 0;
+
+    let totalSupply = 111111111;
+    // Excluded from total supply to get circulating supply is the following:
+    // Balance of team_lock
+    // Balance of dao_funding_stream
+    // Balance of dao 
+    // Balance of team_vesting
+    // Balance of masternodes
+
+    try{
+      const query = `
+       query Balances {
+  allStates(
+    filter: {and: {key: {startsWith: "currency.balances:", notLike: "%:%:%", in: ["currency.balances:team_lock", "currency.balances:dao_funding_stream", "currency.balances:dao", "currency.balances:team_vesting", "currency.balances:masternodes"
+    ]}}}
+    orderBy: VALUE_DESC
+  ) { 
+    nodes {
+      value
+    }
   }
-  }
+}
+`
+      const response = await axios.post(`${this.bc.rpc}/graphql`, {
+        query
+      });
+      const data = response.data;
+      if (data && data.data && data.data.allStates && data.data.allStates.nodes) {
+        data.data.allStates.nodes.forEach(node => {
+          this.circulatingSupply += parseFloat(node.value);
+        });
+        this.circulatingSupply = totalSupply - this.circulatingSupply;
+      } else {
+        console.error("Error fetching circulating supply: Invalid response format");
+        this.circulatingSupply = "Error";
+      }
+    } catch (error) {
+      console.error("Error fetching team_lock balance:", error);
+    }
+  },
+}
 }
 </script>
 
