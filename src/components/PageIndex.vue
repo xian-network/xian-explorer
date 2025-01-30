@@ -5,7 +5,7 @@ tm-page(title='Overview')
     tm-list-item(dt='Stamp Rate (Stamps/Xian)' :dd='stampRate || ""')
     tm-list-item(dt='Total Transactions' :dd='num.prettyInt(totalTxs || 0)')
     tm-list-item(dt='Xian Holders' :dd='num.prettyInt(totalHolders || 0)')
-    tm-list-item(dt='Circulating Supply' :dd='num.pretty(circulatingSupply || 0) + " XIAN"')
+    //tm-list-item(dt='Circulating Supply' :dd='num.pretty(circulatingSupply || 0) + " XIAN"')
 
   tm-part(title='Current Block' v-if="latestBlock.height > 0")
     tm-list-item(dt='Block Height' :dd='num.prettyInt(latestBlock.height)'
