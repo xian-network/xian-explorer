@@ -1,6 +1,6 @@
 <template lang="pug">
-  tm-page(title='Richlist')
-    div(slot="menu"): tm-tool-bar
+  tm-page(title="Richlist")
+    div(slot="menu"): tm-tool_bar
       router-link(:to="{ path: '/addresses', query: prevQuery }" v-if="hasPrevPage")
         i.material-icons chevron_left
         | Prev. Addresses
@@ -10,15 +10,17 @@
 
     table.BlocksTable
       thead
-        th Rank
-        th Address
-        th Balance
+        tr
+          th Rank
+          th Address
+          th Balance
       tbody
         tr(v-for="(wallet, index) in addresses" :key="wallet.address")
-          td {{ (currentPage - 1) * itemsPerPage + index + 1 }} <!-- Rank Number -->
+          td {{ (currentPage - 1) * itemsPerPage + index + 1 }}
           td
             router-link(:to="`/addresses/${wallet.address}`")
-              | {{ wallet.address }}
+              // Show the name if available, otherwise the address
+              | {{ wallet.name ? wallet.name : wallet.address }}
           td {{ wallet.balance }}
 </template>
 
@@ -27,10 +29,47 @@ import axios from "axios";
 import { mapGetters } from "vuex";
 import { TmPage, TmToolBar } from "@tendermint/ui";
 
-const maxItemsPerPage = 20;
+// Change this if you have a separate file for these functions
+async function execute_get_address_to_main_name(address, rpc) {
+  let payload = {
+    sender: "",
+    contract: "con_name_service",
+    function: "get_address_to_main_name",
+    kwargs: { address }
+  };
 
-// Regular expression to match addresses (assuming 64-character hex strings)
-const addressRegex = /^[a-fA-F0-9]{64}$/;
+  let bytes = new TextEncoder().encode(JSON.stringify(payload));
+  let hex = toHexString(bytes);
+
+  // Fetch from your blockchain’s RPC
+  let response = await fetch(rpc + '/abci_query?path="/simulate_tx/' + hex + '"');
+  let data = await response.json();
+
+  let decoded = atob(data.result.response.value || "");
+  if (!decoded || decoded === "ée" || decoded === "AA==") {
+    return "None";
+  }
+
+  decoded = JSON.parse(decoded);
+
+  // If the Name Service returned an error
+  if (decoded.status === 1) {
+    return "None";
+  }
+
+  // The "result" may be quoted or contain single quotes
+  let result = decoded.result.replaceAll("'", "");
+  return result;
+}
+
+// Simple helper to convert byte arrays to hex strings
+function toHexString(bytes) {
+  return Array.from(bytes)
+    .map((x) => ("00" + x.toString(16)).slice(-2))
+    .join("");
+}
+
+const maxItemsPerPage = 20;
 
 export default {
   name: "page-addresses",
@@ -47,80 +86,104 @@ export default {
   },
   computed: {
     ...mapGetters([
-      "blockchain",
+      "blockchain", // Must return an object with at least 'rpc' (string)
     ]),
     hasPrevPage() {
       return this.currentPage > 1;
     },
     hasNextPage() {
+      // If we got a full set of items, we assume there is a "next" page
       return this.addresses.length === this.itemsPerPage;
     },
     prevQuery() {
       if (!this.hasPrevPage) return {};
-      return {
-        page: this.currentPage - 1,
-      };
+      return { page: this.currentPage - 1 };
     },
     nextQuery() {
       if (!this.hasNextPage) return {};
-      return {
-        page: this.currentPage + 1,
-      };
-    },
+      return { page: this.currentPage + 1 };
+    }
   },
   methods: {
     async fetchRichList(page) {
+      // Update current page
       this.currentPage = page || this.currentPage;
+
       const offset = (this.currentPage - 1) * this.itemsPerPage;
       const query = `
-       query RichList($limit: Int!, $offset: Int!) {
-  allStates(
-    filter: {and: {key: {startsWith: "currency.balances:", notLike: "%:%:%"}}}
-    first: $limit
-    offset: $offset
-    orderBy: VALUE_DESC
-  ) {
-    edges {
-      node {
-        key
-        value
-      }
-    }
-  }
-}
-`;
+        query RichList($limit: Int!, $offset: Int!) {
+          allStates(
+            filter: {
+              and: {
+                key: { startsWith: "currency.balances:", notLike: "%:%:%" }
+              }
+            }
+            first: $limit
+            offset: $offset
+            orderBy: VALUE_DESC
+          ) {
+            edges {
+              node {
+                key
+                value
+              }
+            }
+          }
+        }
+      `;
 
       const variables = {
         limit: this.itemsPerPage,
         offset: offset
       };
 
+      // 1) Fetch addresses & balances from GraphQL
       const response = await axios.post(`${this.blockchain.rpc}/graphql`, {
         query,
         variables
       });
-
-      // Assuming response data structure as { data: { allStates: { edges: [...] } } }
       const edges = response.data.data.allStates.edges;
-      this.addresses = edges
-        .map(edge => edge.node)
-        
-        .map(node => {
-          // Extract the address part from the key
-          const address = node.key.split(':')[1];
-          return {
-            address,
-            // balance needs to be formated to 8 decimal places from the float value
-            balance:  typeof node.value === 'number' ? node.value.toFixed(8) : node.value
-          };
-        });
-    },
+
+      // 2) Map to simple objects
+      let addressesData = edges.map((edge) => {
+        const { key, value } = edge.node;
+        // key is something like "currency.balances:abcdef123..."
+        const address = key.split(":")[1];
+        return {
+          address,
+          balance: typeof value === "number" ? value.toFixed(8) : value,
+          name: null
+        };
+      });
+
+      // 3) Look up each address’s main name from the Name Service
+      //    Use Promise.all to do them all in parallel
+      const resolvedNames = await Promise.all(
+        addressesData.map((item) =>
+          execute_get_address_to_main_name(item.address, this.blockchain.rpc)
+        )
+      );
+
+      // 4) Insert name into the array if it’s not "None"
+      addressesData = addressesData.map((item, i) => {
+        const maybeName = resolvedNames[i];
+        if (maybeName !== "None" && maybeName) {
+          item.name = maybeName;
+        }
+        return item;
+      });
+
+      // 5) Finalize
+      this.addresses = addressesData;
+    }
   },
   async mounted() {
+    // Initial fetch
     await this.fetchRichList();
   },
   watch: {
-    '$route': {
+    // Re-run fetch whenever page query changes
+    "$route": {
       immediate: true,
       handler() {
         const page = this.$route.query.page ? parseInt(this.$route.query.page) : 1;
@@ -128,7 +191,7 @@ export default {
       }
     }
   }
-}
+};
 </script>
 
 <style lang="stylus">
