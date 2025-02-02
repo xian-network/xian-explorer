@@ -120,7 +120,7 @@ export default {
             }
             first: $limit
             offset: $offset
-            orderBy: VALUE_DESC
+            orderBy: VALUE_NUMERIC_DESC
           ) {
             edges {
               node {
