@@ -57,7 +57,7 @@
     // Adjust the "function" field and contract name to match your actual contract
     const payload = {
       sender: "",
-      contract: "con_name_service",
+      contract: "con_name_service_main",
       function: "get_main_name_to_address", 
       kwargs: { name: xnsName },
     };

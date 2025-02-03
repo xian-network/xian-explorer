@@ -33,7 +33,7 @@ import { TmPage, TmToolBar } from "@tendermint/ui";
 async function execute_get_address_to_main_name(address, rpc) {
   let payload = {
     sender: "",
-    contract: "con_name_service",
+    contract: "con_name_service_main",
     function: "get_address_to_main_name",
     kwargs: { address }
   };
