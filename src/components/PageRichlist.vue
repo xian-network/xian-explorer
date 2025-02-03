@@ -151,7 +151,7 @@ export default {
         const address = key.split(":")[1];
         return {
           address,
-          balance: typeof value === "number" ? value.toFixed(8) : value,
+          balance: parseFloat(value).toFixed(8),
           name: null
         };
       });
