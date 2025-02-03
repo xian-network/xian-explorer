@@ -113,11 +113,7 @@ export default {
       const query = `
         query RichList($limit: Int!, $offset: Int!) {
           allStates(
-            filter: {
-              and: {
-                key: { startsWith: "currency.balances:", notLike: "%:%:%" }
-              }
-            }
+            filter: {and: {key: {startsWith: "currency.balances:", notLike: "%:%:%"}, valueNumeric: {greaterThan: "0"}}}
             first: $limit
             offset: $offset
             orderBy: VALUE_NUMERIC_DESC
