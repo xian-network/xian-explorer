@@ -63,7 +63,7 @@ function toHexString(bytes) {
 async function execute_get_address_to_main_name(address, rpc) {
   const payload = {
     sender: "",
-    contract: "con_name_service_main",
+    contract: "con_name_service_final",
     function: "get_address_to_main_name",
     kwargs: { address }
   };
