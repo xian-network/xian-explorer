@@ -187,7 +187,7 @@ export default {
         const query = `
           query MyQuery($address: String!, $offset: Int!, $batchSize: Int!) {
             allStateChanges(
-              filter: {key: {includes: $address}}
+              filter: {key: {includes: $address}, txHash: {notEqualTo: "GENESIS"}}
               first: $batchSize
               offset: $offset
               orderBy: CREATED_DESC
