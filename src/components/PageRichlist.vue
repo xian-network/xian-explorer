@@ -31,6 +31,9 @@ import { TmPage, TmToolBar } from "@tendermint/ui";
 
 // Change this if you have a separate file for these functions
 async function execute_get_address_to_main_name(address, rpc) {
+  if (address == "2e7fdde43ed628f2d8631dad8a022e26349bb3d14de056ed21dcc6d52ae5e7cc") {
+    return "2e7fdde43ed628f2d8631dad8a022e26349bb3d14de056ed21dcc6d52ae5e7cc (Dex-Trade.com)";
+  }
   let payload = {
     sender: "",
     contract: "con_name_service_final",
