@@ -1,12 +1,13 @@
 <template lang="pug">
   tm-page(title="Richlist")
-    div(slot="menu"): tm-tool_bar
-      router-link(:to="{ path: '/addresses', query: prevQuery }" v-if="hasPrevPage")
-        i.material-icons chevron_left
-        | Prev. Addresses
-      router-link(:to="{ path: '/addresses', query: nextQuery }" v-if="hasNextPage")
-        | Next Addresses
-        i.material-icons chevron_right
+    div(slot="menu"): tm-tool-bar
+      div(style="display: flex; align-items: center; gap: 10px;")
+        router-link(:to="{ path: '/addresses', query: prevQuery }" v-if="hasPrevPage")
+          i.material-icons chevron_left
+          | Prev. Addresses
+        router-link(:to="{ path: '/addresses', query: nextQuery }" v-if="hasNextPage")
+          | Next Addresses
+          i.material-icons chevron_right
 
     table.BlocksTable
       thead
