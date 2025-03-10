@@ -7,16 +7,108 @@
       a(:href="jsonUrl" target="_blank") JSON
   
     div(v-if="decodedTx")
-      part-tx-data(
-        :data="decodedTx"
-        name="Transaction Details"
-        pathPrefix="tx."
-        :includeFields="[]"
-        :excludeFields="[]"
-      )
+      tm-part(:title="`Transaction Details`")
+        tm-list-item(:dt="'Hash'")
+          template(slot="dd")
+            dd(class="flex gap")
+              span {{ decodedTx.txHash }}
+              span(@click="copyToClipboard(decodedTx.txHash)" class="copy-icon")
+                i.material-icons(:title="'Copy to clipboard'") content_copy
+        tm-list-item(:dt="'Height'")
+          template(slot="dd")
+            router-link(:to="decodedTx.block.to" :title="decodedTx.block.title")
+              | {{ decodedTx.block.text }}
+        tm-list-item(:dt="'Timestamp'")
+          template(slot="dd")
+            | {{ formatDate(decodedTx.txTimestamp) }}
+        tm-list-item(:dt="'Signature'")
+          template(slot="dd")
+            | {{ decodedTx.metadata.signature }}
   
+      tm-part(:title="`Transaction Result`")
+        tm-list-item(:dt="'Success'")
+          template(slot="dd")
+            i.material-icons.success-icon(v-if="decodedTx.txResult.success" title="Success") check_circle
+            i.material-icons.failed-icon(v-else title="Failed") cancel
+        tm-list-item(:dt="'Stamps Used'")
+          template(slot="dd")
+            | {{ decodedTx.txResult.stampsUsed }}
+        tm-list-item(:dt="'Result'")
+          template(slot="dd")
+            | {{ decodedTx.txResult.data.result }}
+
+      tm-part(:title="`Transaction Request`")
+        tm-list-item(:dt="'Contract'")
+          template(slot="dd")
+            | {{ decodedTx.payload.contract }}
+        tm-list-item(:dt="'Function'")
+          template(slot="dd")
+            | {{ decodedTx.payload.function }}
+        tm-list-item(:dt="'Arguments'")
+          template(slot="dd")
+            | {{ decodedTx.payload.kwargs }}
+        tm-list-item(:dt="'Nonce'")
+          template(slot="dd")
+            | {{ decodedTx.payload.nonce }}
+        tm-list-item(:dt="'Stamps Supplied'")
+          template(slot="dd")
+            | {{ decodedTx.payload.stamps_supplied }}
+
+      details(:class="`tm-part-header`")
+        summary(:class="`tm-part-title h5`") Rewards ({{ decodedTx.txResult.data.mergedRewards.length }})
+        template(v-for="(reward, i) in decodedTx.txResult.data.mergedRewards")
+          tm-list-item(:dt="`${reward.address}`")
+            template(slot="dd")
+              | {{ reward.amount }}
+
+      details(:class="`tm-part-header`")
+        summary(:class="`tm-part-title h5`") Events ({{ decodedTx.txResult.data.events.length }})
+        template(v-for="(event, i) in decodedTx.txResult.data.events")
+          tm-list-item(:dt="`Event ${i}`")
+            template(slot="dd")
+              | {{ event }}
+
+      details(:class="`tm-part-header`")
+        summary(:class="`tm-part-title h5`") State Changes ({{ decodedTx.txResult.data.state.length }})
+        template(v-for="(state, i) in decodedTx.txResult.data.state")
+          tm-list-item(:dt="`State ${i}`")
+            template(slot="dd")
+              | {{ state }}
+
     tm-part(v-else title="Transaction was not found")
-  </template>
+</template>
+
+<style scoped>
+.success-icon {
+  color: green;
+  font-size: 18px;
+  vertical-align: middle;
+}
+
+.failed-icon {
+  color: red;
+  font-size: 18px;
+  vertical-align: middle;
+}
+
+.copy-icon {
+  cursor: pointer;
+  margin-left: 5px;
+}
+.copy-icon:hover {
+  opacity: 0.7;
+}
+
+/* Add spacing for collapsible sections */
+details {
+}
+details summary {
+  cursor: pointer;
+  font-weight: bold;
+}
+</style>
+
+
   
   <script>
   import { mapGetters } from "vuex"
@@ -84,6 +176,27 @@
           txResult.rewards.validator_reward = Object.entries(txResult.data.rewards.masternode_reward).map(([k, v]) => ({ validator: k, amount: v }));
           txResult.rewards.developer_reward = Object.entries(txResult.data.rewards.developer_reward).map(([k, v]) => ({ developer: k, amount: v }));
         }
+
+        // Merge all reward types into one array
+txResult.data.mergedRewards = txResult.rewards.foundation_reward
+  .concat(txResult.rewards.validator_reward, txResult.rewards.developer_reward)
+  .map(reward => ({
+    address: reward.address || reward.validator || reward.developer,
+    amount: Number(reward.amount)
+  }));
+
+// Aggregate rewards by summing amounts for duplicate addresses
+txResult.data.mergedRewards = Object.values(
+  txResult.data.mergedRewards.reduce((acc, reward) => {
+    if (!acc[reward.address]) {
+      acc[reward.address] = { address: reward.address, amount: 0 };
+    }
+    acc[reward.address].amount += reward.amount;
+    acc[reward.address].amount = Number(acc[reward.address].amount.toFixed(8));
+    return acc;
+  }, {})
+);
+
   
         delete txResult.data.rewards;
         delete txResult.data.stamps_used;
@@ -100,7 +213,9 @@
           text: this.height,
           to: { name: "block", params: { block: this.height } }
         };
-        return Object.assign({ txResult, block, txHash }, txObj);
+        let obj = Object.assign({ txResult, block, txHash }, txObj);
+        console.log(obj);
+        return obj;
       },
     },
     data: () => ({
@@ -110,6 +225,39 @@
       timestamp: "", // Make sure timestamp is part of data
     }),
     methods: {
+      formatDate(date) {
+        return new Date(date).toLocaleString();
+      },
+      shortenHash(hash) {
+        return hash ? `${hash.substring(0, 6)}...${hash.slice(-4)}` : "N/A";
+      },
+      copyToClipboard(text) {
+  if (!text) return;
+
+  if (navigator && navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text)
+      .then(() => {
+        alert("Copied to clipboard: " + text);
+      })
+      .catch(err => {
+        console.error("Clipboard copy failed", err);
+        this.fallbackCopyTextToClipboard(text);
+      });
+  } else {
+    this.fallbackCopyTextToClipboard(text);
+  }
+},
+
+fallbackCopyTextToClipboard(text) {
+  let tempInput = document.createElement("textarea");
+  tempInput.value = text;
+  document.body.appendChild(tempInput);
+  tempInput.select();
+  document.execCommand("copy");
+  document.body.removeChild(tempInput);
+  alert("Copied to clipboard (fallback method): " + text);
+},
+
       async fetchTx() {
         try {
           this.jsonUrl = `${this.blockchain.rpc}/tx?hash=0x${this.hash}`;
@@ -153,4 +301,5 @@
     }
   }
   </script>
+  
   
