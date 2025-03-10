@@ -21,7 +21,7 @@
           td {{ tx.formattedTime }}
           td
             router-link(:to="`/tx/${tx.hash}`")
-              | {{ tx.hash }}
+              | {{ shortenHash(tx.hash) }}
           td {{ tx.contract }}
           td {{ tx.function }}
           td {{ tx.stamps }}
@@ -75,6 +75,9 @@ export default {
     },
   },
   methods: {
+    shortenHash(hash) {
+        return hash ? `${hash.substring(0, 6)}...${hash.slice(-4)}` : "N/A";
+      },
     async fetchTransactions(page) {
       this.currentPage = page || this.currentPage;
 
