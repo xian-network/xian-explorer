@@ -22,8 +22,8 @@
           td
             router-link(:to="`/tx/${tx.hash}`")
               | {{ shortenHash(tx.hash) }}
-          td {{ tx.contract }}
-          td {{ tx.function }}
+          td {{ shortenText(tx.contract) }}
+          td {{ shortenText(tx.function) }}
           td {{ tx.stamps }}
 </template>
 
@@ -76,8 +76,11 @@ export default {
   },
   methods: {
     shortenHash(hash) {
-        return hash ? `${hash.substring(0, 6)}...${hash.slice(-4)}` : "N/A";
+        return hash ? `${hash.substring(0, 12)}...${hash.slice(-4)}` : "N/A";
       },
+    shortenText(text) {
+      return text.length > 20 ? `${text.substring(0, 20)}...` : text;
+    },
     async fetchTransactions(page) {
       this.currentPage = page || this.currentPage;
 
