@@ -178,12 +178,17 @@ details summary {
         }
 
         // Merge all reward types into one array
+        try {
 txResult.data.mergedRewards = txResult.rewards.foundation_reward
   .concat(txResult.rewards.validator_reward, txResult.rewards.developer_reward)
   .map(reward => ({
     address: reward.address || reward.validator || reward.developer,
     amount: Number(reward.amount)
   }));
+} catch (e) {
+  console.error("Error merging rewards", e);
+  txResult.data.mergedRewards = [];
+}
 
 // Aggregate rewards by summing amounts for duplicate addresses
 txResult.data.mergedRewards = Object.values(
