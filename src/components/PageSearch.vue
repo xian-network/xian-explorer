@@ -11,7 +11,6 @@
               v-model="query"
             )
             tm-btn(type="submit" icon="search" :disabled="loading" value="Go")
-            span.loading-spinner(v-if="loading") Loading...
 </template>
 
 <script>
