@@ -24,6 +24,9 @@
         tm-list-item(:dt="'Signature'")
           template(slot="dd")
             | {{ decodedTx.metadata.signature }}
+        tm-list-item(:dt="'Sender'")
+          template(slot="dd")
+            | {{ decodedTx.payload.sender }}
   
       tm-part(:title="`Transaction Result`")
         tm-list-item(:dt="'Success'")

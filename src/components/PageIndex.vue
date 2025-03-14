@@ -51,7 +51,7 @@
       .show-all-link-container
         // Plain text link to /txs
         router-link(to="/txs" class="show-all-link")
-          i.material-icons(style="vertical-align: middle; margin-right: 0.3rem") arrow_forward
+          i.material-icons(style="vertical-align: middle; margin-right: 0.3rem") chevron_right
           |  Show All Transactions
   </template>
   
