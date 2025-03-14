@@ -1,50 +1,51 @@
 <template lang="pug">
   tm-page(title='Overview')
-    // -- Search Section (more attractive) --
-    .search-container
-      tm-part(title='Global Search')
-        p.search-subtitle
-          | Enter a Name, Block Height, Transaction Hash, Contract, or Address
+  
+    // -- "Hero" style search container --
+    .hero-search
+      .hero-content
+        h1.hero-title Explore the Xian Blockchain
+        p.hero-subtitle
+          | Search for a Block, Transaction Hash, Contract, Address, or XNS Name
         tm-form-struct(@submit.native.prevent="onSubmit")
-          
-          .search-bar
+          .hero-search-bar
             tm-field#search-input(
               type="text"
               placeholder="e.g. 2e7fdde43ed6.., 12345, or alice"
-              :autofocus="true"
               required
               v-model="query"
             )
-            tm-btn(type="submit" icon="search" :disabled="loading" value="Go")
+            tm-btn(type="submit" icon="search" :disabled="loading" value="Search")
   
     // --- Existing "Blockchain" Part ---
     tm-part(title='Blockchain')
       tm-list-item(dt='Chain ID' :dd='latestBlock.chain_id')
+      tm-list-item(dt='Block Height' :dd='num.prettyInt(latestBlock.height)'
+        :to="{ name: 'block', params: { block: latestBlock.height }}")
       tm-list-item(dt='Stamp Rate (Stamps/Xian)' :dd='stampRate || ""')
-      tm-list-item(dt='Total Transactions' :dd='num.prettyInt(totalTxs || 0)')
       tm-list-item(dt='Xian Holders' :dd='num.prettyInt(totalHolders || 0)')
       //tm-list-item(dt='Circulating Supply' :dd='num.pretty(circulatingSupply || 0) + " XIAN"')
   
-    tm-part(title='Current Block' v-if="latestBlock.height > 0")
-      tm-list-item(dt='Block Height' :dd='num.prettyInt(latestBlock.height)'
-        :to="{ name: 'block', params: { block: latestBlock.height }}")
-      tm-list-item(dt='Block Time' :dd='readableDate(latestBlock.time)')
-      tm-list-item(dt='Transactions' :dd='num.prettyInt(latestBlock.num_txs)')
-      tm-list-item(dt='Last Commit Hash' :dd='latestBlock.last_commit_hash')
-  
-    tm-part(title='Current Block' v-else)
-      tm-list-item(dt='Block Height' :dd='num.prettyInt(latestBlock.height)'
-        :to="{ name: 'block', params: { block: latestBlock.height }}")
-      tm-list-item(dt='Block Time' dd='No blocks yet')
-      tm-list-item(dt='Last Commit Hash' dd='N/A')
-  
-    tm-part(title='Connected To')
-      tm-list-item(dt='RPC Endpoint')
-        div(slot="dd").node-wrapper
-          tm-field.node-input(
-            type="text"
-            v-model="bc.rpc")
+    // --- Last 5 Transactions ---
+    tm-part(title='Last 5 Transactions' v-if="lastTxs.length" class="LastTxsTablePart")
+      table.LastTxsTable
+        thead
+          tr
+            th Time
+            th Hash
+            th Contract
+            th Function
+            th Stamps Used
+        tbody
+          tr(v-for="tx in lastTxs" :key="tx.hash")
+            td {{ tx.formattedTime }}
+            td
+              router-link(:to="`/tx/${tx.hash}`") {{ shortenHash(tx.hash) }}
+            td {{ shortenText(tx.contract) }}
+            td {{ shortenText(tx.function) }}
+            td {{ tx.stamps }}
   </template>
+  
   
   <script>
   import axios from "axios";
@@ -142,7 +143,8 @@
       stampRate: null,
       totalTxs: 0,
       totalHolders: 0,
-      circulatingSupply: 0
+      circulatingSupply: 0,
+      lastTxs: []
     }),
     mounted() {
       // Existing calls
@@ -153,6 +155,8 @@
       this.fetchTotalTxs();
       this.fetchTotalHolders();
       this.fetchCirculatingSupply();
+
+      this.fetchLastTxs();
     },
     methods: {
       readableDate,
@@ -303,6 +307,57 @@
           console.error("Error fetching team_lock balance:", error);
         }
       },
+
+        // You can re-use shorteners from page-transactions or define them inline
+    shortenHash(hash) {
+      return hash ? `${hash.substring(0, 12)}...${hash.slice(-4)}` : "N/A";
+    },
+    shortenText(text) {
+      if (!text) return "";
+      return text.length > 20 ? `${text.substring(0, 20)}...` : text;
+    },
+
+    // NEW: fetch the 5 most recent transactions
+    async fetchLastTxs() {
+      const query = `
+        query {
+          allTransactions(
+            first: 5
+            orderBy: BLOCK_HEIGHT_DESC
+          ) {
+            edges {
+              node {
+                blockTime
+                blockHeight
+                hash
+                contract
+                function
+                stamps
+              }
+            }
+          }
+        }
+      `;
+      try {
+        const response = await axios.post(`${this.bc.rpc}/graphql`, { query });
+        const edges = response.data.data.allTransactions.edges || [];
+
+        this.lastTxs = edges.map((edge) => {
+          const tx = edge.node;
+          return {
+            hash: tx.hash,
+            blockHeight: tx.blockHeight,
+            contract: tx.contract,
+            function: tx.function,
+            stamps: tx.stamps,
+            // Convert blockTime from nanoseconds to a readable Date string
+            formattedTime: new Date(Number(tx.blockTime) / 1e6).toLocaleString(),
+          };
+        });
+      } catch (error) {
+        console.error("Error fetching last 5 transactions:", error);
+      }
+    },
   
       // --- BEGIN: Methods from the search page ---
       async onSubmit(event) {
@@ -406,59 +461,80 @@
   <style lang='stylus'>
   @require '~variables'
 
-  // Container for the search area
-  .search-container
-    border-radius 8px
-    box-shadow 0 1px 3px rgba(0,0,0,.1)
+  .hero-search
+    padding 3rem 1rem
+    text-align center
+    color #fff
 
-  // Optional subtitle under the part title
-  .search-subtitle
-    padding-left 1rem
-    padding-right 1rem
-    padding-top 0.5rem
-    padding-bottom 1rem
-    color white
+    // The inner container that limits max width
+    .hero-content
+      max-width 700px
+      margin 0 auto
 
-  // The search bar row
-  .search-bar
-    display flex
-    flex-direction row
-    align-items center
-    border-radius 4px
-    padding-left 1rem
-    padding-right 0.5rem
-    padding-bottom 1rem
+    .hero-title
+      font-size 2rem
+      margin-bottom 0.5rem
+      font-weight 600
 
-    .tm-field
-      flex 1
-      margin-right 0.5rem
+    .hero-subtitle
+      margin-bottom 2rem
+      font-size 1.1rem
+      color rgba(#fff, 0.85)
 
-    .tm-field input
-      border none
-      outline none
-      width 100%
-      background transparent
-      font-size 1rem
+    // The search bar row
+    .hero-search-bar
+      display flex
+      flex-direction row
+      justify-content center
+      align-items center
+      padding 0.5rem
+      border-radius 6px
+      box-shadow 0 1px 5px rgba(0,0,0,0.2)
+      max-width 600px
+      margin 0 auto
 
-    .tm-btn
-      flex-shrink 0
-      margin-left 0.5rem
+      // The text input
+      .tm-field
+        flex 1
+        margin-right 0.5rem
 
-  .loading-spinner
-    margin-left 0.5rem
-    font-size 0.9rem
-    color #999
+      .tm-field input
+        width 100%
+        border none
+        outline none
+        padding 0.75rem
+        font-size 1rem
+        color #333
 
-  // Overwrite any theme defaults for the .tm-field if needed
-  .tm-field.node-input
-    min-width 20rem
-    height 2rem
-    padding 0 0.5rem
-    background transparent
-    df()
+      // The search button
+      .tm-btn
+        flex-shrink 0
+        margin-left 0.5rem
+        min-width 100px
+        border-radius 4px
+        font-weight 500
 
-  .node-wrapper
-    display flex
-    align-items center
+  // Keep the existing LastTxsTablePart or other styling as you had
+  .LastTxsTablePart
+    .tm-part-container
+      .tm-part-header
+        margin-bottom 0
+
+  .LastTxsTable
+    width 100%
+    border-collapse collapse
+    margin-top 1rem
+
+    th, td
+      padding 0.5rem 1rem
+      text-align left
+
+    th
+      font-weight bold
+      font-size 14px
+
+    tr:hover
+      background-color var(--hover-bg)
+
   </style>
   
