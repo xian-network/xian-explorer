@@ -44,6 +44,15 @@
             td {{ shortenText(tx.contract) }}
             td {{ shortenText(tx.function) }}
             td {{ tx.stamps }}
+
+
+      // -- "Show All" button linking to /txs page
+      // A centered "Show All" text link below
+      .show-all-link-container
+        // Plain text link to /txs
+        router-link(to="/txs" class="show-all-link")
+          i.material-icons(style="vertical-align: middle; margin-right: 0.3rem") arrow_forward
+          |  Show All Transactions
   </template>
   
   
@@ -535,6 +544,21 @@
 
     tr:hover
       background-color var(--hover-bg)
+
+
+  
+  .show-all-link-container
+    text-align center
+    margin-top 1rem
+
+  .show-all-link
+    text-decoration none
+    font-weight 500
+
+    &:hover
+      text-decoration underline
+      cursor pointer
+
 
   </style>
   
