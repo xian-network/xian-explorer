@@ -13,8 +13,9 @@ tm-page(:title="`Address: ${$route.params.address}`")
   // --------------------------------
   div
     tm-part(title="Token Holdings" v-if="tokens.length > 0 && tokens[0].contract !== 'None'")
-      tm-list-item(v-for="token in tokens" :key="token.contract" :dt="token.token_name" :dd="token.balance")
-        
+      tm-list-item(v-for="token in tokens" :key="token.contract" :dt="token.token_name" :dd="token.balance"
+        :to="{ name: 'contract', params: { contract: token.contract } }")
+
     tm-part(title="Token Holdings" v-else-if="tokens.length === 1 && tokens[0].contract === 'None'")
       tm-list-item(dt="No tokens found")
 
