@@ -26,7 +26,8 @@
             | {{ decodedTx.metadata.signature }}
         tm-list-item(:dt="'Sender'")
           template(slot="dd")
-            | {{ decodedTx.payload.sender }}
+            router-link(:to="`/addresses/${decodedTx.payload.sender}`")
+              | {{ decodedTx.payload.sender }}
   
       tm-part(:title="`Transaction Result`")
         tm-list-item(:dt="'Success'")
@@ -43,7 +44,8 @@
       tm-part(:title="`Transaction Request`")
         tm-list-item(:dt="'Contract'")
           template(slot="dd")
-            | {{ decodedTx.payload.contract }}
+            router-link(:to="`/contracts/${decodedTx.payload.contract}`")
+              | {{ decodedTx.payload.contract }}
         tm-list-item(:dt="'Function'")
           template(slot="dd")
             | {{ decodedTx.payload.function }}
