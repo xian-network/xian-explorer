@@ -64,7 +64,9 @@
         template(v-for="(reward, i) in decodedTx.txResult.data.mergedRewards")
           tm-list-item(:dt="`${reward.address}`")
             template(slot="dd")
-              | {{ reward.amount }}
+              span.badge(:class="`badge-${reward.type}`") {{ reward.type }}
+              span {{ reward.amount }}
+              
 
       details(:class="`tm-part-header`")
         summary(:class="`tm-part-title h5`") Events ({{ decodedTx.txResult.data.events.length }})
@@ -110,6 +112,29 @@ details {
 details summary {
   cursor: pointer;
   font-weight: bold;
+}
+
+
+.badge-foundation {
+  background-color: #007bff;
+  color: white;
+  padding: 0 5px;
+  border-radius: 5px;
+  margin-right: 5px;
+}
+.badge-validator {
+  background-color: #28a745;
+  color: white;
+  padding: 0 5px;
+  border-radius: 5px;
+  margin-right: 5px;
+}
+.badge-developer {
+  background-color: #dc3545;
+  color: white;
+  margin-right: 5px;
+  padding: 0 5px;
+  border-radius: 5px;
 }
 </style>
 
@@ -184,28 +209,19 @@ details summary {
 
         // Merge all reward types into one array
         try {
-txResult.data.mergedRewards = txResult.rewards.foundation_reward
-  .concat(txResult.rewards.validator_reward, txResult.rewards.developer_reward)
-  .map(reward => ({
-    address: reward.address || reward.validator || reward.developer,
-    amount: Number(reward.amount)
-  }));
+  txResult.data.mergedRewards = txResult.rewards.foundation_reward
+    .concat(txResult.rewards.validator_reward, txResult.rewards.developer_reward)
+    .map(reward => ({
+      address: reward.address || reward.validator || reward.developer,
+      amount: Number(reward.amount),
+      type: reward.developer ? 'developer' : (reward.validator ? 'validator' : 'foundation')
+    }));
 } catch (e) {
   console.error("Error merging rewards", e);
   txResult.data.mergedRewards = [];
 }
 
-// Aggregate rewards by summing amounts for duplicate addresses
-txResult.data.mergedRewards = Object.values(
-  txResult.data.mergedRewards.reduce((acc, reward) => {
-    if (!acc[reward.address]) {
-      acc[reward.address] = { address: reward.address, amount: 0 };
-    }
-    acc[reward.address].amount += reward.amount;
-    acc[reward.address].amount = Number(acc[reward.address].amount.toFixed(8));
-    return acc;
-  }, {})
-);
+
 
   
         delete txResult.data.rewards;
