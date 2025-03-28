@@ -367,7 +367,7 @@ export default {
 
           const balQuery = `
             query TokenBalance($balanceKey: String!) {
-              allStates(filter: { key: { equalTo: $balanceKey } }) {
+              allStates(filter: {key: {equalTo: $balanceKey}, and: {valueNumeric: {greaterThan: "0"}}}) {
                 edges {
                   node {
                     value
