@@ -1,469 +1,520 @@
 <template lang="pug">
-tm-page(:title="`Address: ${$route.params.address}`")
-  div(slot="menu"): tm-tool-bar
-
-  div
-    tm-part(title="Address Details")
-      tm-list-item(dt="XNS Name" :dd="mainNameDisplay")
-      tm-list-item(dt="Address" :dd="$route.params.address")
-      tm-list-item(dt="Balance" :dd="wallet.balance + ' XIAN'")
-
-  // --------------------------------
-  // Token Holdings
-  // --------------------------------
-  div
-    tm-part(title="Token Holdings" v-if="tokens.length > 0 && tokens[0].contract !== 'None'")
-      tm-list-item(v-for="token in tokens" :key="token.contract" :dt="token.token_name" :dd="token.balance"
-        :to="{ name: 'contract', params: { contract: token.contract } }")
-
-    tm-part(title="Token Holdings" v-else-if="tokens.length === 1 && tokens[0].contract === 'None'")
-      tm-list-item(dt="No tokens found")
-
-    tm-part(title="Token Holdings" v-else-if="tokens.length === 0")
-      tm-list-item(dt="Loading tokens...")
-
-  // --------------------------------
-  // Transactions
-  // --------------------------------
-  div
-    tm-part(title="Transactions")
-      table.BlocksTable
-        thead
-          tr
-            th Time
-            th Transaction Hash
-            th Contract
-            th Function
-            th Stamps Used
-        tbody
-          tr(v-for="tx in transactions" :key="tx.hash")
-            td {{ tx.formattedTime }}
-            td
-              router-link(:to="`/tx/${tx.hash}`")
-                | {{ shortenHash(tx.hash) }}
-            td {{ shortenText(tx.contract) }}
-            td {{ shortenText(tx.function) }}
-            td {{ tx.stamps }}
-
-      tm-form-group.pagination
-        a.button.prev(
-          :class="{ disabled: page === 1 }"
-          @click="prevPage"
-        ) Prev
-        span Page {{ page }}
-        a.button.next(
-          :class="{ disabled: transactions.length < itemsPerPage }"
-          @click="nextPage"
-        ) Next
-</template>
-<script>
-import { mapGetters } from "vuex";
-import axios from "axios";
-import {
-  TmListItem,
-  TmPage,
-  TmPart,
-  TmToolBar
-} from "@tendermint/ui";
-
-// --------------------------------------------------
-// Example helper if you used them before
-// (inline them or store in a separate utils file)
-function toHexString(bytes) {
-  return Array.from(bytes)
-    .map((x) => ("00" + x.toString(16)).slice(-2))
-    .join("");
-}
-
-async function execute_get_address_to_main_name(address, rpc) {
-  const payload = {
-    sender: "",
-    contract: "con_name_service_final",
-    function: "get_address_to_main_name",
-    kwargs: { address }
-  };
-
-  const bytes = new TextEncoder().encode(JSON.stringify(payload));
-  const hex = toHexString(bytes);
-
-  const response = await fetch(`${rpc}/abci_query?path="/simulate_tx/${hex}"`);
-  const data = await response.json();
-
-  let decoded = "";
-  if (data.result.response.value) {
-    decoded = atob(data.result.response.value);
-  }
-  if (!decoded || decoded === "ée" || decoded === "AA==") {
-    return "None";
-  }
-  decoded = JSON.parse(decoded);
-  if (decoded.status === 1) {
-    return "None";
-  }
-  return decoded.result.replaceAll("'", "");
-}
-// --------------------------------------------------
-
-export default {
-  name: "page-address",
-  components: {
-    TmToolBar,
+  tm-page(:title="`Address: ${$route.params.address}`")
+    div(slot="menu"): tm-tool-bar
+  
+    div
+      tm-part(title="Address Details")
+        tm-list-item(dt="XNS Name" :dd="mainNameDisplay")
+        tm-list-item(dt="Address" :dd="$route.params.address")
+        tm-list-item(dt="Balance" :dd="wallet.balance + ' XIAN'")
+  
+    // --------------------------------
+    // Token Holdings
+    // --------------------------------
+    div
+      tm-part(title="Token Holdings" v-if="tokens.length > 0 && tokens[0].contract !== 'None'")
+        tm-list-item(
+          v-for="token in tokens"
+          :key="token.contract"
+          :dt="formattedTokenName(token)"
+          :dd="token.balance"
+          :to="{ name: 'contract', params: { contract: token.contract } }"
+        )
+        // If you want to show website or operator:
+        // tm-list-item(v-if="token.operator" dt="Operator" :dd="token.operator")
+        // tm-list-item(v-if="token.token_website" dt="Website")
+        //   template(slot="dd")
+        //     a(:href="token.token_website" target="_blank") {{ token.token_website }}
+  
+      tm-part(title="Token Holdings" v-else-if="tokens.length === 1 && tokens[0].contract === 'None'")
+        tm-list-item(dt="No tokens found")
+  
+      tm-part(title="Token Holdings" v-else-if="tokens.length === 0")
+        tm-list-item(dt="Loading tokens...")
+  
+    // --------------------------------
+    // Transactions
+    // --------------------------------
+    div
+      tm-part(title="Transactions")
+        table.BlocksTable
+          thead
+            tr
+              th Time
+              th Transaction Hash
+              th Contract
+              th Function
+              th Stamps Used
+          tbody
+            tr(v-for="tx in transactions" :key="tx.hash")
+              td {{ tx.formattedTime }}
+              td
+                router-link(:to="`/tx/${tx.hash}`")
+                  | {{ shortenHash(tx.hash) }}
+              td {{ shortenText(tx.contract) }}
+              td {{ shortenText(tx.function) }}
+              td {{ tx.stamps }}
+  
+        tm-form-group.pagination
+          a.button.prev(
+            :class="{ disabled: page === 1 }"
+            @click="prevPage"
+          ) Prev
+          span Page {{ page }}
+          a.button.next(
+            :class="{ disabled: transactions.length < itemsPerPage }"
+            @click="nextPage"
+          ) Next
+  </template>
+  
+  <script>
+  import { mapGetters } from "vuex";
+  import axios from "axios";
+  import {
     TmListItem,
+    TmPage,
     TmPart,
-    TmPage
-  },
-  data: () => ({
-    wallet: { balance: 0 },
-    tokens: [],        // Will hold all tokens with nonzero balances
-    transactions: [],
-    page: 1,
-    itemsPerPage: 10,
-    mainName: null
-  }),
-  computed: {
-    ...mapGetters(["blockchain"]), // must expose .rpc
-
-    mainNameDisplay() {
-      if (!this.mainName || this.mainName === "None") {
-        return "—";
-      }
-      return this.mainName;
+    TmToolBar
+  } from "@tendermint/ui";
+  
+  /**
+   * Example helper if you used them before
+   * (inline them or store in a separate utils file)
+   */
+  function toHexString(bytes) {
+    return Array.from(bytes)
+      .map((x) => ("00" + x.toString(16)).slice(-2))
+      .join("");
+  }
+  
+  async function execute_get_address_to_main_name(address, rpc) {
+    const payload = {
+      sender: "",
+      contract: "con_name_service_final",
+      function: "get_address_to_main_name",
+      kwargs: { address }
+    };
+  
+    const bytes = new TextEncoder().encode(JSON.stringify(payload));
+    const hex = toHexString(bytes);
+  
+    const response = await fetch(`${rpc}/abci_query?path="/simulate_tx/${hex}"`);
+    const data = await response.json();
+  
+    let decoded = "";
+    if (data.result.response.value) {
+      decoded = atob(data.result.response.value);
     }
-  },
-  methods: {
-    shortenHash(hash) {
-      return hash ? hash.substring(0, 12) + "..." + hash.slice(-4) : "N/A";
+    // Filter out weird or "no data" responses
+    if (!decoded || decoded === "ée" || decoded === "AA==") {
+      return "None";
+    }
+    decoded = JSON.parse(decoded);
+    if (decoded.status === 1) {
+      return "None";
+    }
+    return decoded.result.replaceAll("'", "");
+  }
+  
+  export default {
+    name: "page-address",
+    components: {
+      TmToolBar,
+      TmListItem,
+      TmPart,
+      TmPage
     },
-    shortenText(text) {
-      if (!text) return "";
-      return text.length > 20 ? text.substring(0, 20) + "..." : text;
-    },
-
-    // 1) Fetch the Name Service main name
-    async fetchName() {
-      const addr = this.$route.params.address;
-      this.mainName = await execute_get_address_to_main_name(
-        addr,
-        this.blockchain.rpc
-      );
-    },
-
-    // 2) Fetch the address’s XIAN balance
-    async fetchAddress() {
-      const query = `
-        query MyQuery($address: String!) {
-          allStates(
-            filter: {
-              and: {
-                key: { startsWith: $address, notLike: "%:%:%" }
-              }
-            }
-          ) {
-            edges {
-              node {
-                value
-              }
-            }
-          }
+    data: () => ({
+      wallet: { balance: 0 },
+      tokens: [],        // Will hold all tokens with nonzero balances
+      transactions: [],
+      page: 1,
+      itemsPerPage: 10,
+      mainName: null
+    }),
+    computed: {
+      ...mapGetters(["blockchain"]), // must expose .rpc
+  
+      mainNameDisplay() {
+        if (!this.mainName || this.mainName === "None") {
+          return "—";
         }
-      `;
-      const addressKey = "currency.balances:" + this.$route.params.address;
-
-      const response = await axios.post(
-        this.blockchain.rpc + "/graphql",
-        {
-          query,
-          variables: { address: addressKey }
-        }
-      );
-
-      // Safe checks w/o optional chaining
-      const respData = response && response.data;
-      const dataPart = respData && respData.data;
-      const allStates = dataPart && dataPart.allStates;
-      const edges = (allStates && allStates.edges) ? allStates.edges : [];
-
-      let numericBalance = 0;
-      if (edges[0] && edges[0].node && edges[0].node.value) {
-        numericBalance = parseFloat(edges[0].node.value);
+        return this.mainName;
       }
-      this.wallet.balance = numericBalance.toFixed(8);
     },
-
-    async fetchTokenName(tokenContract) {
-        // Construct the key dynamically using the actual token contract.
-        const key = `${tokenContract}.metadata:token_name`;
-
-        const query = `
-          query TokenName($key: String!) {
-            allStates(condition: { key: $key }) {
-              nodes {
-                value
-              }
-            }
-          }
-        `;
-
-        const response = await axios.post(
-          this.blockchain.rpc + "/graphql",
-          { query , variables: { key } }
+    methods: {
+      shortenHash(hash) {
+        return hash ? hash.substring(0, 12) + "..." + hash.slice(-4) : "N/A";
+      },
+      shortenText(text) {
+        if (!text) return "";
+        return text.length > 20 ? text.substring(0, 20) + "..." : text;
+      },
+  
+      // Format token's display name, e.g. "USDC (USDC)"
+      formattedTokenName(token) {
+        var display = token.token_name || token.contract;
+        if (token.token_symbol) {
+          display += ` (${token.token_symbol})`;
+        }
+        return display;
+      },
+  
+      // 1) Fetch the Name Service main name
+      async fetchName() {
+        const addr = this.$route.params.address;
+        this.mainName = await execute_get_address_to_main_name(
+          addr,
+          this.blockchain.rpc
         );
-
-        const nodes =
-  response &&
-  response.data &&
-  response.data.data &&
-  response.data.data.allStates &&
-  response.data.data.allStates.nodes
-    ? response.data.data.allStates.nodes
-    : [];
-        // Return the token name if found, otherwise fall back to the contract name.
-        return nodes.length > 0 ? nodes[0].value : tokenContract;
-    },
-
-
-    // 3) Fetch transactions
-    async fetchTransactions() {
-      const offset = (this.page - 1) * this.itemsPerPage;
-      const fetchBatchSize = this.itemsPerPage * 2;
-      let uniqueTransactions = [];
-      let seenHashes = new Set();
-      let currentOffset = offset;
-
-      while (uniqueTransactions.length < this.itemsPerPage) {
+      },
+  
+      // 2) Fetch the address’s XIAN balance
+      async fetchAddress() {
         const query = `
-          query MyQuery($address: String!, $offset: Int!, $batchSize: Int!) {
-            allStateChanges(
-              filter: { key: { includes: $address }, txHash: { notEqualTo: "GENESIS"}}
-              first: $batchSize
-              offset: $offset
-              orderBy: CREATED_DESC
+          query MyQuery($address: String!) {
+            allStates(
+              filter: {
+                and: {
+                  key: { startsWith: $address, notLike: "%:%:%" }
+                }
+              }
             ) {
               edges {
                 node {
-                  transactionByTxHash {
-                    blockTime
-                    blockHeight
-                    contract
-                    stamps
-                    success
-                    function
-                    hash
-                  }
+                  value
                 }
               }
             }
           }
         `;
-
-        const variables = {
-          address: this.$route.params.address,
-          offset: currentOffset,
-          batchSize: fetchBatchSize
-        };
-
+        const addressKey = "currency.balances:" + this.$route.params.address;
+  
         const response = await axios.post(
           this.blockchain.rpc + "/graphql",
           {
             query,
-            variables
+            variables: { address: addressKey }
           }
         );
-
-        const rData = response && response.data;
-        const rDataPart = rData && rData.data;
-        const allStateChanges = rDataPart && rDataPart.allStateChanges;
-        const edges = (allStateChanges && allStateChanges.edges) ? allStateChanges.edges : [];
-
-        const newTxs = edges
-          .map(edge => {
-            return edge.node && edge.node.transactionByTxHash;
-          })
-          .filter(tx => tx && tx.hash);
-
-        // Remove duplicates by hash
-        for (let tx of newTxs) {
-          if (!seenHashes.has(tx.hash)) {
-            uniqueTransactions.push(tx);
-            seenHashes.add(tx.hash);
-          }
-        }
-
-        // If we got fewer than fetchBatchSize, no need to keep fetching
-        if (newTxs.length < fetchBatchSize) {
-          break;
-        }
-        currentOffset += fetchBatchSize;
-      }
-
-      // slice down to itemsPerPage and add a local time string
-      const finalTxs = uniqueTransactions.slice(0, this.itemsPerPage).map(tx => {
-        return {
-          ...tx,
-          formattedTime: new Date(Number(tx.blockTime) / 1e6).toLocaleString()
-        };
-      });
-
-      this.transactions = finalTxs;
-    },
-
-    nextPage() {
-      if (this.transactions.length >= this.itemsPerPage) {
-        this.page++;
-        this.fetchTransactions();
-      }
-    },
-    prevPage() {
-      if (this.page > 1) {
-        this.page--;
-        this.fetchTransactions();
-      }
-    },
-
-    // 4) Fetch all token balances (XSC tokens)
-    async fetchAllTokenBalances() {
-      const userAddr = this.$route.params.address;
-      let offset = 0;
-      const batchSize = 50;
-      const foundTokens = [];
-
-      while (true) {
-        // Fetch a page of XSC-standard tokens (xsc0001 = true)
-        const query = `
-          query FetchTokens($first: Int!, $offset: Int!) {
-            allContracts(
-              filter: { xsc0001: { equalTo: true } }
-              first: $first
-              offset: $offset
-            ) {
-              nodes {
-                name
-              }
-            }
-          }
-        `;
-
-        const resp = await axios.post(
-          this.blockchain.rpc + "/graphql",
-          {
-            query,
-            variables: { first: batchSize, offset }
-          }
-        );
-
-        const respData = resp && resp.data;
+  
+        // Safe checks
+        const respData = response && response.data;
         const dataPart = respData && respData.data;
-        const allContracts = dataPart && dataPart.allContracts;
-        const contractList = (allContracts && allContracts.nodes) ? allContracts.nodes : [];
-
-        if (!contractList.length) {
-          // No more tokens left
-          break;
+        const allStates = dataPart && dataPart.allStates;
+        const edges = (allStates && allStates.edges) ? allStates.edges : [];
+  
+        let numericBalance = 0;
+        if (edges.length > 0 && edges[0].node && edges[0].node.value) {
+          numericBalance = parseFloat(edges[0].node.value);
         }
-
-        // For each token contract, fetch user’s balance
-        for (let token of contractList) {
-          const balanceKey = token.name + ".balances:" + userAddr;
-
-          const balQuery = `
-            query TokenBalance($balanceKey: String!) {
-              allStates(filter: {key: {equalTo: $balanceKey}, and: {valueNumeric: {greaterThan: "0"}}}) {
+        this.wallet.balance = numericBalance.toFixed(8);
+      },
+  
+      // 3) Fetch transactions
+      async fetchTransactions() {
+        const offset = (this.page - 1) * this.itemsPerPage;
+        const fetchBatchSize = this.itemsPerPage * 2;
+        let uniqueTransactions = [];
+        let seenHashes = new Set();
+        let currentOffset = offset;
+  
+        while (uniqueTransactions.length < this.itemsPerPage) {
+          const query = `
+            query MyQuery($address: String!, $offset: Int!, $batchSize: Int!) {
+              allStateChanges(
+                filter: { key: { includes: $address }, txHash: { notEqualTo: "GENESIS"}}
+                first: $batchSize
+                offset: $offset
+                orderBy: CREATED_DESC
+              ) {
                 edges {
                   node {
-                    value
+                    transactionByTxHash {
+                      blockTime
+                      blockHeight
+                      contract
+                      stamps
+                      success
+                      function
+                      hash
+                    }
                   }
                 }
               }
             }
           `;
-
-          const balResp = await axios.post(
+  
+          const variables = {
+            address: this.$route.params.address,
+            offset: currentOffset,
+            batchSize: fetchBatchSize
+          };
+  
+          const response = await axios.post(
             this.blockchain.rpc + "/graphql",
             {
-              query: balQuery,
-              variables: { balanceKey }
+              query,
+              variables
             }
           );
-
-          const balData = balResp && balResp.data;
-          const balPart = balData && balData.data;
-          const allStates = balPart && balPart.allStates;
-          const edges = (allStates && allStates.edges) ? allStates.edges : [];
-
-          let balanceVal = 0;
-          if (edges[0] && edges[0].node && edges[0].node.value) {
-            balanceVal = parseFloat(edges[0].node.value);
+  
+          const rData = response && response.data;
+          const rDataPart = rData && rData.data;
+          const allStateChanges = rDataPart && rDataPart.allStateChanges;
+          const edges = (allStateChanges && allStateChanges.edges) ? allStateChanges.edges : [];
+  
+          const newTxs = edges
+            .map(edge => {
+              return edge.node && edge.node.transactionByTxHash;
+            })
+            .filter(tx => tx && tx.hash);
+  
+          // Remove duplicates by hash
+          for (let tx of newTxs) {
+            if (!seenHashes.has(tx.hash)) {
+              uniqueTransactions.push(tx);
+              seenHashes.add(tx.hash);
+            }
           }
-
-          // Only keep tokens with nonzero balance
-          if (balanceVal > 0 && token.name !== "currency") {
-              const tokenName = await this.fetchTokenName(token.name);
-              foundTokens.push({
-                contract: token.name,
-                balance: balanceVal,
-                token_name: tokenName
-              });
-
+  
+          // If we got fewer than fetchBatchSize, no need to keep fetching
+          if (newTxs.length < fetchBatchSize) {
+            break;
+          }
+          currentOffset += fetchBatchSize;
+        }
+  
+        // slice down to itemsPerPage and add a local time string
+        const finalTxs = uniqueTransactions.slice(0, this.itemsPerPage).map(tx => {
+          return {
+            ...tx,
+            formattedTime: new Date(Number(tx.blockTime) / 1e6).toLocaleString()
+          };
+        });
+  
+        this.transactions = finalTxs;
+      },
+  
+      nextPage() {
+        if (this.transactions.length >= this.itemsPerPage) {
+          this.page++;
+          this.fetchTransactions();
+        }
+      },
+      prevPage() {
+        if (this.page > 1) {
+          this.page--;
+          this.fetchTransactions();
+        }
+      },
+  
+      // =======================================
+      // 4) More Efficient Token Balances Method
+      // =======================================
+      async fetchAllTokenBalances() {
+        // Step A) Fetch all user states > 0
+        const userAddr = this.$route.params.address;
+        const query = `
+          query UserBalances($address: String!) {
+            allStates(
+              filter: {
+                key: { endsWith: $address }
+                valueNumeric: { greaterThan: "0" }
+              }
+            ) {
+              edges {
+                node {
+                  key
+                  value
+                }
+              }
+            }
+          }
+        `;
+        const variables = { address: userAddr };
+  
+        const resp = await axios.post(this.blockchain.rpc + "/graphql", { query, variables });
+        const rData = resp && resp.data;
+        const dataPart = rData && rData.data;
+        const allStates = dataPart && dataPart.allStates;
+        const edges = (allStates && allStates.edges) ? allStates.edges : [];
+  
+        // Parse out "contract.balances:address" => contract
+        const balances = {};
+        for (let edge of edges) {
+          if (!edge || !edge.node || !edge.node.key) continue;
+          const fullKey = edge.node.key; // e.g. "con_usdc.balances:0xABC..."
+          const [maybeContract, suffix] = fullKey.split(".balances:");
+          if (suffix === userAddr) {
+            const contractName = maybeContract.trim();
+            const balanceValue = parseFloat(edge.node.value);
+            if (contractName !== "currency" && balanceValue > 0) {
+              balances[contractName] = balanceValue;
+            }
           }
         }
-
-        offset += batchSize;
-        // If fewer than batchSize, we’re done
-        if (contractList.length < batchSize) {
-          break;
+  
+        // If user has no nonzero balances in any contract, bail out
+        const contractNames = Object.keys(balances);
+        if (contractNames.length === 0) {
+          this.tokens = [{ contract: "None", balance: "None" }];
+          return;
         }
+  
+        // Step B) Check which of those contracts are xsc0001
+        await this.fetchWhichAreTokens(balances, contractNames);
+      },
+  
+      async fetchWhichAreTokens(balances, contractNames) {
+        const query = `
+          query TokenContracts($names: [String!]!) {
+            allContracts(filter: { name: { in: $names } }) {
+              nodes {
+                name
+                xsc0001
+              }
+            }
+          }
+        `;
+        const variables = { names: contractNames };
+  
+        const resp = await axios.post(this.blockchain.rpc + "/graphql", { query, variables });
+        const rData = resp && resp.data;
+        const dataPart = rData && rData.data;
+        const allContracts = dataPart && dataPart.allContracts;
+        const nodes = (allContracts && allContracts.nodes) ? allContracts.nodes : [];
+  
+        // Build a map of contractName -> xsc0001
+        const contractMap = {};
+        nodes.forEach(({ name, xsc0001 }) => {
+          contractMap[name] = !!xsc0001;
+        });
+  
+        // Filter out non-token contracts
+        const realTokenContracts = Object.keys(balances).filter(
+          (c) => contractMap[c] === true
+        );
+  
+        // If no real tokens, show "None"
+        if (realTokenContracts.length === 0) {
+          this.tokens = [{ contract: "None", balance: "None" }];
+          return;
+        }
+  
+        // Step C) Fetch metadata (token_name, symbol, etc.)
+        await this.fetchTokenMetadata(balances, realTokenContracts);
+      },
+  
+      async fetchTokenMetadata(balances, tokenContracts) {
+        const metaFields = ["token_name", "token_symbol", "token_website", "operator"];
+        const allMetadataKeys = [];
+  
+        tokenContracts.forEach((contract) => {
+          metaFields.forEach((field) => {
+            allMetadataKeys.push(`${contract}.metadata:${field}`);
+          });
+        });
+  
+        const query = `
+          query TokenMetadata($keys: [String!]!) {
+            allStates(filter: { key: { in: $keys } }) {
+              edges {
+                node {
+                  key
+                  value
+                }
+              }
+            }
+          }
+        `;
+        const variables = { keys: allMetadataKeys };
+  
+        const resp = await axios.post(this.blockchain.rpc + "/graphql", { query, variables });
+        const rData = resp && resp.data;
+        const dataPart = rData && rData.data;
+        const allStates = dataPart && dataPart.allStates;
+        const edges = (allStates && allStates.edges) ? allStates.edges : [];
+  
+        // Build a map => { [contractName]: { token_name, token_symbol, ... } }
+        const metadataMap = {};
+        for (let edge of edges) {
+          if (!edge || !edge.node || !edge.node.key) continue;
+          const fullKey = edge.node.key; // e.g. "con_usdc.metadata:token_name"
+          const [contractDotMeta, field] = fullKey.split(":");
+          const contractName = contractDotMeta.replace(".metadata", "");
+          if (!metadataMap[contractName]) {
+            metadataMap[contractName] = {};
+          }
+          metadataMap[contractName][field] = edge.node.value;
+        }
+  
+        // Build final tokens array
+        const finalTokens = tokenContracts.map((contract) => {
+          const meta = metadataMap[contract] || {};
+          return {
+            contract,
+            balance: balances[contract],
+            token_name: meta.token_name || contract,
+            token_symbol: meta.token_symbol || "",
+            token_website: meta.token_website || "",
+            operator: meta.operator || ""
+          };
+        });
+  
+        // Sort by name
+        finalTokens.sort((a, b) => (a.token_name > b.token_name ? 1 : -1));
+        this.tokens = finalTokens;
       }
-
-      this.tokens = foundTokens;
-      if (!this.tokens.length) {
-        this.tokens = [{ contract: "None", balance: "None" }];
-      }
+    },
+  
+    // ========================================
+    // Lifecycle Hooks
+    // ========================================
+    async mounted() {
+      await this.fetchName();
+      await this.fetchAddress();
+      await this.fetchTransactions();
+      await this.fetchAllTokenBalances();
     }
-  },
-  async mounted() {
-    await this.fetchName();
-    await this.fetchAddress();
-    await this.fetchTransactions();
-    await this.fetchAllTokenBalances();
+  };
+  </script>
+  
+  <style lang="stylus">
+  .BlocksTable
+    width 100%
+    th
+      color var(--dim)
+      background var(--box-shadow)
+      font-weight bold
+      font-size 14px
+    tr
+      &:hover
+        background-color var(--hover-bg)
+    th, td
+      padding 0.5rem 1rem
+  </style>
+  
+  <style>
+  pre {
+    padding: 1rem;
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+    white-space: pre-wrap;
   }
-};
-</script>
-
-
-<style lang="stylus">
-.BlocksTable
-  width 100%
-  th
-    color var(--dim)
-    background var(--box-shadow)
-    font-weight bold
-    font-size 14px
-  tr
-    &:hover
-      background-color var(--hover-bg)
-  th, td
-    padding 0.5rem 1rem
-</style>
-
-<style>
-pre {
-  padding: 1rem;
-  padding-top: 0.5rem;
-  padding-bottom: 0.5rem;
-  white-space: pre-wrap;
-}
-.pagination {
-  display: flex;
-  justify-content: center;
-  gap: 1rem;
-  margin-top: 1rem;
-}
-a.button.disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  pointer-events: none;
-}
-a.button {
-  cursor: pointer;
-}
-</style>
+  .pagination {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    margin-top: 1rem;
+  }
+  a.button.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+  }
+  a.button {
+    cursor: pointer;
+  }
+  </style>
+  
