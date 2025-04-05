@@ -7,7 +7,9 @@ nav#app-header: .container
 
   router-link.header-item.header-item-logo(to="/")
     img(src="@/assets/images/xian-white.svg")
-    h3.LogoType Xian Explorer
+    h3.LogoType
+      | Xian Explorer 
+    span.MainnetName Mainnet
 
   app-menu(v-if="config.activeMenu === 'app' || config.desktop")
 
@@ -67,6 +69,15 @@ export default {
   font-size: 1.1rem;
   font-weight: bold;
   color: #fff;
+
+.MainnetName
+  margin-left: 0.5rem
+  background: #fff
+  color: #333
+  font-size: 0.8rem
+  padding: 2px 5px
+  border-radius: 3px
+
 
 @media screen and (max-width: 1023px)
   #app-header
