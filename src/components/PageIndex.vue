@@ -17,7 +17,7 @@
             )
             tm-btn(type="submit" icon="search" :disabled="loading" value="Search")
   
-    // --- "Blockchain" Part ---
+    // --- 1) Blockchain Section ---
     tm-part(title='Blockchain')
       tm-list-item(dt='Chain ID' :dd='latestBlock.chain_id')
       tm-list-item(
@@ -26,14 +26,16 @@
         :to="{ name: 'block', params: { block: latestBlock.height }}"
       )
       tm-list-item(dt='Stamp Rate (Stamps/Xian)' :dd='stampRate || ""')
+      // you could add more chain-specific items here
+  
+    // --- 2) Xian Coin Section ---
+    tm-part(title='Xian Coin')
       tm-list-item(dt='Xian Holders' :dd='num.prettyInt(totalHolders || 0)')
+      tm-list-item(dt='Total Supply' :dd='num.prettyInt(totalSupply) + " XIAN"')
+      tm-list-item(dt='Circulating Supply' :dd='num.prettyInt(circulatingSupply) + " XIAN"')
   
-      // -- ADD: total supply + circ. supply
-      tm-list-item(dt="Total Supply" :dd="num.prettyInt(totalSupply) + ' XIAN'")
-      tm-list-item(dt="Circulating Supply" :dd="num.prettyInt(circulatingSupply) + ' XIAN'")
-  
-    // --- Last 5 Transactions ---
-    tm-part(title='Last 5 Transactions' v-if="lastTxs.length" class="LastTxsTablePart")
+    // --- 3) Last 5 Transactions (always visible) ---
+    tm-part(title='Last 5 Transactions' class="LastTxsTablePart")
       table.LastTxsTable
         thead
           tr
@@ -43,7 +45,11 @@
             th Function
             th Stamps Used
         tbody
-          tr(v-for="tx in lastTxs" :key="tx.hash")
+          // Show a "Loading..." row if lastTxs is empty
+          tr(v-if="lastTxs.length === 0")
+            td(colspan="5") Loading...
+          // Show the transactions once loaded
+          tr(v-for="tx in lastTxs" :key="tx.hash" v-else)
             td {{ tx.formattedTime }}
             td
               router-link(:to="`/tx/${tx.hash}`") {{ shortenHash(tx.hash) }}
@@ -87,7 +93,7 @@
     },
     computed: {
       ...mapGetters([
-        "bc", // needed for search requests
+        "bc",
         "config",
         "nodes",
         "validators",
@@ -158,34 +164,39 @@
         return "Loading...";
       }
     },
-    data: () => ({
-      query: "",
-      loading: false,
+    data() {
+      return {
+        query: "",
+        loading: false,
   
-      num: num,
-      stampRate: null,
-      totalTxs: 0,
-      totalHolders: 0,
+        num: num,
+        stampRate: null,
+        totalTxs: 0,
+        totalHolders: 0,
   
-      totalSupply: 0,
-      excludedSupply: 0,
-      circulatingSupply: 0,
+        // We'll track total/excluded/circulating
+        totalSupply: 0,
+        excludedSupply: 0,
+        circulatingSupply: 0,
   
-      lastTxs: []
-    }),
+        // Show empty array by default for immediate rendering
+        lastTxs: []
+      };
+    },
     async mounted() {
       this.setMetaDescription(
         "Xian Explorer is a blockchain explorer for the Xian blockchain..."
       );
+  
       await this.fetchStampRate();
       await this.fetchTotalTxs();
       await this.fetchTotalHolders();
   
-      // Summation
+      // Summation (in parallel)
       await Promise.all([this.fetchTotalSupply(), this.fetchExcludedSupply()]);
       this.circulatingSupply = this.totalSupply - this.excludedSupply;
   
-      // last 5 transactions
+      // last 5 tx
       await this.fetchLastTxs();
     },
     methods: {
@@ -206,6 +217,7 @@
         meta.content = description;
       },
   
+      // Stamp rate
       async fetchStampRate() {
         try {
           const response = await fetch(
@@ -223,6 +235,7 @@
         }
       },
   
+      // Xian holders
       async fetchTotalHolders() {
         try {
           const query = `
@@ -248,9 +261,7 @@
           ) {
             this.totalHolders = parseInt(data.data.allStates.totalCount, 10);
           } else {
-            console.error(
-              "Error fetching total holders: Invalid response format"
-            );
+            console.error("Error fetching total holders: Invalid response format");
             this.totalHolders = "Error";
           }
         } catch (error) {
@@ -259,6 +270,7 @@
         }
       },
   
+      // Count transactions
       async fetchTotalTxs() {
         try {
           const response = await fetch(
@@ -268,9 +280,7 @@
           if (data && data.result && data.result.total_count) {
             this.totalTxs = parseInt(data.result.total_count, 10);
           } else {
-            console.error(
-              "Error fetching total transactions: Invalid response format"
-            );
+            console.error("Error fetching total transactions: Invalid response");
             this.totalTxs = "Error";
           }
         } catch (error) {
@@ -279,11 +289,9 @@
         }
       },
   
-      // ================
-      // Chunk Summation
-      // ================
+      // Summation of all nonzero addresses in chunks
       async fetchTotalSupply() {
-        // 1) Get totalCount
+        // 1) get totalCount
         const countQuery = `
           query {
             allStates(
@@ -353,22 +361,19 @@
   
           this.totalSupply = runningSum;
         } catch (err) {
-          console.error("Error fetching total supply chunk-based:", err);
+          console.error("Error fetching total supply (chunk-based):", err);
           this.totalSupply = 0;
         }
       },
   
-      // ======================
-      // Single Query: Excluded
-      // ======================
+      // Single small query for excluded addresses
       async fetchExcludedSupply() {
         const excludedKeys = [
           "currency.balances:team_lock",
           "currency.balances:dao_funding_stream",
           "currency.balances:dao",
-          "currency.balances:con_team_y1_linear_vesting",
-          "currency.balances:masternodes",
-          "currency.balances:con_farm_xian_usdc"
+          "currency.balances:team_vesting",
+          "currency.balances:masternodes"
         ];
         const query = `
           query {
@@ -401,7 +406,7 @@
         }
       },
   
-      // last 5 transactions
+      // 5) Last 5 tx
       async fetchLastTxs() {
         const query = `
           query {
@@ -441,7 +446,7 @@
         }
       },
   
-      // Helpers
+      // Helper shorteners
       shortenHash(hash) {
         return hash ? hash.substring(0, 12) + "..." + hash.slice(-4) : "N/A";
       },
@@ -450,7 +455,7 @@
         return text.length > 20 ? text.substring(0, 20) + "..." : text;
       },
   
-      // Searching from your existing code
+      // Searching
       async onSubmit(event) {
         if (event) event.preventDefault();
         this.loading = true;
@@ -462,14 +467,14 @@
         const trimmedQuery = this.query.trim();
   
         try {
-          // XNS name
+          // 1) check as XNS name
           const address = await this.resolveXnsName(trimmedQuery);
           if (address && address !== "None") {
             this.$router.push({ name: "address", params: { address } });
             return;
           }
   
-          // Check if 64 hex
+          // 2) if 64 hex, treat as tx or address
           if (/^[a-fA-F0-9]{64}$/.test(trimmedQuery)) {
             const txExists = await this.checkTxExists(trimmedQuery);
             if (txExists) {
@@ -478,10 +483,10 @@
             }
             this.$router.push({ name: "address", params: { address: trimmedQuery } });
           } else if (/^\d+$/.test(trimmedQuery)) {
-            // numeric => block
+            // 3) numeric => block
             this.$router.push({ name: "block", params: { block: trimmedQuery } });
           } else {
-            // contract?
+            // 4) else check contract
             const contractExists = await this.checkContractExists(trimmedQuery);
             if (contractExists) {
               this.$router.push({ name: "contract", params: { contract: trimmedQuery } });
@@ -501,15 +506,18 @@
             function: "get_main_name_to_address",
             kwargs: { name }
           };
+  
           const bytes = new TextEncoder().encode(JSON.stringify(payload));
           const hex = Array.from(bytes)
             .map(x => ("00" + x.toString(16)).slice(-2))
             .join("");
           const response = await fetch(`${this.bc.rpc}/abci_query?path="/simulate_tx/${hex}"`);
           const data = await response.json();
+  
           if (!data.result || !data.result.response || !data.result.response.value) {
             return null;
           }
+  
           let decoded = atob(data.result.response.value);
           const parsed = JSON.parse(decoded);
           if (parsed.status !== 1 && parsed.result && parsed.result.replace(/'/g, "") !== "None") {
@@ -533,7 +541,9 @@
       },
       async checkContractExists(contractName) {
         try {
-          const response = await fetch(`${this.bc.rpc}/abci_query?path="/contract/${contractName}"`);
+          const response = await fetch(
+            `${this.bc.rpc}/abci_query?path="/contract/${contractName}"`
+          );
           const data = await response.json();
           return data.result && data.result.response && data.result.response.value != null;
         } catch (err) {
@@ -548,6 +558,7 @@
   <style lang="stylus">
   @require '~variables'
   
+  // Hero search container
   .hero-search
     padding 3rem 1rem
     text-align center
