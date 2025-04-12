@@ -27,7 +27,7 @@
         tm-list-item(:dt="'Sender'")
           template(slot="dd")
             router-link(:to="`/addresses/${decodedTx.payload.sender}`")
-              | {{ decodedTx.payload.sender }}
+              | {{ senderDisplay }}
   
       tm-part(:title="`Transaction Result`")
         tm-list-item(:dt="'Success'")
@@ -243,12 +243,24 @@ details summary {
         console.log(obj);
         return obj;
       },
+      // If we got a name, use it; otherwise use the raw address
+    // Show XNS name if found; else raw address
+    senderDisplay() {
+      // old-style fallback: no optional chaining
+      if (this.senderName) {
+        return this.senderName
+      } else if (this.decodedTx && this.decodedTx.payload && this.decodedTx.payload.sender) {
+        return this.decodedTx.payload.sender
+      }
+      return ""
+    }
     },
     data: () => ({
       jsonUrl: "",
       tx: null,
       height: "",
       timestamp: "", // Make sure timestamp is part of data
+      senderName: "",
     }),
     methods: {
       formatDate(date) {
@@ -311,7 +323,36 @@ fallbackCopyTextToClipboard(text) {
       async fetchTransactionData() {
         await this.fetchTx(); // First fetch the transaction data
         await this.fetchBlockTimestamp(); // Then fetch the block timestamp
+        // Once we have `this.tx`, decode it and get the sender address:
+        if (this.tx) {
+        const txObj = decodeTx(this.tx)
+        const addr = (txObj.payload && txObj.payload.sender) ? txObj.payload.sender : ""
+        // Try resolve XNS
+        this.senderName = await this.resolveXnsName(addr)
       }
+      },
+      async resolveXnsName(address) {
+      try {
+        const payload = {
+          sender: "",
+          contract: "con_name_service_final",
+          function: "get_address_to_main_name",
+          kwargs: { address }
+        }
+        const bytes = new TextEncoder().encode(JSON.stringify(payload))
+        const hex = Array.from(bytes).map(x => ("00" + x.toString(16)).slice(-2)).join("")
+        const resp = await fetch(`${this.blockchain.rpc}/abci_query?path="/simulate_tx/${hex}"`)
+        const j = await resp.json()
+        if (!j.result || !j.result.response || !j.result.response.value) return ""
+        let decoded = JSON.parse(atob(j.result.response.value))
+        if (decoded.status !== 1 && decoded.result && decoded.result !== "None") {
+          return decoded.result.replace(/'/g, "")
+        }
+      } catch (err) {
+        console.error("Name resolution error:", err)
+      }
+      return ""
+    }
     },
     async mounted() {
       await this.fetchTransactionData(); // Fetch both transaction and timestamp

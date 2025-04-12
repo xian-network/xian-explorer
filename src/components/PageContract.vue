@@ -10,9 +10,12 @@
         tm-list-item(v-if="tokenData.token_website" dt="Website")
           template(slot="dd")
             a(:href="tokenData.token_website" target="_blank") {{ tokenData.token_website }}
+        
         tm-list-item(v-if="tokenData.operator" dt="Operator")
           template(slot="dd")
-            a(:href="`https://explorer.xian.org/addresses/${tokenData.operator}`") {{ tokenData.operator }}
+            a(:href="`https://explorer.xian.org/addresses/${tokenData.operator}`")
+              | {{ operatorDisplay }}  <!-- Display XNS if found -->
+
         tm-list-item(v-if="tokenData.total_supply" dt="Total Supply" :dd="tokenData.total_supply")
 
     div(v-if="contract.code")
@@ -45,10 +48,20 @@
         code: "",
         isToken: false
       },
-      tokenData: {}
+      tokenData: {},
+
+      operatorXnsName: ""
     }),
     computed: {
-      ...mapGetters(["blockchain"])
+      ...mapGetters(["blockchain"]),
+
+       // If an XNS name was found, use it; else show the raw operator address
+    operatorDisplay() {
+      if (this.operatorXnsName) {
+        return this.operatorXnsName
+      }
+      return this.tokenData.operator || ""
+    }
     },
     methods: {
       async fetchContract(name) {
@@ -104,7 +117,67 @@
           this.contract.isToken = false;
           this.tokenData = {};
         }
+
+        try {
+        const res = await axios.post(`${this.blockchain.rpc}/graphql`, gqlQuery, {
+          headers: { 'Content-Type': 'application/json' }
+        })
+
+        const contractData = res.data.data.contractByName || {}
+        const stateData = res.data.data.allStates.edges || []
+
+        // Basic contract details
+        this.contract.name = name
+        this.contract.code = contractData.code || ""
+        this.contract.isToken = contractData.xsc0001 === true
+
+        // Build token data from states
+        this.tokenData = {}
+        stateData.forEach(({ node }) => {
+          const key = node.key.split(":")[1] // e.g. "operator"
+          this.tokenData[key] = node.value
+        })
+
+        // If there's an operator, resolve XNS name
+        if (this.tokenData.operator) {
+          this.operatorXnsName = await this.resolveXnsName(this.tokenData.operator)
+        }
+
+        this.jsonUrl = `${this.blockchain.rpc}/graphql?query=${encodeURIComponent(gqlQuery.query)}`
+
+      } catch (err) {
+        console.error("Error fetching contract/token data:", err)
+        this.contract.code = ""
+        this.contract.isToken = false
+        this.tokenData = {}
       }
+      },
+      // Same XNS resolution approach as before
+    async resolveXnsName(address) {
+      try {
+        const payload = {
+          sender: "",
+          contract: "con_name_service_final",
+          function: "get_address_to_main_name",
+          kwargs: { address }
+        }
+        const bytes = new TextEncoder().encode(JSON.stringify(payload))
+        const hex = Array.from(bytes).map(x => ("00" + x.toString(16)).slice(-2)).join("")
+        const resp = await fetch(`${this.blockchain.rpc}/abci_query?path="/simulate_tx/${hex}"`)
+        const json = await resp.json()
+        if (!json.result || !json.result.response || !json.result.response.value) {
+          return ""
+        }
+
+        let decoded = JSON.parse(atob(json.result.response.value))
+        if (decoded.status !== 1 && decoded.result && decoded.result !== "None") {
+          return decoded.result.replace(/'/g, "")
+        }
+      } catch (error) {
+        console.error("Error resolving XNS name:", error)
+      }
+      return ""
+    }
     },
     async mounted() {
       await this.fetchContract(this.$route.params.contract);
