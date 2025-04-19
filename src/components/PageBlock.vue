@@ -9,17 +9,6 @@ tm-page(:title="`Block ${block.header.height}${hasNextBlock ? '' : ' (the latest
       i.material-icons chevron_right
     a(:href="jsonUrl" target="_blank") JSON
 
-  div(v-if="block.data.txs.length > 0")
-    part-tx-data(
-      v-for="(x, i) in decodedTxs"
-      :data="x"
-      :name="`Transaction ${i+1} / ${decodedTxs.length}`"
-      :path-prefix="`tx.${i}.`"
-      :includeFields="[]"
-      :excludeFields="[]"
-    )
-  tm-part(v-else title="This block has no transactions")
-
   tm-part(title='Block Header')
     tm-list-item(dt="Chain ID" :dd="block.header.chain_id")
     tm-list-item(dt="Time" :dd="new Date(block.header.time).toLocaleString()")
@@ -32,6 +21,15 @@ tm-page(:title="`Block ${block.header.height}${hasNextBlock ? '' : ' (the latest
     tm-list-item(dt="Hash" :dd="block.header.last_block_id.hash")
     tm-list-item(dt="Parts Total" :dd="block.header.last_block_id.parts.total")
     tm-list-item(dt="Parts Hash" :dd="block.header.last_block_id.parts.hash")
+
+  tm-part(title="Precommit"
+    v-for="p in block.last_commit.precommits"
+    :key="p.validator_address" v-if="p !== null")
+    tm-list-item(dt="Address" :dd="p.validator_address")
+    tm-list-item(dt="Index" :dd="p.validator_index")
+    tm-list-item(dt="Round" :dd="p.round")
+    tm-list-item(:dt="`Sig (${p.signature.type})`"
+    :dd="p.signature.data")
 </template>
 
 <script>
