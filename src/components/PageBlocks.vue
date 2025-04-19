@@ -19,7 +19,7 @@ tm-page(title='Blocks')
         td
           router-link(:to="`/blocks/${x.header.height}`")
             | {{ num.prettyInt(x.header.height) }}
-        td {{ readableDate(x.header.time) }}
+        td {{ new Date(x.header.time).toLocaleString() }}
         td {{ x.header.last_commit_hash }}
 </template>
 
