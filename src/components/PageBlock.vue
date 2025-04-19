@@ -32,15 +32,6 @@ tm-page(:title="`Block ${block.header.height}${hasNextBlock ? '' : ' (the latest
     tm-list-item(dt="Hash" :dd="block.header.last_block_id.hash")
     tm-list-item(dt="Parts Total" :dd="block.header.last_block_id.parts.total")
     tm-list-item(dt="Parts Hash" :dd="block.header.last_block_id.parts.hash")
-
-  tm-part(title="Precommit"
-    v-for="p in block.last_commit.precommits"
-    :key="p.validator_address" v-if="p !== null")
-    tm-list-item(dt="Address" :dd="p.validator_address")
-    tm-list-item(dt="Index" :dd="p.validator_index")
-    tm-list-item(dt="Round" :dd="p.round")
-    tm-list-item(:dt="`Sig (${p.signature.type})`"
-    :dd="p.signature.data")
 </template>
 
 <script>
