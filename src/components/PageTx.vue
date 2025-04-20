@@ -34,9 +34,11 @@
           template(slot="dd")
             i.material-icons.success-icon(v-if="decodedTx.txResult.success" title="Success") check_circle
             i.material-icons.failed-icon(v-else title="Failed") cancel
-        tm-list-item(:dt="'Stamps Used'")
+        tm-list-item(:dt="'Fee (Stamps / XIAN)'")
           template(slot="dd")
             | {{ decodedTx.txResult.stampsUsed }}
+            span(style="opacity:.6")   /  
+              | {{ feeXian }}
         tm-list-item(:dt="'Result'")
           template(slot="dd")
             | {{ decodedTx.txResult.data.result }}
@@ -158,7 +160,10 @@ details summary {
     },
     computed: {
       ...mapGetters(["blockchain"]),
-  
+      feeXian() {
+   if (!this.decodedTx || !this.stampRate) return "—";
+   return (this.decodedTx.txResult.stampsUsed / this.stampRate).toFixed(3);
+ },
       hash() {
         return this.$route.params.hash;
       },
@@ -261,8 +266,20 @@ details summary {
       height: "",
       timestamp: "", // Make sure timestamp is part of data
       senderName: "",
+      stampRate:null
     }),
     methods: {
+      async fetchStampRate() {
+   try {
+     const r = await fetch(
+       this.blockchain.rpc + '/abci_query?path="/get/stamp_cost.S:value"'
+     );
+     const v = (await r.json()).result.response.value;
+     this.stampRate = v === "AA==" ? null : parseInt(atob(v), 10);
+   } catch (e) {
+     console.error("stamp‑rate fetch failed", e);
+   }
+ },
       formatDate(date) {
         return new Date(date).toLocaleString();
       },
@@ -355,6 +372,7 @@ fallbackCopyTextToClipboard(text) {
     }
     },
     async mounted() {
+      await this.fetchStampRate(); // Fetch the stamp rate
       await this.fetchTransactionData(); // Fetch both transaction and timestamp
     },
     async beforeRouteUpdate(to, from, next) {

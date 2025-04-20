@@ -43,7 +43,7 @@
             th Hash
             th Contract
             th Function
-            th Stamps Used
+            th Fee (Stamps / XIAN)
         tbody
           // Show a "Loading..." row if lastTxs is empty
           tr(v-if="lastTxs.length === 0")
@@ -55,7 +55,10 @@
               router-link(:to="`/tx/${tx.hash}`") {{ shortenHash(tx.hash) }}
             td {{ shortenText(tx.contract) }}
             td {{ shortenText(tx.function) }}
-            td {{ tx.stamps }}
+            td
+              | {{ num.prettyInt(tx.stamps) }}
+              span(style="opacity:0.6")   /  
+                | {{ tx.feeXian }}
   
       .show-all-link-container
         router-link(to="/txs" class="show-all-link")
@@ -409,43 +412,46 @@
   
       // 5) Last 5 tx
       async fetchLastTxs() {
-        const query = `
-          query {
-            allTransactions(
-              first: 5
-              orderBy: BLOCK_HEIGHT_DESC
-            ) {
-              edges {
-                node {
-                  blockTime
-                  blockHeight
-                  hash
-                  contract
-                  function
-                  stamps
-                }
-              }
-            }
+  const query = `
+    query {
+      allTransactions(first: 5, orderBy: BLOCK_HEIGHT_DESC) {
+        edges {
+          node {
+            blockTime
+            blockHeight
+            hash
+            contract
+            function
+            stamps
           }
-        `;
-        try {
-          const response = await axios.post(`${this.bc.rpc}/graphql`, { query });
-          const edges = response.data.data.allTransactions.edges || [];
-          this.lastTxs = edges.map(edge => {
-            const tx = edge.node;
-            return {
-              hash: tx.hash,
-              blockHeight: tx.blockHeight,
-              contract: tx.contract,
-              function: tx.function,
-              stamps: tx.stamps,
-              formattedTime: new Date(Number(tx.blockTime) / 1e6).toLocaleString()
-            };
-          });
-        } catch (error) {
-          console.error("Error fetching last 5 transactions:", error);
         }
-      },
+      }
+    }
+  `;
+  try {
+    const { data } = await axios.post(`${this.bc.rpc}/graphql`, { query });
+    const edges = data.data.allTransactions.edges || [];
+
+    this.lastTxs = edges.map(({ node: tx }) => {
+      const feeXian =
+        this.stampRate ? (tx.stamps / this.stampRate).toFixed(3) : "—";                 // fallback if stampRate unavailable
+      return {
+        hash: tx.hash,
+        blockHeight: tx.blockHeight,
+        contract: tx.contract,
+        function: tx.function,
+        stamps: tx.stamps,
+        feeXian,                              // <‑‑ new field
+        formattedTime: new Date(
+          Number(tx.blockTime) / 1e6          // blockTime is ns
+        ).toLocaleString()
+      };
+    });
+  } catch (err) {
+    console.error("Error fetching last 5 txs:", err);
+  }
+},
+
   
       // Helper shorteners
       shortenHash(hash) {

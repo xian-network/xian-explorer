@@ -11,20 +11,23 @@
 
     table.BlocksTable
       thead
-        th Time
-        th Transaction Hash
-        th Contract
-        th Function
-        th Stamps Used
+        tr
+          th Time
+          th Transaction Hash
+          th Contract
+          th Function
+          th Fee (Stamps / XIAN)
       tbody
         tr(v-for="tx in transactions" :key="tx.hash")
           td {{ tx.formattedTime }}
           td
-            router-link(:to="`/tx/${tx.hash}`")
-              | {{ shortenHash(tx.hash) }}
+            router-link(:to="`/tx/${tx.hash}`") {{ shortenHash(tx.hash) }}
           td {{ shortenText(tx.contract) }}
           td {{ shortenText(tx.function) }}
-          td {{ tx.stamps }}
+          td
+            | {{ num.prettyInt(tx.stamps) }}
+            span(style="opacity:0.6")   /  
+                | {{ tx.feeXian }}
 </template>
 
 <script>
@@ -49,6 +52,7 @@ export default {
       num: num,
       currentPage: 1,
       itemsPerPage: maxItemsPerPage,
+      stampRate: null
     };
   },
   computed: {
@@ -76,10 +80,21 @@ export default {
   },
   methods: {
     shortenHash(hash) {
-        return hash ? `${hash.substring(0, 12)}...${hash.slice(-4)}` : "N/A";
-      },
+      return hash ? `${hash.substring(0, 12)}...${hash.slice(-4)}` : "N/A";
+    },
     shortenText(text) {
       return text.length > 20 ? `${text.substring(0, 20)}...` : text;
+    },
+    async fetchStampRate() {
+      try {
+        const resp = await fetch(
+          this.blockchain.rpc + '/abci_query?path="/get/stamp_cost.S:value"'
+        );
+        const v = resp.ok ? (await resp.json()).result.response.value : "AA==";
+        this.stampRate = v === "AA==" ? null : parseInt(atob(v), 10);
+      } catch (e) {
+        console.error("stamp‑rate fetch failed", e);
+      }
     },
     async fetchTransactions(page) {
       this.currentPage = page || this.currentPage;
@@ -114,28 +129,41 @@ export default {
         limit: this.itemsPerPage,
       };
 
-      try {
-        const response = await axios.post(this.jsonUrl, {
-          query,
-          variables
-        });
+      const response = await axios.post(this.jsonUrl, {
+        query,
+        variables
+      });
 
-        // Map transactions and format blockTime
-        this.transactions = response.data.data.allTransactions.edges.map(edge => ({
-          hash: edge.node.hash,
-          blockHeight: edge.node.blockHeight,
-          contract: edge.node.contract,
-          function: edge.node.function,
-          stamps: edge.node.stamps,
-          formattedTime: new Date(Number(edge.node.blockTime) / 1e6).toLocaleString(),
-        }));
-      } catch (error) {
-        console.error("Error fetching transactions:", error);
-      }
+      // Map transactions and format blockTime
+      this.transactions = response.data.data.allTransactions.edges.map(edge => ({
+        hash: edge.node.hash,
+        blockHeight: edge.node.blockHeight,
+        contract: edge.node.contract,
+        function: edge.node.function,
+        stamps: edge.node.stamps,
+        formattedTime: new Date(Number(edge.node.blockTime) / 1e6).toLocaleString(),
+      }));
+
+      this.transactions = response.data.data.allTransactions.edges.map(({ node }) => {
+        const feeXian = this.stampRate
+          ? (node.stamps / this.stampRate).toFixed(3)   // 3 dp; tweak if you like
+          : "—";
+        return {
+          hash: node.hash,
+          blockHeight: node.blockHeight,
+          contract: node.contract,
+          function: node.function,
+          stamps: node.stamps,
+          feeXian,
+          formattedTime: new Date(Number(node.blockTime) / 1e6).toLocaleString()
+        };
+      });
     },
   },
   async mounted() {
+    await this.fetchStampRate();
     await this.fetchTransactions();
+
   },
   watch: {
     '$route': {

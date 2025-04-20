@@ -44,7 +44,7 @@
               th Transaction Hash
               th Contract
               th Function
-              th Stamps Used
+              th Fee (Stamps / XIAN)
           tbody
             tr(v-for="tx in transactions" :key="tx.hash")
               td {{ tx.formattedTime }}
@@ -53,7 +53,10 @@
                   | {{ shortenHash(tx.hash) }}
               td {{ shortenText(tx.contract) }}
               td {{ shortenText(tx.function) }}
-              td {{ tx.stamps }}
+              td
+                | {{ (tx.stamps) }}
+                span(style="opacity:.6")   /  
+                  | {{ tx.feeXian }}
   
         tm-form-group.pagination
           a.button.prev(
@@ -130,7 +133,8 @@
       transactions: [],
       page: 1,
       itemsPerPage: 10,
-      mainName: null
+      mainName: null,
+      stampRate: null
     }),
     computed: {
       ...mapGetters(["blockchain"]), // must expose .rpc
@@ -143,6 +147,17 @@
       }
     },
     methods: {
+      async fetchStampRate() {
+   try {
+     const r = await fetch(
+       this.blockchain.rpc + '/abci_query?path="/get/stamp_cost.S:value"'
+     );
+     const v = (await r.json()).result.response.value;
+     this.stampRate = v === "AA==" ? null : parseInt(atob(v), 10);
+   } catch (e) {
+     console.error("stamp‑rate fetch failed", e);
+   }
+ },
       shortenHash(hash) {
         return hash ? hash.substring(0, 12) + "..." + hash.slice(-4) : "N/A";
       },
@@ -286,13 +301,15 @@
         }
   
         // slice down to itemsPerPage and add a local time string
-        const finalTxs = uniqueTransactions.slice(0, this.itemsPerPage).map(tx => {
-          return {
-            ...tx,
-            formattedTime: new Date(Number(tx.blockTime) / 1e6).toLocaleString()
-          };
-        });
-  
+        const finalTxs = uniqueTransactions
+     .slice(0, this.itemsPerPage)
+     .map(tx => ({
+       ...tx,
+       feeXian: this.stampRate
+         ? (tx.stamps / this.stampRate).toFixed(3)
+                  : "—",
+       formattedTime: new Date(Number(tx.blockTime) / 1e6).toLocaleString()
+     }));
         this.transactions = finalTxs;
       },
   
@@ -472,6 +489,7 @@
     // Lifecycle Hooks
     // ========================================
     async mounted() {
+      await this.fetchStampRate();
       await this.fetchName();
       await this.fetchAddress();
       await this.fetchTransactions();
