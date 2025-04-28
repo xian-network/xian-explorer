@@ -5,22 +5,11 @@
 
     div(v-if="contract.isToken && Object.keys(tokenData).length")
       tm-part(title="Token Information")
-        tm-list-item(v-if="tokenData.token_name" dt="Name" :dd="tokenData.token_name")
-        tm-list-item(v-if="tokenData.token_symbol" dt="Symbol" :dd="tokenData.token_symbol")
-        tm-list-item(v-if="tokenData.token_website" dt="Website")
-          template(slot="dd")
-            a(:href="tokenData.token_website" target="_blank") {{ tokenData.token_website }}
-        
-        tm-list-item(v-if="tokenData.operator" dt="Operator")
-          template(slot="dd")
-            a(:href="`https://explorer.xian.org/addresses/${tokenData.operator}`")
-              | {{ operatorDisplay }}  <!-- Display XNS if found -->
-
-        tm-list-item(v-if="tokenData.total_supply" dt="Total Supply" :dd="tokenData.total_supply")
+       
         tm-list-item(v-if="contract.name" dt="Token Page")
           template(slot="dd")
             a(:href="`/tokens/${contract.name}`")
-              | {{ contract.name }}
+              | {{ tokenData.token_name + " (" + tokenData.token_symbol + ")" }}
 
     div(v-if="contract.code")
       tm-part(title='Contract Details')
