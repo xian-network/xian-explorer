@@ -19,6 +19,8 @@ import PageContracts from "../components/PageContracts"
 import PageContract from "../components/PageContract"
 import PageRichlist from "../components/PageRichlist"
 import PageAddress from "../components/PageAddress"
+import PageTokens from "../components/PageTokens"
+import PageToken from "../components/PageToken"
 
 const routes = [
   { path: "/", component: Index },
@@ -29,6 +31,8 @@ const routes = [
   { path: "/txs", component: Transactions },
   { path: "/contracts", component: PageContracts },
   { path: "/contracts/:contract", name: "contract", component: PageContract },
+  { path: "/tokens", component: PageTokens },
+  { path: "/tokens/:token", name: "token", component: PageToken },
   { path: "/nodes", component: FullNodes },
   { path: "/addresses", component: PageRichlist },
   { path: "/addresses/:address", name:"address", component: PageAddress },

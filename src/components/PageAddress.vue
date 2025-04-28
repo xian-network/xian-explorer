@@ -18,7 +18,7 @@
           :key="token.contract"
           :dt="formattedTokenName(token)"
           :dd="token.balance"
-          :to="{ name: 'contract', params: { contract: token.contract } }"
+          :to="{ name: 'token', params: { token: token.contract } }"
         )
         // If you want to show website or operator:
         // tm-list-item(v-if="token.operator" dt="Operator" :dd="token.operator")

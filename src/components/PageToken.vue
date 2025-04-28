@@ -16,20 +16,40 @@
             a(:href="`https://explorer.xian.org/addresses/${tokenData.operator}`")
               | {{ operatorDisplay }}  <!-- Display XNS if found -->
 
-        tm-list-item(v-if="tokenData.total_supply" dt="Total Supply" :dd="tokenData.total_supply")
-        tm-list-item(v-if="contract.name" dt="Token Page")
+        tm-list-item(v-if="contract.name" dt="Contract Name")
           template(slot="dd")
-            a(:href="`/tokens/${contract.name}`")
+            a(:href="`/contracts/${contract.name}`")
               | {{ contract.name }}
 
-    div(v-if="contract.code")
-      tm-part(title='Contract Details')
-        tm-list-item(dt="Name" :dd="contract['name']")
+        tm-list-item(v-if="tokenData.total_supply" dt="Total Supply" :dd="tokenData.total_supply")
+
+    div(v-if="contract.isToken")
+      tm-part(title="Holders")
+        table.BlocksTable
+          thead
+            tr
+              th Address / XNS
+              th Balance
+          tbody
+            tr(v-if="holders.length === 0")
+              td(colspan="2") Loading…
+            tr(v-for="h in holders" :key="h.address")
+              td
+                router-link(:to="`/addresses/${h.address}`") {{ h.display }}
+              td {{ h.balance }}
+        tm-form-group.pagination
+          a.button.prev(
+            :class="{ disabled: holdersPage === 1 }"
+            @click="prevHolders"
+          ) Prev
+          span Page {{ holdersPage }}
+          a.button.next(
+            :class="{ disabled: !hasMoreHolders }"
+            @click="nextHolders"
+          ) Next
+
   
-      tm-part(title='Code')
-        pre {{ contract['code'] }}
-  
-    tm-part(v-else title="Contract not found")
+    tm-part(v-else title="Token not found")
   </template>
   
   <script>
@@ -38,7 +58,7 @@
   import { TmListItem, TmPage, TmPart, TmToolBar } from "@tendermint/ui"
   
   export default {
-    name: "page-contract",
+    name: "page-token",
     components: {
       TmToolBar,
       TmListItem,
@@ -54,7 +74,11 @@
       },
       tokenData: {},
 
-      operatorXnsName: ""
+      operatorXnsName: "",
+      holders: [],
+  holdersPage: 1,
+  holdersPerPage: 25,
+  hasMoreHolders: false
     }),
     computed: {
       ...mapGetters(["blockchain"]),
@@ -181,10 +205,81 @@
         console.error("Error resolving XNS name:", error)
       }
       return ""
-    }
     },
+    async fetchHolders(page = 1) {
+    if (!this.contract.name) return;
+    this.holdersPage = page;
+
+    const first = this.holdersPerPage + 1;   // fetch one extra to know “next”
+    const offset = (page - 1) * this.holdersPerPage;
+
+    const query = `
+      query TokenHolders($keyPrefix:String!, $first:Int!, $offset:Int!){
+        allStates(
+          filter:{
+            and:{
+              key:{ startsWith:$keyPrefix, notLike: "%:%:%" }
+              valueNumeric:{ greaterThan:"0" }
+            }
+            
+          }
+          orderBy: VALUE_DESC
+          first:$first
+          offset:$offset
+        ){
+          edges{ node{ key value } }
+        }
+      }`;
+
+    const variables = {
+      keyPrefix: `${this.contract.name}.balances:`,
+      first,
+      offset
+    };
+
+    try {
+      const { data } = await axios.post(
+        `${this.blockchain.rpc}/graphql`,
+        { query, variables }
+      );
+      const edges = data.data.allStates.edges || [];
+
+      /* slice to page size & map */
+      const slice = edges.slice(0, this.holdersPerPage);
+      this.hasMoreHolders = edges.length > this.holdersPerPage;
+
+      this.holders = await Promise.all(
+        slice.map(async ({ node }) => {
+          const address = node.key.split(":")[1];
+          const xns     = await this.resolveXnsName(address); // reuse helper
+          return {
+            address,
+            display: xns || address,
+            balance: node.value
+          };
+        })
+      );
+    } catch (e) {
+      console.error("holder list error", e);
+      this.holders = [];
+      this.hasMoreHolders = false;
+    }
+  },
+
+  nextHolders() {
+    if (this.hasMoreHolders) this.fetchHolders(this.holdersPage + 1);
+  },
+  prevHolders() {
+    if (this.holdersPage > 1) this.fetchHolders(this.holdersPage - 1);
+  },
+    },
+    
     async mounted() {
-      await this.fetchContract(this.$route.params.contract);
+      await this.fetchContract(this.$route.params.token);
+
+      if (this.contract.isToken) {
+    this.fetchHolders();           // page 1
+  }
     }
   }
   </script>
