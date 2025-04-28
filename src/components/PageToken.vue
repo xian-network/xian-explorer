@@ -22,7 +22,7 @@
               | {{ contract.name }}
 
         tm-list-item(v-if="tokenData.total_supply" dt="Total Supply" :dd="tokenData.total_supply")
-        tm-list-item(v-if="tokenData.holder_count !== undefined" dt="Holders" :dd="tokenData.holder_count")
+        tm-list-item(v-if="tokenData.holder_count !== undefined" dt="Total Holders" :dd="tokenData.holder_count")
 
     div(v-if="contract.isToken")
       tm-part(title="Holders")
