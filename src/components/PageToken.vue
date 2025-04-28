@@ -22,6 +22,7 @@
               | {{ contract.name }}
 
         tm-list-item(v-if="tokenData.total_supply" dt="Total Supply" :dd="tokenData.total_supply")
+        tm-list-item(v-if="tokenData.holder_count !== undefined" dt="Holders" :dd="tokenData.holder_count")
 
     div(v-if="contract.isToken")
       tm-part(title="Holders")
@@ -92,6 +93,46 @@
     }
     },
     methods: {
+      /* ─ Count addresses whose balance > 0 ─ */
+async fetchHoldersCount () {
+  if (!this.contract.name) return;
+
+  const query = `
+    query HolderCount($prefix:String!){
+      allStates(
+        filter:{
+          and:{
+            key:{ startsWith:$prefix, notLike:"%:%:%" }
+            valueNumeric:{ greaterThan:"0" }
+          }
+        }
+      ){
+        totalCount      # <-- just the number
+      }
+    }`;
+  const variables = { prefix: `${this.contract.name}.balances:` };
+
+  try {
+    const { data } = await axios.post(
+      `${this.blockchain.rpc}/graphql`,
+      { query, variables }
+    );
+    let count = 0;
+if (
+  data &&
+  data.data &&
+  data.data.allStates &&
+  typeof data.data.allStates.totalCount !== "undefined"
+) {
+  count = data.data.allStates.totalCount;
+}
+this.tokenData.holder_count = count;
+  } catch (e) {
+    console.error("holder-count error", e);
+    this.tokenData.holder_count = 0;
+  }
+},
+
       async fetchContract(name) {
         const tokenKeys = [
           `${name}.metadata:token_name`,
@@ -278,6 +319,7 @@
       await this.fetchContract(this.$route.params.token);
 
       if (this.contract.isToken) {
+        this.fetchHoldersCount();   // <-- new
     this.fetchHolders();           // page 1
   }
     }
