@@ -9,7 +9,8 @@
         tm-list-item(v-if="tokenData.token_symbol" dt="Symbol" :dd="tokenData.token_symbol")
         tm-list-item(v-if="tokenData.token_website" dt="Website")
           template(slot="dd")
-            a(:href="tokenData.token_website" target="_blank") {{ tokenData.token_website }}
+            a(href="#" @click.prevent="visitWebsite(tokenData.token_website)") {{ tokenData.token_website }}
+
         
         tm-list-item(v-if="tokenData.operator" dt="Operator")
           template(slot="dd")
@@ -51,6 +52,15 @@
 
   
     tm-part(v-else title="Token not found")
+
+
+    div(v-if="showWebsiteModal" class="modal-overlay")
+      div(class="modal-box")
+        h2 Warning
+        p You are about to visit an external website. This site may be unsafe. Proceed carefully.
+        div(class="modal-buttons")
+          button(@click="proceedWebsite" class="button confirm") Continue
+          button(@click="cancelWebsite" class="button cancel") Cancel
   </template>
   
   <script>
@@ -74,7 +84,8 @@
         isToken: false
       },
       tokenData: {},
-
+showWebsiteModal: false,
+websiteToVisit: "",
       operatorXnsName: "",
       holders: [],
   holdersPage: 1,
@@ -93,6 +104,26 @@
     }
     },
     methods: {
+      visitWebsite(url) {
+        // Fix the URL if it doesn't start with http(s)
+        if (!url.startsWith("http://") && !url.startsWith("https://")) {
+          url = "https://" + url;
+        }
+  if (!url) return;
+  this.websiteToVisit = url;
+  this.showWebsiteModal = true;
+},
+proceedWebsite() {
+  if (this.websiteToVisit) {
+    window.open(this.websiteToVisit, '_blank');
+  }
+  this.showWebsiteModal = false;
+  this.websiteToVisit = "";
+},
+cancelWebsite() {
+  this.showWebsiteModal = false;
+  this.websiteToVisit = "";
+},
       /* ─ Count addresses whose balance > 0 ─ */
 async fetchHoldersCount () {
   if (!this.contract.name) return;
@@ -333,5 +364,49 @@ this.tokenData.holder_count = count;
     padding-bottom: .5rem;
     white-space: pre-wrap;
   }
+  .modal-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-box {
+  background: #1a1a1a;
+  padding: 20px;
+  border-radius: 8px;
+  max-width: 400px;
+  width: 90%;
+  text-align: center;
+  color: #fff;
+}
+
+.modal-buttons {
+  margin-top: 20px;
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+
+.button {
+  padding: 8px 16px;
+  border: none;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.button.confirm {
+  background-color: #4caf50;
+  color: white;
+}
+
+.button.cancel {
+  background-color: #f44336;
+  color: white;
+}
+
   </style>
   
