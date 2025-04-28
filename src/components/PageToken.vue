@@ -223,7 +223,7 @@
             }
             
           }
-          orderBy: VALUE_DESC
+          orderBy: VALUE_NUMERIC_DESC
           first:$first
           offset:$offset
         ){
