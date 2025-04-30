@@ -32,13 +32,18 @@
             tr
               th Pair
               th Price (Paired Token)
+              th Change (24h)
           tbody
             tr(v-for="m in markets" :key="m.pair")
               td
                 a(:href="`https://snakexchange.org/?token0=${m.token0}&token1=${m.token1}`" target="_blank") {{ m.label }}
               td {{ m.price.toFixed(6) }} {{ tokenSymbols.get(m.pairedSymbol) || m.pairedSymbol }}
+              td
+                span(v-if="m.changePct > 0" class="green") +{{ m.changePct.toFixed(2) }}%
+                span(v-else-if="m.changePct < 0" class="red") {{ m.changePct.toFixed(2) }}%
+                span(v-else) 0.00%
             tr(v-if="markets.length === 0")
-              td(colspan="2") No markets found
+              td(colspan="3") No markets found
 
     div(v-if="contract.isToken")
       tm-part(title="Holders",:style="{ marginTop: '1rem' }")
@@ -391,6 +396,12 @@ this.tokenData.holder_count = count;
             if (inversePrice > 0) price = 1 / inversePrice
           }
           if (price === 0) continue
+          let price24h = await this.getHistoricalPrice(p.pair, baseIsToken0);
+          if (price24h === 0){
+            const inversePrice24h = await this.getHistoricalPrice(p.pair, !baseIsToken0);
+            if (inversePrice24h > 0) price24h = 1 / inversePrice24h;
+          }
+          const changePct = ((price - price24h) / price24h) * 100
 
           const paired = baseIsToken0 ? p.token1 : p.token0
           result.push({
@@ -399,7 +410,8 @@ this.tokenData.holder_count = count;
             token1: p.token1,
             label: `${p.token0} / ${p.token1}`,
             price,
-            pairedSymbol: paired
+            pairedSymbol: paired,
+  changePct
           })
         }
 
@@ -448,6 +460,45 @@ this.tokenData.holder_count = count;
         return 0
       }
     },
+    async getHistoricalPrice(pair, baseIsToken0) {
+  try {
+    const now = new Date();
+const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+const formatted = yesterday.toISOString().replace("Z", ""); // remove trailing 'Z'
+    const query = {
+      query: `query {
+        allEvents(
+          condition: {contract:"con_pairs", event:"Swap"},
+          filter: {
+            dataIndexed: {contains: {pair: "${pair}"}},
+            created: {lessThan: "${formatted}"}
+          },
+          orderBy: CREATED_DESC,
+          first: 1
+        ) {
+          edges { node { data } }
+        }
+      }`
+    };
+    const res = await axios.post(`${this.blockchain.rpc}/graphql`, query);
+    
+    const data = res && res.data && res.data.data && res.data.data.allEvents && res.data.data.allEvents.edges && res.data.data.allEvents.edges[0] && res.data.data.allEvents.edges[0].node && res.data.data.allEvents.edges[0].node.data || {};
+
+    const a0in = parseFloat(data.amount0In || 0);
+    const a1in = parseFloat(data.amount1In || 0);
+    const a0out = parseFloat(data.amount0Out || 0);
+    const a1out = parseFloat(data.amount1Out || 0);
+
+    if (baseIsToken0 && a0in > 0 && a1out > 0) return a1out / a0in;
+    if (!baseIsToken0 && a1in > 0 && a0out > 0) return a0out / a1in;
+
+    return 0;
+  } catch (e) {
+    console.error("24h historical price fetch failed for", pair, e);
+    return 0;
+  }
+}
+
     },
     
     async mounted() {
@@ -542,6 +593,13 @@ this.tokenData.holder_count = count;
     justify-content: center;
     gap: 1rem;
     margin-top: 1rem;
+  }
+
+  .green {
+    color: #4caf50;
+  }
+  .red {
+    color: #f44336;
   }
   </style>
   
