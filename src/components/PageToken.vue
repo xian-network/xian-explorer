@@ -581,12 +581,12 @@ const formatted = yesterday.toISOString().replace("Z", ""); // remove trailing '
 }
 
 .BlocksTable thead th:nth-child(1) {
-  width: 27.5%;
+  width: 40%;
 }
 
 .BlocksTable thead th:nth-child(2),
 .BlocksTable thead th:nth-child(3) {
-  width: 45%;
+  width: 30%
 }
 .pagination {
     display: flex;
