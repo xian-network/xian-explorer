@@ -537,6 +537,11 @@ this.tokenData.holder_count = count;
 .BlocksTable thead th:nth-child(3) {
   width: 45%;
 }
-
+.pagination {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    margin-top: 1rem;
+  }
   </style>
   
