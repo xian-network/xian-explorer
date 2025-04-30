@@ -36,7 +36,7 @@
   
     // --- 3) Last 5 Transactions (always visible) ---
     tm-part(title='Last 5 Transactions' class="LastTxsTablePart")
-      table.LastTxsTable
+      table.BlocksTable
         thead
           tr
             th Time

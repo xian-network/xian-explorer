@@ -159,6 +159,56 @@ th, td {
   
 }
 
+table.BlocksTable {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+  font-size: 0.95rem;
+}
+
+table.BlocksTable thead {
+  color: #ccc;
+  font-weight: 600;
+  font-size: 13px;
+  text-transform: uppercase;
+}
+
+table.BlocksTable th, table.BlocksTable td {
+  padding: 0.75rem;
+  border: 1px solid #333;
+  text-align: left;
+  background-color: transparent;
+}
+
+table.BlocksTable tbody tr:nth-child(odd) {
+}
+
+table.BlocksTable td:nth-child(2),
+table.BlocksTable td:nth-child(3) {
+}
+
+.tm-part-title
+  font-weight: bold;
+  font-size: 1.2rem!important;
+  color: var(--txt);
+.tm-part-header
+  display: block;
+  padding: 1rem;
+  background-color: #181818;
+  border: 1px solid #333;
+
+
+.BlocksTable {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+}
+.BlocksTable th, .BlocksTable td {
+  padding: 0.75rem 1rem;
+  text-align: left;
+  border-bottom: 1px solid #333;
+}
+
 /* Responsive styling */
 @media screen and (max-width: 600px) {
   table, thead, tbody, th, td, tr {
@@ -172,9 +222,6 @@ th, td {
     position: relative;
     padding-left: 50%;
     
-  }
-  tr{
-    border-top: 1px solid #ddd;
   }
   td:before {
     content: attr(data-label);

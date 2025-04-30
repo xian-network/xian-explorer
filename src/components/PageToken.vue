@@ -26,7 +26,22 @@
         tm-list-item(v-if="tokenData.holder_count !== undefined" dt="Total Holders" :dd="tokenData.holder_count")
 
     div(v-if="contract.isToken")
-      tm-part(title="Holders")
+      tm-part(title="Markets")
+        table.BlocksTable
+          thead
+            tr
+              th Pair
+              th Price (Paired Token)
+          tbody
+            tr(v-for="m in markets" :key="m.pair")
+              td
+                a(:href="`https://snakexchange.org/?token0=${m.token0}&token1=${m.token1}`" target="_blank") {{ m.label }}
+              td {{ m.price.toFixed(6) }} {{ tokenSymbols.get(m.pairedSymbol) || m.pairedSymbol }}
+            tr(v-if="markets.length === 0")
+              td(colspan="2") No markets found
+
+    div(v-if="contract.isToken")
+      tm-part(title="Holders",:style="{ marginTop: '1rem' }")
         table.BlocksTable
           thead
             tr
@@ -38,7 +53,7 @@
             tr(v-for="h in holders" :key="h.address")
               td
                 router-link(:to="`/addresses/${h.address}`") {{ h.display }}
-              td {{ h.balance }}
+              td {{ parseFloat(h.balance).toFixed(8) }}
         tm-form-group.pagination
           a.button.prev(
             :class="{ disabled: holdersPage === 1 }"
@@ -84,13 +99,17 @@
         isToken: false
       },
       tokenData: {},
+      markets: [],
 showWebsiteModal: false,
 websiteToVisit: "",
       operatorXnsName: "",
       holders: [],
   holdersPage: 1,
   holdersPerPage: 25,
-  hasMoreHolders: false
+  hasMoreHolders: false,
+  tokens: new Map(), // Assuming you have a map of tokens
+  pairMap: new Map(),
+  tokenSymbols: new Map(), // Assuming you have a map of token symbols
     }),
     computed: {
       ...mapGetters(["blockchain"]),
@@ -344,6 +363,91 @@ this.tokenData.holder_count = count;
   prevHolders() {
     if (this.holdersPage > 1) this.fetchHolders(this.holdersPage - 1);
   },
+  async fetchMarkets() {
+      try {
+        const query = {
+          query: `query { allEvents(condition:{contract:"con_pairs",event:"PairCreated"}) { edges { node { dataIndexed data } } } }`
+        }
+        const res = await axios.post(`${this.blockchain.rpc}/graphql`, query)
+        const edges = res && res.data && res.data.data && res.data.data.allEvents && res.data.data.allEvents.edges || []
+
+        const pairs = edges.map(e => ({
+          pair: e.node && e.node.data && e.node.data.pair || null,
+          token0: e.node && e.node.dataIndexed && e.node.dataIndexed.token0,
+          token1: e.node && e.node.dataIndexed && e.node.dataIndexed.token1
+        })).filter(p => p.pair)
+
+        const related = pairs.filter(p => p.token0 === this.contract.name || p.token1 === this.contract.name)
+        const uniqueTokens = new Set(related.map(p => (p.token0 === this.contract.name ? p.token1 : p.token0)))
+
+        await this.fetchTokenSymbols([...uniqueTokens])
+
+        const result = []
+        for (const p of related) {
+          const baseIsToken0 = p.token0 === this.contract.name
+          let price = await this.getLatestPrice(p.pair, baseIsToken0)
+          if (price === 0) {
+            const inversePrice = await this.getLatestPrice(p.pair, !baseIsToken0)
+            if (inversePrice > 0) price = 1 / inversePrice
+          }
+          if (price === 0) continue
+
+          const paired = baseIsToken0 ? p.token1 : p.token0
+          result.push({
+            pair: p.pair,
+            token0: p.token0,
+            token1: p.token1,
+            label: `${p.token0} / ${p.token1}`,
+            price,
+            pairedSymbol: paired
+          })
+        }
+
+        this.markets = result
+      } catch (err) {
+        console.error("Market fetch error", err)
+        this.markets = []
+      }
+    },
+    async fetchTokenSymbols(contracts) {
+      if (!contracts.length) return
+      const keys = contracts.map(c => `"${c}.metadata:token_symbol"`).join(",")
+      const query = {
+        query: `query { allStates(filter:{key:{in:[${keys}]}}) { edges { node { key value } } } }`
+      }
+      try {
+        const res = await axios.post(`${this.blockchain.rpc}/graphql`, query)
+        const edges = res && res.data && res.data.data && res.data.data.allStates && res.data.data.allStates.edges || []
+        edges.forEach(({ node }) => {
+          const contract = node.key.split(".")[0]
+          this.tokenSymbols.set(contract, node.value)
+        })
+      } catch (e) {
+        console.error("Failed to fetch token symbols", e)
+      }
+    },
+    async getLatestPrice(pair, baseIsToken0) {
+      try {
+        const query = {
+          query: `query { allEvents(condition: {contract:"con_pairs", event:"Swap"}, filter: {dataIndexed:{contains:{pair:"${pair}"}}}, orderBy: CREATED_DESC, first: 1) { edges { node { data } } } }`
+        }
+        const res = await axios.post(`${this.blockchain.rpc}/graphql`, query)
+        const data = res && res.data && res.data.data && res.data.data.allEvents && res.data.data.allEvents.edges && res.data.data.allEvents.edges[0] && res.data.data.allEvents.edges[0].node && res.data.data.allEvents.edges[0].node.data || {}
+
+        const a0in = parseFloat(data.amount0In || 0)
+        const a1in = parseFloat(data.amount1In || 0)
+        const a0out = parseFloat(data.amount0Out || 0)
+        const a1out = parseFloat(data.amount1Out || 0)
+
+        if (baseIsToken0 && a0in > 0 && a1out > 0) return a1out / a0in
+        if (!baseIsToken0 && a1in > 0 && a0out > 0) return a0out / a1in
+
+        return 0
+      } catch (e) {
+        console.error("Price fetch failed for", pair, e)
+        return 0
+      }
+    },
     },
     
     async mounted() {
@@ -352,6 +456,7 @@ this.tokenData.holder_count = count;
       if (this.contract.isToken) {
         this.fetchHoldersCount();   // <-- new
     this.fetchHolders();           // page 1
+    this.fetchMarkets();
   }
     }
   }
@@ -406,6 +511,31 @@ this.tokenData.holder_count = count;
 .button.cancel {
   background-color: #f44336;
   color: white;
+}
+
+.BlocksTable {
+  table-layout: fixed;
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.BlocksTable th,
+.BlocksTable td {
+  padding: 0.75rem 1rem;
+  text-align: left;
+  border-bottom: 1px solid #333;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.BlocksTable thead th:nth-child(1) {
+  width: 27.5%;
+}
+
+.BlocksTable thead th:nth-child(2),
+.BlocksTable thead th:nth-child(3) {
+  width: 45%;
 }
 
   </style>

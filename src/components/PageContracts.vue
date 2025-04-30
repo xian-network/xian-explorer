@@ -9,7 +9,7 @@ tm-page(title='Contracts')
       i.material-icons chevron_right
     a(:href="jsonUrl" target="_blank") JSON
 
-  table.ContractsTable
+  table.BlocksTable
     thead
       th Contract Name
       th Submission Date
