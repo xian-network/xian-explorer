@@ -33,8 +33,14 @@
       tm-list-item(dt='Xian Holders' :dd='num.prettyInt(totalHolders || 0)')
       tm-list-item(dt='Total Supply' :dd='num.prettyInt(totalSupply) + " XIAN"')
       tm-list-item(dt='Circulating Supply' :dd='num.prettyInt(circulatingSupply) + " XIAN"')
-      tm-list-item(dt='Price' :dd='xianPrice ? `$${xianPrice.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 5 })}` : "—"')
       tm-list-item(dt='Market Cap' :dd='xianPrice ? `$${(xianPrice * circulatingSupply).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "—"')
+      tm-list-item(dt='Price' :dd='xianPrice ? `$${xianPrice.toFixed(4)}` : "—"')
+      tm-list-item(dt='24h Change')
+        template(slot="dd")
+          span(:class="xianChange24h > 0 ? 'green' : (xianChange24h < 0 ? 'red' : '')")
+            | {{ xianChange24h !== null ? `${xianChange24h > 0 ? '+' : ''}${xianChange24h.toFixed(2)}%` : "—" }}
+      tm-list-item(dt='24h Volume' :dd='xianVolume24h ? `$${xianVolume24h.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "—"')
+      
 
   
     // --- 3) Last 5 Transactions (always visible) ---
@@ -188,6 +194,8 @@
         // Show empty array by default for immediate rendering
         lastTxs: [],
         xianPrice: null,
+      xianChange24h: null,
+      xianVolume24h: null,
       };
     },
     async mounted() {
@@ -243,7 +251,7 @@
         }
       },
       async fetchXianPrice() {
-      const query = `
+      const nowQuery = `
         query {
           allEvents(
             condition: { contract: "con_pairs", event: "Swap" },
@@ -255,23 +263,67 @@
           }
         }
       `;
+
+      const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().replace("Z", "");
+      const volumeQuery = `
+        query {
+          allEvents(
+            condition: { contract: "con_pairs", event: "Swap" },
+            filter: {
+              dataIndexed: { contains: { pair: "1" } },
+              created: { greaterThan: "${since}" }
+            },
+            first: 1000
+          ) {
+            edges { node { data } }
+          }
+        }
+      `;
+
       try {
-        const res = await axios.post(`${this.bc.rpc}/graphql`, { query });
-        const swap = res.data.data.allEvents.edges[0].node.data;
+        const [resNow, resVol] = await Promise.all([
+          axios.post(`${this.bc.rpc}/graphql`, { query: nowQuery }),
+          axios.post(`${this.bc.rpc}/graphql`, { query: volumeQuery })
+        ]);
 
-        const a0in = parseFloat(swap.amount0In || 0);
-        const a1out = parseFloat(swap.amount1Out || 0);
-        const a1in = parseFloat(swap.amount1In || 0);
-        const a0out = parseFloat(swap.amount0Out || 0);
+        const latest = resNow && resNow.data && resNow.data.data && resNow.data.data.allEvents && resNow.data.data.allEvents.edges && resNow.data.data.allEvents.edges[0] && resNow.data.data.allEvents.edges[0].node && resNow.data.data.allEvents.edges[0].node.data;
+        const events = resVol && resVol.data && resVol.data.data && resVol.data.data.allEvents && resVol.data.data.allEvents.edges;
 
-        // Assuming USDC is token0 and XIAN is token1
-        if (a0in > 0 && a1out > 0) this.xianPrice = a0in / a1out;
-        else if (a1in > 0 && a0out > 0) this.xianPrice = a0out / a1in;
-        else this.xianPrice = 0;
+        const a0in = parseFloat(latest.amount0In || 0);
+        const a1out = parseFloat(latest.amount1Out || 0);
+        const a1in = parseFloat(latest.amount1In || 0);
+        const a0out = parseFloat(latest.amount0Out || 0);
 
+        let current = 0;
+        if (a0in > 0 && a1out > 0) current = a0in / a1out;
+        else if (a1in > 0 && a0out > 0) current = a0out / a1in;
+
+        let totalVolume = 0;
+        let firstPrice = 0;
+
+        for (const { node: { data } } of events) {
+          const a0in = parseFloat(data.amount0In || 0);
+          const a1out = parseFloat(data.amount1Out || 0);
+          const a1in = parseFloat(data.amount1In || 0);
+          const a0out = parseFloat(data.amount0Out || 0);
+
+          if (a0in > 0 && a1out > 0) {
+            totalVolume += a0in;
+            if (!firstPrice) firstPrice = a0in / a1out;
+          } else if (a1in > 0 && a0out > 0) {
+            totalVolume += a1in;
+            if (!firstPrice) firstPrice = a0out / a1in;
+          }
+        }
+
+        this.xianPrice = current;
+        this.xianVolume24h = totalVolume;
+        this.xianChange24h = firstPrice > 0 ? ((current - firstPrice) / firstPrice) * 100 : null;
       } catch (err) {
-        console.error("Failed to fetch XIAN price:", err);
+        console.error("Failed to fetch XIAN price/24h volume/change:", err);
         this.xianPrice = 0;
+        this.xianChange24h = null;
+        this.xianVolume24h = null;
       }
     },
       // Xian holders
@@ -597,7 +649,15 @@
     }
   };
   </script>
-  
+  <style scoped>
+.green {
+  color: #4caf50;
+}
+.red {
+  color: #f44336;
+}
+</style>
+
   <style lang="stylus">
   @require '~variables'
   
