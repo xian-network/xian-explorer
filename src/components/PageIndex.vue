@@ -33,6 +33,9 @@
       tm-list-item(dt='Xian Holders' :dd='num.prettyInt(totalHolders || 0)')
       tm-list-item(dt='Total Supply' :dd='num.prettyInt(totalSupply) + " XIAN"')
       tm-list-item(dt='Circulating Supply' :dd='num.prettyInt(circulatingSupply) + " XIAN"')
+      tm-list-item(dt='Price' :dd='xianPrice ? `$${xianPrice.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 5 })}` : "—"')
+      tm-list-item(dt='Market Cap' :dd='xianPrice ? `$${(xianPrice * circulatingSupply).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "—"')
+
   
     // --- 3) Last 5 Transactions (always visible) ---
     tm-part(title='Last 5 Transactions' class="LastTxsTablePart")
@@ -183,7 +186,8 @@
         circulatingSupply: 0,
   
         // Show empty array by default for immediate rendering
-        lastTxs: []
+        lastTxs: [],
+        xianPrice: null,
       };
     },
     async mounted() {
@@ -194,6 +198,7 @@
       await this.fetchStampRate();
       await this.fetchTotalTxs();
       await this.fetchTotalHolders();
+      await this.fetchXianPrice();
   
       // Summation (in parallel)
       await Promise.all([this.fetchTotalSupply(), this.fetchExcludedSupply()]);
@@ -237,7 +242,38 @@
           this.stampRate = "Error";
         }
       },
-  
+      async fetchXianPrice() {
+      const query = `
+        query {
+          allEvents(
+            condition: { contract: "con_pairs", event: "Swap" },
+            filter: { dataIndexed: { contains: { pair: "1" } } },
+            orderBy: CREATED_DESC,
+            first: 1
+          ) {
+            edges { node { data } }
+          }
+        }
+      `;
+      try {
+        const res = await axios.post(`${this.bc.rpc}/graphql`, { query });
+        const swap = res.data.data.allEvents.edges[0].node.data;
+
+        const a0in = parseFloat(swap.amount0In || 0);
+        const a1out = parseFloat(swap.amount1Out || 0);
+        const a1in = parseFloat(swap.amount1In || 0);
+        const a0out = parseFloat(swap.amount0Out || 0);
+
+        // Assuming USDC is token0 and XIAN is token1
+        if (a0in > 0 && a1out > 0) this.xianPrice = a0in / a1out;
+        else if (a1in > 0 && a0out > 0) this.xianPrice = a0out / a1in;
+        else this.xianPrice = 0;
+
+      } catch (err) {
+        console.error("Failed to fetch XIAN price:", err);
+        this.xianPrice = 0;
+      }
+    },
       // Xian holders
       async fetchTotalHolders() {
         try {
