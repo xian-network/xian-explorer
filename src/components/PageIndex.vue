@@ -306,12 +306,11 @@
           const a1out = parseFloat(data.amount1Out || 0);
           const a1in = parseFloat(data.amount1In || 0);
           const a0out = parseFloat(data.amount0Out || 0);
-
+          totalVolume += parseFloat(data.amount0In || 0); // buy XIAN with USDC
+          totalVolume += parseFloat(data.amount0Out || 0); // sell XIAN for USDC
           if (a0in > 0 && a1out > 0) {
-            totalVolume += a0in;
             if (!firstPrice) firstPrice = a0in / a1out;
           } else if (a1in > 0 && a0out > 0) {
-            totalVolume += a1in;
             if (!firstPrice) firstPrice = a0out / a1in;
           }
         }
