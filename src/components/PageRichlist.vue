@@ -35,6 +35,9 @@ async function execute_get_address_to_main_name(address, rpc) {
   if (address == "2e7fdde43ed628f2d8631dad8a022e26349bb3d14de056ed21dcc6d52ae5e7cc") {
     return "2e7fdde43ed628f2d8631dad8a022e26349bb3d14de056ed21dcc6d52ae5e7cc (Dex-Trade.com)";
   }
+  if (address == "3e3aeaf504805eac1efc8e91fa42e5326fa6f6c22cbc4ee98b1f55f55aedccd5"){
+    return "3e3aeaf504805eac1efc8e91fa42e5326fa6f6c22cbc4ee98b1f55f55aedccd5 (Bridge Wallet)";
+  }
   let payload = {
     sender: "",
     contract: "con_name_service_final",
