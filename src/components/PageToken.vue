@@ -110,6 +110,7 @@ websiteToVisit: "",
       operatorXnsName: "",
       holders: [],
   holdersPage: 1,
+  maxPairs: 1,
   holdersPerPage: 25,
   hasMoreHolders: false,
   tokens: new Map(), // Assuming you have a map of tokens
@@ -381,6 +382,12 @@ this.tokenData.holder_count = count;
           token0: e.node && e.node.dataIndexed && e.node.dataIndexed.token0,
           token1: e.node && e.node.dataIndexed && e.node.dataIndexed.token1
         })).filter(p => p.pair)
+
+        // Limit to maxPairs if set
+        if (this.maxPairs > 0 && this.contract.name == "currency") {
+          pairs.sort((a, b) => a.pair.localeCompare(b.pair))
+          pairs.splice(this.maxPairs)
+        }
 
         const related = pairs.filter(p => p.token0 === this.contract.name || p.token1 === this.contract.name)
         const uniqueTokens = new Set(related.map(p => (p.token0 === this.contract.name ? p.token1 : p.token0)))
