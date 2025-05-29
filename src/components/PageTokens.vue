@@ -17,7 +17,13 @@ tm-page(title='Contracts')
       tr(v-for="contract in contracts" :key="contract.name")
         td
           router-link(:to="`/tokens/${contract.name}`")
-            | {{ contract.display }}
+            // Display the token name with vert centered check symbol if available
+            div(style="display: flex; align-items: center;")
+              span(v-if="contract.display") {{ contract.display }}
+              i.material-icons(v-if="contract.display" style="margin-left: 0.25rem;") check_circle
+            
+            
+            
         td {{ contract.submissionDate }}
 </template>
 
@@ -74,6 +80,25 @@ export default {
 },
 methods: {
   async fetchContracts(offset = 0) {
+    this.verifiedList = await axios.get(
+      `https://snakexchange.org/scripts/tokenlist.txt`
+    )
+      .then(response => response.data)
+      .catch(error => {
+        console.error("Error fetching verified token list:", error);
+        return "";
+      });
+
+    // Parse the snakData to extract the contracts
+    // Example format: "xUSDC;Wrapped USDC;con_usdc"
+    // Multiple entries are separated by newlines
+    console.log(this.verifiedList);
+    this.verifiedList = this.verifiedList
+      .split("\n")
+      .map(line => line.split(";")[2]) // Get the contract name (3rd part)
+      .filter(name => name); // Filter out any empty lines
+    console.log("Verified contracts:", this.verifiedList);
+
     /* 1️⃣ remember paging info */
     this.offset = Number(offset) || 0;
 
@@ -84,7 +109,7 @@ methods: {
           first:  $first
           offset: $offset
           orderBy: CREATED_DESC
-          filter: { xsc0001: { equalTo: true } }
+          filter: { name: { in: ${JSON.stringify(this.verifiedList)} } }
         ) {
           nodes { name created }
         }
