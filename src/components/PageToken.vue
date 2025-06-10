@@ -37,6 +37,13 @@
             tr(v-for="m in markets" :key="m.pair")
               td
                 a(:href="`https://snakexchange.org/?token0=${m.token0}&token1=${m.token1}`" target="_blank") {{ m.label }}
+                |  
+                // ⁠Price chart (📈); `inverted` is true only when pair id === 1
+                a.chart-link(
+                  :href="`https://charts.xian.org/?pair=${m.pair}&tf=60&inverted=${m.pair === '1'}`"
+                  style="float: right; margin-left: 0.5rem;"
+                  target="_blank"
+                ) Chart 📈
               td {{ m.price.toFixed(6) }} {{ tokenSymbols.get(m.pairedSymbol) || m.pairedSymbol }}
               td
                 span(v-if="m.changePct > 0" class="green") +{{ m.changePct.toFixed(2) }}%
