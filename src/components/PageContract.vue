@@ -5,7 +5,6 @@
 
     div(v-if="contract.isToken && Object.keys(tokenData).length")
       tm-part(title="Token Information")
-       
         tm-list-item(v-if="contract.name" dt="Token Page")
           template(slot="dd")
             a(:href="`/tokens/${contract.name}`")
@@ -16,102 +15,81 @@
         tm-list-item(dt="Name" :dd="contract['name']")
   
       tm-part(title='Code')
-        pre {{ contract['code'] }}
+        // 👉 highlighted Python source
+        pre(class="hljs" v-html="highlightedCode")
   
     tm-part(v-else title="Contract not found")
-  </template>
-  
-  <script>
-  import { mapGetters } from "vuex"
-  import axios from "axios"
-  import { TmListItem, TmPage, TmPart, TmToolBar } from "@tendermint/ui"
-  
-  export default {
-    name: "page-contract",
-    components: {
-      TmToolBar,
-      TmListItem,
-      TmPart,
-      TmPage
+</template>
+
+<script>
+import { mapGetters } from "vuex"
+import axios from "axios"
+// ── highlight.js setup ─────────────────────────────────────
+import hljs from 'highlight.js/lib/core'
+import python from 'highlight.js/lib/languages/python'
+hljs.registerLanguage('python', python)
+
+import { TmListItem, TmPage, TmPart, TmToolBar } from "@tendermint/ui"
+
+export default {
+  name: "page-contract",
+  components: {
+    TmToolBar,
+    TmListItem,
+    TmPart,
+    TmPage
+  },
+  data: () => ({
+    jsonUrl: "",
+    contract: {
+      name: "",
+      code: "",
+      isToken: false
     },
-    data: () => ({
-      jsonUrl: "",
-      contract: {
-        name: "",
-        code: "",
-        isToken: false
-      },
-      tokenData: {},
+    tokenData: {},
+    operatorXnsName: "",
+    // 👉 here we keep the highlighted html
+    highlightedCode: ""
+  }),
+  computed: {
+    ...mapGetters(["blockchain"]),
 
-      operatorXnsName: ""
-    }),
-    computed: {
-      ...mapGetters(["blockchain"]),
-
-       // If an XNS name was found, use it; else show the raw operator address
+    // If an XNS name was found, use it; else show the raw operator address
     operatorDisplay() {
-      if (this.operatorXnsName) {
-        return this.operatorXnsName
-      }
+      if (this.operatorXnsName) return this.operatorXnsName
       return this.tokenData.operator || ""
     }
-    },
-    methods: {
-      async fetchContract(name) {
-        const tokenKeys = [
-          `${name}.metadata:token_name`,
-          `${name}.metadata:token_symbol`,
-          `${name}.metadata:token_website`,
-          `${name}.metadata:operator`,
-          `${name}.metadata:total_supply`
-        ];
+  },
+  methods: {
+    async fetchContract(name) {
+      const tokenKeys = [
+        `${name}.metadata:token_name`,
+        `${name}.metadata:token_symbol`,
+        `${name}.metadata:token_website`,
+        `${name}.metadata:operator`,
+        `${name}.metadata:total_supply`
+      ]
 
-        const gqlQuery = {
-          query: `
-            query ContractAndToken {
-              contractByName(name: "${name}") {
-                code
-                xsc0001
-              }
-              allStates(filter: { key: { in: [${tokenKeys.map(k => `"${k}"`).join(", ")}] } }) {
-                edges {
-                  node {
-                    key
-                    value
-                  }
+      const gqlQuery = {
+        query: `
+          query ContractAndToken {
+            contractByName(name: "${name}") {
+              code
+              xsc0001
+            }
+            allStates(filter: { key: { in: [${tokenKeys.map(k => `"${k}"`).join(", ")}] } }) {
+              edges {
+                node {
+                  key
+                  value
                 }
               }
             }
-          `
-        };
+          }
+        `
+      }
 
-        try {
-          const res = await axios.post(`${this.blockchain.rpc}/graphql`, gqlQuery, {
-            headers: { 'Content-Type': 'application/json' }
-          });
-
-          const contractData = res.data.data.contractByName || {};
-          const stateData = res.data.data.allStates.edges || [];
-
-          this.contract.name = name;
-          this.contract.code = contractData.code || "";
-          this.contract.isToken = contractData.xsc0001 === true;
-
-          this.tokenData = {};
-          stateData.forEach(({ node }) => {
-            const key = node.key.split(":")[1]; // get `token_name` etc.
-            this.tokenData[key] = node.value;
-          });
-
-          this.jsonUrl = `${this.blockchain.rpc}/graphql?query=${encodeURIComponent(gqlQuery.query)}`;
-        } catch (err) {
-          console.error("Error fetching contract/token data:", err);
-          this.contract.code = "";
-          this.contract.isToken = false;
-          this.tokenData = {};
-        }
-
-        try {
+      try {
         const res = await axios.post(`${this.blockchain.rpc}/graphql`, gqlQuery, {
           headers: { 'Content-Type': 'application/json' }
         })
@@ -119,33 +97,37 @@
         const contractData = res.data.data.contractByName || {}
         const stateData = res.data.data.allStates.edges || []
 
-        // Basic contract details
         this.contract.name = name
         this.contract.code = contractData.code || ""
         this.contract.isToken = contractData.xsc0001 === true
 
-        // Build token data from states
+        // 👉 produce highlighted HTML once code is fetched
+        this.highlightedCode = this.contract.code
+          ? hljs.highlight('python', this.contract.code).value
+          : ''
+
         this.tokenData = {}
         stateData.forEach(({ node }) => {
-          const key = node.key.split(":")[1] // e.g. "operator"
+          const key = node.key.split(":")[1]
           this.tokenData[key] = node.value
         })
 
-        // If there's an operator, resolve XNS name
+        // Resolve operator XNS
         if (this.tokenData.operator) {
           this.operatorXnsName = await this.resolveXnsName(this.tokenData.operator)
         }
 
         this.jsonUrl = `${this.blockchain.rpc}/graphql?query=${encodeURIComponent(gqlQuery.query)}`
-
       } catch (err) {
         console.error("Error fetching contract/token data:", err)
         this.contract.code = ""
         this.contract.isToken = false
         this.tokenData = {}
+        this.highlightedCode = ""
       }
-      },
-      // Same XNS resolution approach as before
+    },
+
+    // Same XNS resolution approach as before
     async resolveXnsName(address) {
       try {
         const payload = {
@@ -171,19 +153,24 @@
       }
       return ""
     }
-    },
-    async mounted() {
-      await this.fetchContract(this.$route.params.contract);
-    }
+  },
+  async mounted() {
+    await this.fetchContract(this.$route.params.contract)
   }
-  </script>
-  
-  <style scoped>
-  pre {
-    padding: 1rem;
-    padding-top: .5rem;
-    padding-bottom: .5rem;
-    white-space: pre-wrap;
-  }
-  </style>
-  
+}
+</script>
+
+<style scoped>
+@import url('https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css');
+
+pre {
+  padding: 1rem;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  white-space: pre-wrap;
+  overflow-x: auto;
+}
+.hljs{
+  background:none!important;
+}
+</style>
