@@ -40,7 +40,7 @@
                 |  
                 // ⁠Price chart (📈); `inverted` is true only when pair id === 1
                 a.chart-link(
-                  :href="`https://charts.xian.org/?pair=${m.pair}&tf=60&inverted=${m.pair === '1'}`"
+                  :href="`https://snaklytics.com/#pair=${m.pair}`"
                   style="float: right; margin-left: 0.5rem;"
                   target="_blank"
                 ) Chart 📈
