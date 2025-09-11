@@ -15,7 +15,7 @@
           .footer-title About Xian Explorer
           p.footer-text
             | Explore the Xian blockchain with our modern, user-friendly interface. 
-            | View transactions, blocks, contracts, and more.
+            | View transactions, blocks, contracts, and more with real-time data.
         
         .footer-section
           .footer-title Quick Links
@@ -24,9 +24,11 @@
             router-link(to="/blocks") Blocks
             router-link(to="/txs") Transactions
             router-link(to="/contracts") Contracts
+            router-link(to="/tokens") Tokens
+            router-link(to="/addresses") Addresses
         
         .footer-section
-          .footer-title Network
+          .footer-title Network Info
           .footer-info
             .info-item
               span Chain ID: 
@@ -34,22 +36,26 @@
             .info-item
               span Latest Block: 
               strong {{ latestBlock.height ? num.prettyInt(latestBlock.height) : '—' }}
+            .info-item
+              span Network: 
+              strong Mainnet
         
         .footer-section
-          .footer-title Connect
-          .footer-social
-            a(href="#" target="_blank" rel="noopener")
-              i.material-icons language
-            a(href="#" target="_blank" rel="noopener")
-              i.material-icons chat
-            a(href="#" target="_blank" rel="noopener")
-              i.material-icons code
+          .footer-title Resources
+          .footer-links
+            a(href="https://xian.org" target="_blank" rel="noopener") Official Website
+            a(href="https://docs.xian.org" target="_blank" rel="noopener") Documentation
+            a(href="https://github.com/xian-network" target="_blank" rel="noopener") GitHub
+            a(href="https://discord.gg/xian" target="_blank" rel="noopener") Discord Community
       
       .footer-bottom
         .footer-copyright
           | © 2024 Xian Network. Built with ❤️ for the community.
-        .footer-version
-          | Explorer v2.0
+        .footer-meta
+          .footer-version Explorer v2.0
+          .footer-status
+            .status-indicator.online
+            span Network Online
 </template>
 
 <script>
@@ -229,10 +235,38 @@ html, body
   color var(--text-muted)
   font-size var(--text-sm)
 
+.footer-meta
+  display flex
+  align-items center
+  gap var(--space-4)
+  
+  @media (max-width: 768px)
+    flex-direction column
+    gap var(--space-2)
+
 .footer-version
   color var(--text-muted)
   font-size var(--text-sm)
   font-family var(--font-mono)
+
+.footer-status
+  display flex
+  align-items center
+  gap var(--space-2)
+  font-size var(--text-sm)
+  color var(--text-secondary)
+
+.status-indicator
+  width 8px
+  height 8px
+  border-radius 50%
+  
+  &.online
+    background var(--color-success)
+    box-shadow 0 0 8px rgba(34, 197, 94, 0.4)
+  
+  &.offline
+    background var(--color-error)
 
 // Global utility classes
 .container
