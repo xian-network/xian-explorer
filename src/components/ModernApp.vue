@@ -14,7 +14,7 @@
         .footer-section
           .footer-title About Xian Explorer
           p.footer-text
-            | Explore the Xian blockchain with our modern, user-friendly interface. 
+            | Explore the Xian blockchain with ease.
             | View transactions, blocks, contracts, and more with real-time data.
         
         .footer-section
@@ -46,11 +46,11 @@
             a(href="https://xian.org" target="_blank" rel="noopener") Official Website
             a(href="https://docs.xian.org" target="_blank" rel="noopener") Documentation
             a(href="https://github.com/xian-network" target="_blank" rel="noopener") GitHub
-            a(href="https://discord.gg/xian" target="_blank" rel="noopener") Discord Community
+            a(href="https://t.me/xian_network" target="_blank" rel="noopener") Telegram
       
       .footer-bottom
         .footer-copyright
-          | © 2024 Xian Network. Built with ❤️ for the community.
+          | © Xian
         .footer-meta
           .footer-version Explorer v2.0
           .footer-status

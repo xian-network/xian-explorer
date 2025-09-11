@@ -8,7 +8,7 @@
           | Explore the 
           span.text-gradient-primary Xian Blockchain
         p.hero-subtitle
-          | Discover transactions, blocks, contracts, and addresses on the Xian network with our modern, user-friendly explorer
+          | Discover transactions, blocks, contracts, and addresses on the Xian network with ease.
         
         // Modern Search Bar
         .hero-search
