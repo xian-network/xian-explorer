@@ -751,13 +751,11 @@ export default {
   padding var(--space-3) var(--space-4)
   background var(--bg-tooltip, rgba(0, 0, 0, 0.9))
   color white
-  font-size var(--text-xs)
-  line-height 1.4
+  font-size var(--text-sm)
+  line-height 1.5
   border-radius var(--radius-md)
-  white-space nowrap
-  max-width 280px
-  white-space normal
-  text-align center
+  width 320px
+  text-align left
   box-shadow var(--shadow-lg)
   z-index 1000
   opacity 0
