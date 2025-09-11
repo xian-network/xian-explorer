@@ -499,16 +499,103 @@ export default {
       }
     },
     
-    onSubmit() {
+    async onSubmit(event) {
+      if (event) event.preventDefault();
       if (!this.query.trim()) return;
-      
+
       this.loading = true;
-      // Navigate to search results
-      this.$router.push({
-        name: "search",
-        query: { q: this.query.trim() }
-      });
+      await this.search();
       this.loading = false;
+    },
+
+    async search() {
+      if (!this.query) return;
+      const trimmedQuery = this.query.trim();
+
+      try {
+        // 1) check as XNS name
+        const address = await this.resolveXnsName(trimmedQuery);
+        if (address) {
+          this.$router.push({ name: "address", params: { address } });
+          return;
+        }
+
+        // 2) if 64 hex, treat as tx or address
+        if (/^[a-fA-F0-9]{64}$/.test(trimmedQuery)) {
+          const txExists = await this.checkTxExists(trimmedQuery);
+          if (txExists) {
+            this.$router.push({ name: "tx", params: { hash: trimmedQuery } });
+            return;
+          }
+          this.$router.push({ name: "address", params: { address: trimmedQuery } });
+        } else if (/^\d+$/.test(trimmedQuery)) {
+          // 3) numeric => block
+          this.$router.push({ name: "block", params: { block: trimmedQuery } });
+        } else {
+          // 4) else check contract
+          const contractExists = await this.checkContractExists(trimmedQuery);
+          if (contractExists) {
+            this.$router.push({ name: "contract", params: { contract: trimmedQuery } });
+          } else {
+            alert("No matching transaction, address, or contract found.");
+          }
+        }
+      } catch (error) {
+        console.error("Search error:", error);
+      }
+    },
+
+    async resolveXnsName(name) {
+      try {
+        const payload = {
+          sender: "",
+          contract: "con_name_service_final",
+          function: "get_main_name_to_address",
+          kwargs: { name }
+        };
+
+        const bytes = new TextEncoder().encode(JSON.stringify(payload));
+        const hex = Array.from(bytes)
+          .map(x => ("00" + x.toString(16)).slice(-2))
+          .join("");
+        const response = await fetch(`${this.bc.rpc}/abci_query?path="/simulate_tx/${hex}"`);
+        const data = await response.json();
+
+        if (!data.result || !data.result.response || !data.result.response.value) {
+          return null;
+        }
+
+        const decoded = atob(data.result.response.value);
+        const parsed = JSON.parse(decoded);
+        return parsed.status !== 1 && parsed.result && parsed.result.replace(/'/g, "") !== "None" ? parsed.result.replace(/'/g, "") : null;
+      } catch (err) {
+        console.error("XNS resolution error:", err);
+        return null;
+      }
+    },
+
+    async checkTxExists(txHash) {
+      try {
+        const response = await fetch(`${this.bc.rpc}/tx?hash=0x${txHash}`);
+        const data = await response.json();
+        return data.result && data.result.tx_result;
+      } catch (err) {
+        console.error("Transaction lookup error:", err);
+        return false;
+      }
+    },
+
+    async checkContractExists(contractName) {
+      try {
+        const response = await fetch(
+          `${this.bc.rpc}/abci_query?path="/contract/${contractName}"`
+        );
+        const data = await response.json();
+        return data.result && data.result.response && data.result.response.value != null;
+      } catch (err) {
+        console.error("Contract lookup error:", err);
+        return false;
+      }
     },
     
     shortenHash(hash) {
