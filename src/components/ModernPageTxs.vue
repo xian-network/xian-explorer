@@ -33,7 +33,7 @@
             .table-cell.hash-col Transaction Hash
             .table-cell.contract-col Contract
             .table-cell.function-col Function
-            .table-cell.fee-col Fee (Stamps / XIAN)
+            .table-cell.fee-col Fee
           
           .table-row(v-for="tx in transactions" :key="tx.hash")
             .table-cell.time-col
@@ -59,8 +59,8 @@
             
             .table-cell.fee-col
               .fee-display
-                .stamps {{ num.prettyInt(tx.stamps) }}
-                .xian-fee / {{ tx.feeXian }}
+                .xian-fee {{ tx.feeXian }} XIAN
+                .stamps {{ num.prettyInt(tx.stamps) }} stamps
 
       .loading-state(v-else-if="loading")
         .loading-spinner
@@ -445,18 +445,20 @@ export default {
 .fee-display
   text-align right
   
-  .stamps
-    font-size 0.85rem
+  .xian-fee
+    font-weight var(--font-medium)
     color var(--text-primary)
-    font-weight 600
     
     @media (max-width: 768px)
-      font-size 0.75rem
+      font-size 0.85rem
   
-  .xian-fee
+  .stamps
     font-size 0.75rem
-    color var(--text-dim)
-    margin-left 0.25rem
+    color var(--text-muted)
+    margin-top 2px
+    
+    @media (max-width: 768px)
+      font-size 0.7rem
 
 .loading-state
   text-align center
