@@ -32,8 +32,8 @@
           .stat-label Latest Block
           
         .stat-card
-          .stat-value {{ num.prettyInt(totalSupply) }}
-          .stat-label Total XIAN Supply
+          .stat-value {{ num.prettyInt(circulatingSupply) }}
+          .stat-label Circulating Supply
           
         .stat-card
           .stat-value {{ num.prettyInt(totalHolders || 0) }}
@@ -88,6 +88,9 @@
             .info-item
               .info-label Market Cap
               .info-value {{ xianPrice ? `$${(xianPrice * circulatingSupply).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "—" }}
+            .info-item
+              .info-label Total Supply
+              .info-value {{ num.prettyInt(totalSupply) }} XIAN
             .info-item
               .info-label Circulating Supply
               .info-value {{ num.prettyInt(circulatingSupply) }} XIAN
