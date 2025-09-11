@@ -1,0 +1,251 @@
+// Modern Design System for Xian Explorer
+// Inspired by Xian DEX design
+
+:root
+  // Modern Color Palette
+  --primary-gradient linear-gradient(135deg, #00d4ff 0%, #00a8cc 100%)
+  --secondary-gradient linear-gradient(135deg, #667eea 0%, #764ba2 100%)
+  --accent-gradient linear-gradient(135deg, #f093fb 0%, #f5576c 100%)
+  
+  // Background Colors
+  --bg-primary #0a0e1a
+  --bg-secondary #1a1f2e
+  --bg-tertiary #252b3d
+  --bg-card #1e2332
+  --bg-card-hover #252b3d
+  --bg-overlay rgba(26, 31, 46, 0.95)
+  
+  // Text Colors
+  --text-primary #ffffff
+  --text-secondary #b8c5d6
+  --text-muted #7a8499
+  --text-accent #00d4ff
+  --text-success #4ade80
+  --text-warning #fbbf24
+  --text-error #ef4444
+  
+  // Border Colors
+  --border-primary #2d3748
+  --border-secondary #4a5568
+  --border-accent #00d4ff
+  --border-card #2d3748
+  
+  // Modern Shadows
+  --shadow-sm 0 1px 2px 0 rgba(0, 0, 0, 0.05)
+  --shadow-md 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)
+  --shadow-lg 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)
+  --shadow-xl 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)
+  --shadow-glow 0 0 20px rgba(0, 212, 255, 0.3)
+  
+  // Modern Typography
+  --font-primary 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif
+  --font-mono 'JetBrains Mono', 'Fira Code', Consolas, monospace
+  
+  // Font Sizes
+  --text-xs 0.75rem
+  --text-sm 0.875rem
+  --text-base 1rem
+  --text-lg 1.125rem
+  --text-xl 1.25rem
+  --text-2xl 1.5rem
+  --text-3xl 1.875rem
+  --text-4xl 2.25rem
+  --text-5xl 3rem
+  
+  // Font Weights
+  --font-light 300
+  --font-normal 400
+  --font-medium 500
+  --font-semibold 600
+  --font-bold 700
+  --font-extrabold 800
+  
+  // Spacing Scale
+  --space-1 0.25rem
+  --space-2 0.5rem
+  --space-3 0.75rem
+  --space-4 1rem
+  --space-5 1.25rem
+  --space-6 1.5rem
+  --space-8 2rem
+  --space-10 2.5rem
+  --space-12 3rem
+  --space-16 4rem
+  --space-20 5rem
+  --space-24 6rem
+  
+  // Border Radius
+  --radius-sm 0.125rem
+  --radius-md 0.375rem
+  --radius-lg 0.5rem
+  --radius-xl 0.75rem
+  --radius-2xl 1rem
+  --radius-full 9999px
+  
+  // Transitions
+  --transition-fast 150ms ease-in-out
+  --transition-normal 250ms ease-in-out
+  --transition-slow 350ms ease-in-out
+  
+  // Z-Index Scale
+  --z-dropdown 1000
+  --z-sticky 1020
+  --z-fixed 1030
+  --z-modal-backdrop 1040
+  --z-modal 1050
+  --z-popover 1060
+  --z-tooltip 1070
+
+// Modern Utility Classes
+.gradient-primary
+  background var(--primary-gradient)
+  
+.gradient-secondary
+  background var(--secondary-gradient)
+  
+.gradient-accent
+  background var(--accent-gradient)
+
+.text-gradient-primary
+  background var(--primary-gradient)
+  -webkit-background-clip text
+  -webkit-text-fill-color transparent
+  background-clip text
+
+.card-modern
+  background var(--bg-card)
+  border 1px solid var(--border-card)
+  border-radius var(--radius-xl)
+  box-shadow var(--shadow-md)
+  transition all var(--transition-normal)
+  
+  &:hover
+    background var(--bg-card-hover)
+    box-shadow var(--shadow-lg)
+    transform translateY(-2px)
+
+.btn-modern
+  display inline-flex
+  align-items center
+  justify-content center
+  padding var(--space-3) var(--space-6)
+  border-radius var(--radius-lg)
+  font-weight var(--font-medium)
+  font-size var(--text-sm)
+  transition all var(--transition-fast)
+  cursor pointer
+  border none
+  text-decoration none
+  
+  &.btn-primary
+    background var(--primary-gradient)
+    color white
+    box-shadow var(--shadow-md)
+    
+    &:hover
+      box-shadow var(--shadow-lg), var(--shadow-glow)
+      transform translateY(-1px)
+  
+  &.btn-secondary
+    background var(--bg-tertiary)
+    color var(--text-primary)
+    border 1px solid var(--border-secondary)
+    
+    &:hover
+      background var(--bg-card-hover)
+      border-color var(--border-accent)
+
+.input-modern
+  background var(--bg-tertiary)
+  border 1px solid var(--border-primary)
+  border-radius var(--radius-lg)
+  padding var(--space-3) var(--space-4)
+  color var(--text-primary)
+  font-size var(--text-base)
+  transition all var(--transition-fast)
+  
+  &:focus
+    outline none
+    border-color var(--border-accent)
+    box-shadow 0 0 0 3px rgba(0, 212, 255, 0.1)
+  
+  &::placeholder
+    color var(--text-muted)
+
+.hero-section
+  background linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%)
+  position relative
+  overflow hidden
+  
+  &::before
+    content ''
+    position absolute
+    top 0
+    left 0
+    right 0
+    bottom 0
+    background radial-gradient(circle at 50% 50%, rgba(0, 212, 255, 0.1) 0%, transparent 50%)
+    pointer-events none
+
+.stats-grid
+  display grid
+  grid-template-columns repeat(auto-fit, minmax(250px, 1fr))
+  gap var(--space-6)
+  
+.stat-card
+  @extend .card-modern
+  padding var(--space-6)
+  text-align center
+  
+  .stat-value
+    font-size var(--text-3xl)
+    font-weight var(--font-bold)
+    color var(--text-primary)
+    margin-bottom var(--space-2)
+    
+  .stat-label
+    font-size var(--text-sm)
+    color var(--text-secondary)
+    text-transform uppercase
+    letter-spacing 0.05em
+
+.data-table-modern
+  background var(--bg-card)
+  border-radius var(--radius-xl)
+  overflow hidden
+  box-shadow var(--shadow-md)
+  
+  table
+    width 100%
+    border-collapse collapse
+    
+  th
+    background var(--bg-tertiary)
+    padding var(--space-4)
+    text-align left
+    font-weight var(--font-semibold)
+    color var(--text-secondary)
+    font-size var(--text-sm)
+    text-transform uppercase
+    letter-spacing 0.05em
+    border-bottom 1px solid var(--border-primary)
+    
+  td
+    padding var(--space-4)
+    border-bottom 1px solid var(--border-primary)
+    color var(--text-primary)
+    
+  tr:hover
+    background var(--bg-card-hover)
+
+// Responsive Design
+@media (max-width: 768px)
+  .stats-grid
+    grid-template-columns 1fr
+    gap var(--space-4)
+    
+  .stat-card
+    padding var(--space-4)
+    
+    .stat-value
+      font-size var(--text-2xl)
