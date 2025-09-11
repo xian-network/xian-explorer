@@ -18,8 +18,10 @@ import PageValidator from "../components/PageValidator"
 import PageContracts from "../components/ModernPageContracts"
 import PageContract from "../components/PageContract"
 import PageRichlist from "../components/PageRichlist"
+import ModernPageAddresses from "../components/ModernPageAddresses"
 import PageAddress from "../components/PageAddress"
 import PageTokens from "../components/PageTokens"
+import ModernPageTokens from "../components/ModernPageTokens"
 import PageToken from "../components/PageToken"
 
 const routes = [
@@ -31,10 +33,10 @@ const routes = [
   { path: "/txs", component: Transactions },
   { path: "/contracts", component: PageContracts },
   { path: "/contracts/:contract", name: "contract", component: PageContract },
-  { path: "/tokens", component: PageTokens },
+  { path: "/tokens", component: ModernPageTokens },
   { path: "/tokens/:token", name: "token", component: PageToken },
   { path: "/nodes", component: FullNodes },
-  { path: "/addresses", component: PageRichlist },
+  { path: "/addresses", component: ModernPageAddresses },
   { path: "/addresses/:address", name:"address", component: PageAddress },
   {
     name: "node",
