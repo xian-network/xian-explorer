@@ -527,7 +527,6 @@ export default {
 @import '../styles/modern-variables.styl'
 
 .modern-explorer
-  min-height 100vh
   background var(--bg-primary)
   color var(--text-primary)
   font-family var(--font-primary)

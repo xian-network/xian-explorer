@@ -234,7 +234,6 @@ export default {
 
 <style lang="stylus">
 .modern-page-transactions
-  min-height 100vh
   background var(--bg-app)
 
 .page-header

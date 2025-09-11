@@ -109,6 +109,9 @@ html, body
   background var(--bg-primary)
   color var(--text-primary)
   line-height 1.6
+  height auto
+  overflow-x hidden
+  overflow-y auto
 
 *
   box-sizing border-box
@@ -119,6 +122,7 @@ html, body
   display flex
   flex-direction column
   background var(--bg-primary)
+  overflow visible
 
 // Main content area
 .main-content
