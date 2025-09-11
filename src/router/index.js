@@ -8,6 +8,7 @@ import Search from "../components/PageSearch"
 import Blocks from "../components/ModernPageBlocks"
 import Transactions from "../components/ModernPageTxs"
 import Block from "../components/PageBlock"
+import ModernPageBlock from "../components/ModernPageBlock"
 import Tx from "../components/PageTx"
 import FullNodes from "../components/PageFullNodes"
 import FullNode from "../components/PageFullNode"
@@ -28,7 +29,7 @@ const routes = [
   { path: "/", component: Index },
   { path: "/search", component: Search },
   { path: "/blocks", component: Blocks },
-  { path: "/blocks/:block", name: "block", component: Block },
+  { path: "/blocks/:block", name: "block", component: ModernPageBlock },
   { path: "/tx/:hash", name: "tx", component: Tx }, // TODO rename path to /txs
   { path: "/txs", component: Transactions },
   { path: "/contracts", component: PageContracts },
