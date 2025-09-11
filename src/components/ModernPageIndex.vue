@@ -71,7 +71,12 @@
                 router-link(:to="{ name: 'block', params: { block: latestBlock.height }}")
                   | {{ num.prettyInt(latestBlock.height) }}
             .info-item
-              .info-label Stamp Rate
+              .info-label 
+                | Stamp Rate
+                .tooltip-container
+                  .tooltip-icon info
+                  .tooltip-content
+                    | Transaction fees on Xian are measured in "stamps". The stamp rate determines how many stamps you get per XIAN token. Higher rates mean cheaper transactions.
               .info-value {{ stampRate || "100" }} Stamps/XIAN
         
         .network-card
@@ -707,6 +712,9 @@ export default {
 .info-label
   color var(--text-secondary)
   font-size var(--text-sm)
+  display flex
+  align-items center
+  gap var(--space-2)
 
 .info-value
   font-weight var(--font-medium)
@@ -717,6 +725,59 @@ export default {
     
     &:hover
       text-decoration underline
+
+// Tooltip styles
+.tooltip-container
+  position relative
+  display inline-flex
+  align-items center
+
+.tooltip-icon
+  font-family 'Material Icons'
+  font-size 16px
+  color var(--text-muted)
+  cursor help
+  transition color var(--transition-fast)
+  
+  &:hover
+    color var(--text-accent)
+
+.tooltip-content
+  position absolute
+  bottom 100%
+  left 50%
+  transform translateX(-50%)
+  margin-bottom var(--space-2)
+  padding var(--space-3) var(--space-4)
+  background var(--bg-tooltip, rgba(0, 0, 0, 0.9))
+  color white
+  font-size var(--text-xs)
+  line-height 1.4
+  border-radius var(--radius-md)
+  white-space nowrap
+  max-width 280px
+  white-space normal
+  text-align center
+  box-shadow var(--shadow-lg)
+  z-index 1000
+  opacity 0
+  visibility hidden
+  transition all var(--transition-fast)
+  pointer-events none
+
+.tooltip-container:hover .tooltip-content
+  opacity 1
+  visibility visible
+
+// Arrow for tooltip
+.tooltip-content::after
+  content ''
+  position absolute
+  top 100%
+  left 50%
+  transform translateX(-50%)
+  border 5px solid transparent
+  border-top-color var(--bg-tooltip, rgba(0, 0, 0, 0.9))
 
 // Transactions Section
 .transactions-section
