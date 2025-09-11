@@ -124,13 +124,9 @@ html, body
 .main-content
   flex 1
   width 100%
-  min-height calc(100vh - 72px)
   
   // Add some top padding for content breathing room
   padding-top var(--space-1)
-  
-  @media (max-width: 1024px)
-    min-height calc(100vh - 64px)
 
 // Modern Footer
 .modern-footer
