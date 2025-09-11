@@ -19,6 +19,7 @@ import PageValidatorsRevoked from "../components/PageValidatorsRevoked"
 import PageValidator from "../components/PageValidator"
 import PageContracts from "../components/ModernPageContracts"
 import PageContract from "../components/PageContract"
+import ModernPageContract from "../components/ModernPageContract"
 import PageRichlist from "../components/PageRichlist"
 import ModernPageAddresses from "../components/ModernPageAddresses"
 import PageAddress from "../components/PageAddress"
@@ -34,7 +35,7 @@ const routes = [
   { path: "/tx/:hash", name: "tx", component: ModernPageTx }, // TODO rename path to /txs
   { path: "/txs", component: Transactions },
   { path: "/contracts", component: PageContracts },
-  { path: "/contracts/:contract", name: "contract", component: PageContract },
+  { path: "/contracts/:contract", name: "contract", component: ModernPageContract },
   { path: "/tokens", component: ModernPageTokens },
   { path: "/tokens/:token", name: "token", component: PageToken },
   { path: "/nodes", component: FullNodes },
