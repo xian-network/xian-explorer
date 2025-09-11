@@ -132,8 +132,8 @@
                   .function-cell {{ shortenText(tx.function) }}
                 td
                   .fee-cell
-                    .fee-stamps {{ num.prettyInt(tx.stamps) }}
                     .fee-xian {{ tx.feeXian }} XIAN
+                    .fee-stamps {{ num.prettyInt(tx.stamps) }} stamps
         
         .loading-state(v-else)
           .loading-spinner
@@ -927,12 +927,14 @@ export default {
 .fee-cell
   text-align right
   
-  .fee-stamps
-    font-weight var(--font-medium)
-    
   .fee-xian
+    font-weight var(--font-medium)
+    color var(--text-primary)
+    
+  .fee-stamps
     font-size var(--text-sm)
     color var(--text-muted)
+    margin-top 2px
 
 .loading-state
   text-align center
