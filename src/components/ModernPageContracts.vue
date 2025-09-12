@@ -1,74 +1,116 @@
-<template lang="pug">
-.modern-page-contracts
-  .page-header
-    .container
-      .page-title
-        h1 Smart Contracts
-        p Deployed smart contracts on the Xian blockchain
-      
-      .page-actions
-        .pagination-controls(v-if="contracts.length > 0")
-          router-link.btn.btn-secondary(:to="{ path: '/contracts', query: prevQuery }" v-if="hasPrevPage")
-            i.material-icons chevron_left
-            span Previous
-          router-link.btn.btn-secondary(:to="{ path: '/contracts', query: nextQuery }" v-if="hasNextPage")
-            span Next
-            i.material-icons chevron_right
-        
-        a.btn.btn-outline(:href="jsonUrl" target="_blank" v-if="jsonUrl")
-          i.material-icons code
-          span JSON
+<template>
+  <div class="modern-page-contracts">
+    <!-- Header Section -->
+    <div class="page-header">
+      <div class="header-content">
+        <h1 class="page-title">Smart Contracts</h1>
+        <p class="page-description">
+          Deployed smart contracts on the Xian blockchain. Explore contract details, code, and interactions.
+        </p>
+      </div>
+    </div>
 
-  .page-content
-    .container
-      .contracts-table-container(v-if="contracts.length > 0")
-        .table-header
-          .table-info
-            span Showing {{ contracts.length }} contracts
-            span.page-info(v-if="offset > 0") (Offset {{ offset }})
-        
-        .table-container
-          table.modern-table
-            thead
-              tr
-                th Contract Name
-                th Submission Date
-                th Type
-                th Actions
-            
-            tbody
-              tr.table-row(v-for="contract in contracts" :key="contract.name")
-                td.name-cell
-                  .contract-display
-                    router-link.contract-link(:to="`/contracts/${contract.name}`")
-                      .contract-name {{ contract.name }}
-                    button.copy-btn(@click="copyToClipboard(contract.name)")
-                      i.material-icons content_copy
-                
-                td.date-cell
-                  .date-display
-                    .date-main {{ contract.submissionDate }}
-                    .date-ago {{ getTimeAgo(contract.created) }}
-                
-                td.type-cell
-                  .type-display
-                    .contract-type(:class="getContractTypeClass(contract.name)") {{ getContractType(contract.name) }}
-                
-                td.actions-cell
-                  .actions-display
-                    router-link.btn.btn-sm.btn-primary(:to="`/contracts/${contract.name}`")
-                      i.material-icons visibility
-                      span View
+    <!-- Main Content -->
+    <div class="main-content">
+      <div class="content-container">
+        <!-- Table Controls -->
+        <div class="table-controls">
+          <div class="pagination-controls">
+            <router-link 
+              v-if="hasPrevPage"
+              :to="{ path: '/contracts', query: prevQuery }" 
+              class="nav-button prev-button"
+            >
+              <i class="material-icons">chevron_left</i>
+              Previous
+            </router-link>
+            <router-link 
+              v-if="hasNextPage"
+              :to="{ path: '/contracts', query: nextQuery }" 
+              class="nav-button next-button"
+            >
+              Next
+              <i class="material-icons">chevron_right</i>
+            </router-link>
+          </div>
+          <div class="page-info">
+            <span v-if="contracts.length > 0">Showing {{ contracts.length }} contracts</span>
+          </div>
+          <div class="json-link" v-if="jsonUrl">
+            <a :href="jsonUrl" target="_blank" class="json-button">
+              <i class="material-icons">code</i>
+              JSON
+            </a>
+          </div>
+        </div>
 
-      .loading-state(v-else-if="loading")
-        .loading-spinner
-        p Loading contracts...
+        <!-- Contracts Table -->
+        <div class="table-container" v-if="contracts.length > 0">
+          <table class="modern-table">
+            <thead>
+              <tr>
+                <th>Contract Name</th>
+                <th>Submission Date</th>
+                <th>Type</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="contract in contracts" :key="contract.name" class="table-row">
+                <td class="name-cell">
+                  <div class="contract-display">
+                    <router-link :to="`/contracts/${contract.name}`" class="contract-link">
+                      <div class="contract-name">{{ contract.name }}</div>
+                    </router-link>
+                    <button class="copy-btn" @click="copyToClipboard(contract.name)">
+                      <i class="material-icons">content_copy</i>
+                    </button>
+                  </div>
+                </td>
+                
+                <td class="date-cell">
+                  <div class="date-display">
+                    <div class="date-main">{{ contract.submissionDate }}</div>
+                    <div class="date-ago">{{ getTimeAgo(contract.created) }}</div>
+                  </div>
+                </td>
+                
+                <td class="type-cell">
+                  <div class="type-display">
+                    <div class="contract-type" :class="getContractTypeClass(contract.name)">{{ getContractType(contract.name) }}</div>
+                  </div>
+                </td>
+                
+                <td class="actions-cell">
+                  <div class="actions-display">
+                    <router-link :to="`/contracts/${contract.name}`" class="view-button">
+                      <i class="material-icons">visibility</i>
+                      View
+                    </router-link>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
 
-      .empty-state(v-else)
-        .empty-icon
-          i.material-icons description
-        h3 No contracts found
-        p Unable to load contract data at this time.
+        <!-- Loading State -->
+        <div v-else-if="loading" class="loading-state">
+          <div class="loading-spinner"></div>
+          <p>Loading contracts...</p>
+        </div>
+
+        <!-- Empty State -->
+        <div v-else class="empty-state">
+          <div class="empty-icon">
+            <i class="material-icons">description</i>
+          </div>
+          <h3>No contracts found</h3>
+          <p>Unable to load contract data at this time.</p>
+        </div>
+      </div>
+    </div>
+  </div>
 </template>
 
 <script>
@@ -206,79 +248,98 @@ export default {
 }
 </script>
 
-<style lang="stylus">
+<style lang="stylus" scoped>
 .modern-page-contracts
-  background var(--bg-app)
+  min-height calc(100vh - 72px)
+  background linear-gradient(135deg, #0f1419 0%, #1a2332 100%)
+  color #ffffff
 
 .page-header
-  background linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 100%)
-  padding 3rem 0 2rem
-  border-bottom 1px solid var(--border-color)
-  
-  .container
-    display flex
-    justify-content space-between
-    align-items flex-end
-    gap 2rem
-    
-    @media (max-width: 768px)
-      flex-direction column
-      align-items flex-start
-      gap 1.5rem
+  background linear-gradient(135deg, rgba(20, 184, 166, 0.1) 0%, rgba(59, 130, 246, 0.1) 100%)
+  border-bottom 1px solid rgba(255, 255, 255, 0.1)
+  padding 3rem 0
+
+.header-content
+  max-width 1200px
+  margin 0 auto
+  padding 0 2rem
 
 .page-title
-  h1
-    font-size 2.5rem
-    font-weight 700
-    color var(--text-primary)
-    margin 0 0 0.5rem
-    
-    @media (max-width: 768px)
-      font-size 2rem
-  
-  p
-    font-size 1.1rem
-    color var(--text-secondary)
-    margin 0
-    opacity 0.9
+  font-size 3rem
+  font-weight 700
+  margin 0 0 1rem 0
+  background linear-gradient(135deg, #14b8a6 0%, #3b82f6 100%)
+  -webkit-background-clip text
+  -webkit-text-fill-color transparent
+  background-clip text
 
-.page-actions
+.page-description
+  font-size 1.125rem
+  color rgba(255, 255, 255, 0.7)
+  margin 0 auto
+  max-width 600px
+  text-align center
+
+.main-content
+  padding 2rem 0
+
+.content-container
+  max-width 1200px
+  margin 0 auto
+  padding 0 2rem
+
+.table-controls
   display flex
+  justify-content space-between
   align-items center
+  margin-bottom 2rem
+  flex-wrap wrap
   gap 1rem
-  
-  @media (max-width: 768px)
-    width 100%
-    justify-content space-between
 
 .pagination-controls
   display flex
   gap 0.5rem
 
-.page-content
-  padding 2rem 0
+.nav-button
+  display flex
+  align-items center
+  gap 0.5rem
+  padding 0.75rem 1.5rem
+  background rgba(255, 255, 255, 0.1)
+  color #ffffff
+  text-decoration none
+  border-radius 8px
+  border 1px solid rgba(255, 255, 255, 0.2)
+  transition all 0.2s ease
+  font-weight 500
 
-.contracts-table-container
-  background var(--bg-card)
-  border-radius var(--border-radius-lg)
-  border 1px solid var(--border-color)
-  overflow hidden
-  box-shadow var(--shadow-card)
+  &:hover
+    background rgba(255, 255, 255, 0.2)
+    border-color rgba(255, 255, 255, 0.3)
+    transform translateY(-1px)
 
-.table-header
-  padding 1.5rem
-  border-bottom 1px solid var(--border-color)
-  background var(--bg-card-header)
-  
-  .table-info
+.page-info
+  color rgba(255, 255, 255, 0.7)
+  font-size 0.9rem
+
+.json-link
+  .json-button
     display flex
     align-items center
-    gap 1rem
-    font-size 0.9rem
-    color var(--text-secondary)
-    
-    .page-info
-      color var(--text-dim)
+    gap 0.5rem
+    padding 0.75rem 1.5rem
+    background rgba(20, 184, 166, 0.2)
+    color #14b8a6
+    text-decoration none
+    border-radius 8px
+    border 1px solid rgba(20, 184, 166, 0.3)
+    transition all 0.2s ease
+    font-weight 500
+
+    &:hover
+      background rgba(20, 184, 166, 0.3)
+      border-color rgba(20, 184, 166, 0.5)
+      transform translateY(-1px)
 
 .table-container
   background rgba(255, 255, 255, 0.05)
@@ -319,169 +380,158 @@ export default {
         vertical-align middle
 
 .name-cell
-  min-width 0
-
-.date-cell
-  width 200px
-
-.type-cell
-  width 120px
-
-.actions-cell
-  width 120px
+  width 300px
 
 .contract-display
   display flex
   align-items center
-  gap 0.5rem
-  min-width 0
+  gap 1rem
   
   .contract-link
     text-decoration none
-    color #14b8a6
-    font-weight 600
+    color inherit
+    
+    &:hover .contract-name
+      color #14b8a6
+  
+  .contract-name
+    font-family 'Monaco', 'Menlo', 'Ubuntu Mono', monospace
+    font-size 0.9rem
+    color rgba(255, 255, 255, 0.9)
+    font-weight 500
     transition color 0.2s ease
-    min-width 0
-    
-    &:hover
-      color #10b981
-      text-decoration underline
-    
-    .contract-name
-      font-family 'JetBrains Mono', monospace
-      font-size 0.9rem
-      overflow hidden
-      text-overflow ellipsis
-      white-space nowrap
-      
-      @media (max-width: 768px)
-        font-size 0.8rem
   
   .copy-btn
-    background none
-    border none
-    color rgba(255, 255, 255, 0.5)
+    background rgba(255, 255, 255, 0.1)
+    border 1px solid rgba(255, 255, 255, 0.2)
+    border-radius 6px
+    padding 0.5rem
+    color rgba(255, 255, 255, 0.7)
     cursor pointer
-    padding 0.25rem
-    border-radius 4px
     transition all 0.2s ease
-    flex-shrink 0
     
     &:hover
-      color #14b8a6
-      background rgba(255, 255, 255, 0.05)
+      background rgba(255, 255, 255, 0.2)
+      color #ffffff
+      transform scale(1.05)
     
     i
-      font-size 0.9rem
+      font-size 1rem
+
+.date-cell
+  width 200px
 
 .date-display
-  display flex
-  flex-direction column
-  gap 0.25rem
-
   .date-main
-    font-size 0.85rem
+    font-size 0.95rem
     color #ffffff
     font-weight 500
-    
-    @media (max-width: 768px)
-      font-size 0.75rem
+    margin-bottom 0.25rem
   
   .date-ago
-    font-size 0.7rem
-    color rgba(255, 255, 255, 0.5)
+    font-size 0.8rem
+    color rgba(255, 255, 255, 0.6)
+
+.type-cell
+  width 150px
 
 .type-display
   .contract-type
-    font-size 0.7rem
-    padding 0.25rem 0.5rem
-    border-radius var(--border-radius-sm)
-    text-transform uppercase
+    display inline-block
+    padding 0.375rem 0.75rem
+    border-radius 6px
+    font-size 0.75rem
     font-weight 600
-    text-align center
+    text-transform uppercase
+    letter-spacing 0.05em
     
-    &.type-dex
-      color var(--primary)
-      background var(--primary-bg)
-    
-    &.type-staking
-      color #10b981
-      background rgba(16, 185, 129, 0.1)
-    
-    &.type-currency
-      color #f59e0b
-      background rgba(245, 158, 11, 0.1)
-    
-    &.type-token
-      color #8b5cf6
-      background rgba(139, 92, 246, 0.1)
-    
-    &.type-farming
+    &.token
+      background rgba(34, 197, 94, 0.2)
       color #22c55e
-      background rgba(34, 197, 94, 0.1)
+      border 1px solid rgba(34, 197, 94, 0.3)
     
-    &.type-lottery
-      color #ec4899
-      background rgba(236, 72, 153, 0.1)
+    &.system
+      background rgba(239, 68, 68, 0.2)
+      color #ef4444
+      border 1px solid rgba(239, 68, 68, 0.3)
     
-    &.type-multi
-      color #06b6d4
-      background rgba(6, 182, 212, 0.1)
-    
-    &.type-test
-      color #6b7280
-      background rgba(107, 114, 128, 0.1)
-    
-    &.type-contract
-      color var(--text-secondary)
-      background var(--bg-secondary)
+    &.contract
+      background rgba(59, 130, 246, 0.2)
+      color #3b82f6
+      border 1px solid rgba(59, 130, 246, 0.3)
+
+.actions-cell
+  width 120px
 
 .actions-display
-  .btn-sm
-    padding 0.375rem 0.75rem
-    font-size 0.75rem
+  .view-button
+    display flex
+    align-items center
+    gap 0.5rem
+    padding 0.5rem 1rem
+    background rgba(20, 184, 166, 0.2)
+    color #14b8a6
+    text-decoration none
+    border-radius 6px
+    border 1px solid rgba(20, 184, 166, 0.3)
+    font-size 0.875rem
+    font-weight 500
+    transition all 0.2s ease
+    
+    &:hover
+      background rgba(20, 184, 166, 0.3)
+      border-color rgba(20, 184, 166, 0.5)
+      transform translateY(-1px)
     
     i
-      font-size 0.9rem
-      margin-right 0.25rem
+      font-size 1rem
 
 .loading-state
-  text-align center
+  display flex
+  flex-direction column
+  align-items center
+  justify-content center
   padding 4rem 2rem
-  color var(--text-secondary)
+  color rgba(255, 255, 255, 0.7)
   
   .loading-spinner
     width 40px
     height 40px
-    border 3px solid var(--border-color)
-    border-top 3px solid var(--primary)
+    border 3px solid rgba(255, 255, 255, 0.1)
+    border-top 3px solid #14b8a6
     border-radius 50%
     animation spin 1s linear infinite
-    margin 0 auto 1rem
+    margin-bottom 1rem
   
   p
-    margin 0
     font-size 1.1rem
+    margin 0
 
 .empty-state
-  text-align center
+  display flex
+  flex-direction column
+  align-items center
+  justify-content center
   padding 4rem 2rem
-  color var(--text-secondary)
+  color rgba(255, 255, 255, 0.7)
+  text-align center
   
   .empty-icon
-    margin-bottom 1rem
+    margin-bottom 1.5rem
     
     i
       font-size 3rem
-      color var(--text-dim)
+      color rgba(255, 255, 255, 0.3)
   
   h3
-    margin 0 0 0.5rem
-    color var(--text-primary)
+    font-size 1.5rem
+    color #ffffff
+    margin 0 0 0.5rem 0
   
   p
-    margin 0
     font-size 1rem
+    margin 0
+    opacity 0.8
 
 @keyframes spin
   0%

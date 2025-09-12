@@ -1,66 +1,105 @@
-<template lang="pug">
-.modern-page-blocks
-  .page-header
-    .container
-      .page-title
-        h1 Blocks
-        p Explore the latest blocks on the Xian blockchain
-      
-      .page-actions
-        .pagination-controls(v-if="blocks.length > 0")
-          router-link.btn.btn-secondary(:to="{ path: '/blocks', query: prevQuery }" v-if="hasPrevPage")
-            i.material-icons chevron_left
-            span Previous
-          router-link.btn.btn-secondary(:to="{ path: '/blocks', query: nextQuery }" v-if="hasNextPage")
-            span Next
-            i.material-icons chevron_right
-        
-        a.btn.btn-outline(:href="jsonUrl" target="_blank" v-if="jsonUrl")
-          i.material-icons code
-          span JSON
+<template>
+  <div class="modern-page-blocks">
+    <!-- Header Section -->
+    <div class="page-header">
+      <div class="header-content">
+        <h1 class="page-title">Blocks</h1>
+        <p class="page-description">
+          Explore the latest blocks on the Xian blockchain. View block details, transactions, and timestamps.
+        </p>
+      </div>
+    </div>
 
-  .page-content
-    .container
-      .blocks-table-container(v-if="blocks.length > 0")
-        .table-header
-          .table-info
-            span Showing {{ blocks.length }} blocks
-            span.range(v-if="minHeight && maxHeight") ({{ num.prettyInt(minHeight) }} - {{ num.prettyInt(maxHeight) }})
-        
-        .table-container
-          table.modern-table
-            thead
-              tr
-                th Height
-                th Time
-                th Last Commit Hash
-            
-            tbody
-              tr.table-row(v-for="block in blocks" :key="block.header.height")
-                td.height-cell
-                  router-link.block-link(:to="`/blocks/${block.header.height}`")
-                    .block-number {{ num.prettyInt(block.header.height) }}
+    <!-- Main Content -->
+    <div class="main-content">
+      <div class="content-container">
+        <!-- Table Controls -->
+        <div class="table-controls">
+          <div class="pagination-controls">
+            <router-link 
+              v-if="hasPrevPage"
+              :to="{ path: '/blocks', query: prevQuery }" 
+              class="nav-button prev-button"
+            >
+              <i class="material-icons">chevron_left</i>
+              Previous
+            </router-link>
+            <router-link 
+              v-if="hasNextPage"
+              :to="{ path: '/blocks', query: nextQuery }" 
+              class="nav-button next-button"
+            >
+              Next
+              <i class="material-icons">chevron_right</i>
+            </router-link>
+          </div>
+          <div class="page-info">
+            <span v-if="blocks.length > 0">Showing {{ blocks.length }} blocks</span>
+            <span v-if="minHeight && maxHeight" class="range">({{ num.prettyInt(minHeight) }} - {{ num.prettyInt(maxHeight) }})</span>
+          </div>
+          <div class="json-link" v-if="jsonUrl">
+            <a :href="jsonUrl" target="_blank" class="json-button">
+              <i class="material-icons">code</i>
+              JSON
+            </a>
+          </div>
+        </div>
+
+        <!-- Blocks Table -->
+        <div class="table-container" v-if="blocks.length > 0">
+          <table class="modern-table">
+            <thead>
+              <tr>
+                <th>Height</th>
+                <th>Time</th>
+                <th>Last Commit Hash</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="block in blocks" :key="block.header.height" class="table-row">
+                <td class="height-cell">
+                  <router-link :to="`/blocks/${block.header.height}`" class="block-link">
+                    <div class="block-number">{{ num.prettyInt(block.header.height) }}</div>
+                  </router-link>
+                </td>
                 
-                td.time-cell
-                  .time-display
-                    .time-main {{ formatTime(block.header.time) }}
-                    .time-ago {{ getTimeAgo(block.header.time) }}
+                <td class="time-cell">
+                  <div class="time-display">
+                    <div class="time-main">{{ formatTime(block.header.time) }}</div>
+                    <div class="time-ago">{{ getTimeAgo(block.header.time) }}</div>
+                  </div>
+                </td>
                 
-                td.hash-cell
-                  .hash-display
-                    .hash-text {{ block.header.last_commit_hash }}
-                    button.copy-btn(@click="copyToClipboard(block.header.last_commit_hash)")
-                      i.material-icons content_copy
+                <td class="hash-cell">
+                  <div class="hash-display">
+                    <div class="hash-text">{{ block.header.last_commit_hash }}</div>
+                    <button class="copy-btn" @click="copyToClipboard(block.header.last_commit_hash)">
+                      <i class="material-icons">content_copy</i>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
 
-      .loading-state(v-else-if="loading")
-        .loading-spinner
-        p Loading blocks...
+        <!-- Loading State -->
+        <div v-else-if="loading" class="loading-state">
+          <div class="loading-spinner"></div>
+          <p>Loading blocks...</p>
+        </div>
 
-      .empty-state(v-else)
-        .empty-icon
-          i.material-icons block
-        h3 No blocks found
-        p Unable to load blockchain data at this time.
+        <!-- Empty State -->
+        <div v-else class="empty-state">
+          <div class="empty-icon">
+            <i class="material-icons">block</i>
+          </div>
+          <h3>No blocks found</h3>
+          <p>Unable to load blockchain data at this time.</p>
+        </div>
+      </div>
+    </div>
+  </div>
 </template>
 
 <script>
@@ -188,79 +227,102 @@ export default {
 }
 </script>
 
-<style lang="stylus">
+<style lang="stylus" scoped>
 .modern-page-blocks
-  background var(--bg-app)
+  min-height calc(100vh - 72px)
+  background linear-gradient(135deg, #0f1419 0%, #1a2332 100%)
+  color #ffffff
 
 .page-header
-  background linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 100%)
-  padding 3rem 0 2rem
-  border-bottom 1px solid var(--border-color)
-  
-  .container
-    display flex
-    justify-content space-between
-    align-items flex-end
-    gap 2rem
-    
-    @media (max-width: 768px)
-      flex-direction column
-      align-items flex-start
-      gap 1.5rem
+  background linear-gradient(135deg, rgba(20, 184, 166, 0.1) 0%, rgba(59, 130, 246, 0.1) 100%)
+  border-bottom 1px solid rgba(255, 255, 255, 0.1)
+  padding 3rem 0
+
+.header-content
+  max-width 1200px
+  margin 0 auto
+  padding 0 2rem
 
 .page-title
-  h1
-    font-size 2.5rem
-    font-weight 700
-    color var(--text-primary)
-    margin 0 0 0.5rem
-    
-    @media (max-width: 768px)
-      font-size 2rem
-  
-  p
-    font-size 1.1rem
-    color var(--text-secondary)
-    margin 0
-    opacity 0.9
+  font-size 3rem
+  font-weight 700
+  margin 0 0 1rem 0
+  background linear-gradient(135deg, #14b8a6 0%, #3b82f6 100%)
+  -webkit-background-clip text
+  -webkit-text-fill-color transparent
+  background-clip text
 
-.page-actions
+.page-description
+  font-size 1.125rem
+  color rgba(255, 255, 255, 0.7)
+  margin 0 auto
+  max-width 600px
+  text-align center
+
+.main-content
+  padding 2rem 0
+
+.content-container
+  max-width 1200px
+  margin 0 auto
+  padding 0 2rem
+
+.table-controls
   display flex
+  justify-content space-between
   align-items center
+  margin-bottom 2rem
+  flex-wrap wrap
   gap 1rem
-  
-  @media (max-width: 768px)
-    width 100%
-    justify-content space-between
 
 .pagination-controls
   display flex
   gap 0.5rem
 
-.page-content
-  padding 2rem 0
+.nav-button
+  display flex
+  align-items center
+  gap 0.5rem
+  padding 0.75rem 1.5rem
+  background rgba(255, 255, 255, 0.1)
+  color #ffffff
+  text-decoration none
+  border-radius 8px
+  border 1px solid rgba(255, 255, 255, 0.2)
+  transition all 0.2s ease
+  font-weight 500
 
-.blocks-table-container
-  background var(--bg-card)
-  border-radius var(--border-radius-lg)
-  border 1px solid var(--border-color)
-  overflow hidden
-  box-shadow var(--shadow-card)
+  &:hover
+    background rgba(255, 255, 255, 0.2)
+    border-color rgba(255, 255, 255, 0.3)
+    transform translateY(-1px)
 
-.table-header
-  padding 1.5rem
-  border-bottom 1px solid var(--border-color)
-  background var(--bg-card-header)
+.page-info
+  color rgba(255, 255, 255, 0.7)
+  font-size 0.9rem
   
-  .table-info
+  .range
+    margin-left 0.5rem
+    opacity 0.8
+
+.json-link
+  .json-button
     display flex
     align-items center
-    gap 1rem
-    font-size 0.9rem
-    color var(--text-secondary)
-    
-    .range
-      color var(--text-dim)
+    gap 0.5rem
+    padding 0.75rem 1.5rem
+    background rgba(20, 184, 166, 0.2)
+    color #14b8a6
+    text-decoration none
+    border-radius 8px
+    border 1px solid rgba(20, 184, 166, 0.3)
+    transition all 0.2s ease
+    font-weight 500
+
+    &:hover
+      background rgba(20, 184, 166, 0.3)
+      border-color rgba(20, 184, 166, 0.5)
+      transform translateY(-1px)
 
 .table-container
   background rgba(255, 255, 255, 0.05)
@@ -303,112 +365,109 @@ export default {
 .height-cell
   width 120px
 
+.block-link
+  text-decoration none
+  color inherit
+  
+  &:hover .block-number
+    color #14b8a6
+
+.block-number
+  font-size 1.1rem
+  font-weight 600
+  color #ffffff
+  transition color 0.2s ease
+
 .time-cell
   width 200px
 
-.hash-cell
-  min-width 0
-
-.block-link
-  text-decoration none
-  color #14b8a6
-  font-weight 600
-  font-size 1rem
-  transition color 0.2s ease
-  
-  &:hover
-    color #10b981
-    text-decoration underline
-
-.block-number
-  font-family 'JetBrains Mono', monospace
-
 .time-display
-  display flex
-  flex-direction column
-  gap 0.25rem
-
   .time-main
-    font-size 0.9rem
+    font-size 0.95rem
     color #ffffff
     font-weight 500
+    margin-bottom 0.25rem
   
   .time-ago
-    font-size 0.75rem
-    color rgba(255, 255, 255, 0.5)
+    font-size 0.8rem
+    color rgba(255, 255, 255, 0.6)
 
-.hash-display
-  display flex
-  align-items center
-  gap 0.5rem
-  min-width 0
-  
-  .hash-text
-    font-family 'JetBrains Mono', monospace
-    font-size 0.85rem
-    color #ffffff
-    overflow hidden
-    text-overflow ellipsis
-    white-space nowrap
-    flex 1
+.hash-cell
+  .hash-display
+    display flex
+    align-items center
+    gap 1rem
     
-    @media (max-width: 768px)
-      font-size 0.75rem
-  
-  .copy-btn
-    background none
-    border none
-    color rgba(255, 255, 255, 0.5)
-    cursor pointer
-    padding 0.25rem
-    border-radius 4px
-    transition all 0.2s ease
-    flex-shrink 0
+    .hash-text
+      font-family 'Monaco', 'Menlo', 'Ubuntu Mono', monospace
+      font-size 0.85rem
+      color rgba(255, 255, 255, 0.8)
+      word-break break-all
+      flex 1
     
-    &:hover
-      color #14b8a6
-      background rgba(255, 255, 255, 0.05)
-    
-    i
-      font-size 1rem
+    .copy-btn
+      background rgba(255, 255, 255, 0.1)
+      border 1px solid rgba(255, 255, 255, 0.2)
+      border-radius 6px
+      padding 0.5rem
+      color rgba(255, 255, 255, 0.7)
+      cursor pointer
+      transition all 0.2s ease
+      
+      &:hover
+        background rgba(255, 255, 255, 0.2)
+        color #ffffff
+        transform scale(1.05)
+      
+      i
+        font-size 1rem
 
 .loading-state
-  text-align center
+  display flex
+  flex-direction column
+  align-items center
+  justify-content center
   padding 4rem 2rem
-  color var(--text-secondary)
+  color rgba(255, 255, 255, 0.7)
   
   .loading-spinner
     width 40px
     height 40px
-    border 3px solid var(--border-color)
-    border-top 3px solid var(--primary)
+    border 3px solid rgba(255, 255, 255, 0.1)
+    border-top 3px solid #14b8a6
     border-radius 50%
     animation spin 1s linear infinite
-    margin 0 auto 1rem
+    margin-bottom 1rem
   
   p
-    margin 0
     font-size 1.1rem
+    margin 0
 
 .empty-state
-  text-align center
+  display flex
+  flex-direction column
+  align-items center
+  justify-content center
   padding 4rem 2rem
-  color var(--text-secondary)
+  color rgba(255, 255, 255, 0.7)
+  text-align center
   
   .empty-icon
-    margin-bottom 1rem
+    margin-bottom 1.5rem
     
     i
       font-size 3rem
-      color var(--text-dim)
+      color rgba(255, 255, 255, 0.3)
   
   h3
-    margin 0 0 0.5rem
-    color var(--text-primary)
+    font-size 1.5rem
+    color #ffffff
+    margin 0 0 0.5rem 0
   
   p
-    margin 0
     font-size 1rem
+    margin 0
+    opacity 0.8
 
 @keyframes spin
   0%
