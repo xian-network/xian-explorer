@@ -107,9 +107,9 @@
                   <tbody>
                     <tr v-for="holder in holders" :key="holder.address">
                       <td>
-                        <router-link :to="`/addresses/${holder.address}`" class="address-link">
-                          {{ holder.address }}
-                        </router-link>
+                         <router-link :to="`/addresses/${holder.address}`" class="address-link">
+                            {{ holder.display || holder.address }}
+                          </router-link>
                       </td>
                       <td class="balance-cell">
                         <span class="balance-amount">{{ formatBalance(holder.balance) }}</span>
@@ -131,7 +131,7 @@
                   <span class="page-info">Page {{ currentPage }}</span>
                   <button 
                     @click="nextPage" 
-                    :disabled="holders.length < pageSize"
+                    :disabled="!hasMoreHolders"
                     class="pagination-button"
                   >
                     Next
@@ -167,7 +167,9 @@ export default {
       holders: [],
       tokenSymbols: new Map(),
       currentPage: 1,
-      pageSize: 20
+      pageSize: 20,
+      hasMoreHolders: false,          // NEW
+    xnsCache: new Map(),            // NEW - cache XNS lookups
     }
   },
   computed: {
@@ -213,6 +215,33 @@ export default {
     }
   },
   methods: {
+    async resolveXnsName(address) {
+    if (this.xnsCache.has(address)) return this.xnsCache.get(address)
+    try {
+      const payload = {
+        sender: "",
+        contract: "con_name_service_final",
+        function: "get_address_to_main_name",
+        kwargs: { address }
+      }
+      const bytes = new TextEncoder().encode(JSON.stringify(payload))
+      const hex = Array.from(bytes).map(x => ("00" + x.toString(16)).slice(-2)).join("")
+      const resp = await fetch(`${this.blockchain.rpc}/abci_query?path="/simulate_tx/${hex}"`)
+      const json = await resp.json()
+      const v = json && json.result && json.result.response && json.result.response.value
+      if (!v) { this.xnsCache.set(address, ""); return "" }
+      const decoded = JSON.parse(atob(v))
+      const name = (decoded.status !== 1 && decoded.result && decoded.result !== "None")
+        ? decoded.result.replace(/'/g, "")
+        : ""
+      this.xnsCache.set(address, name)
+      return name
+    } catch (e) {
+      console.error("Error resolving XNS name:", e)
+      this.xnsCache.set(address, "")
+      return ""
+    }
+  },
     async fetchToken(contractName) {
       this.loading = true
       this.error = null
@@ -289,67 +318,84 @@ export default {
     },
     
     async fetchHolders(contractName) {
-      try {
-        const query = `
-          query TokenHolders {
-            allStates(
-              filter: { 
-                key: { startsWith: "${contractName}.balances:" }
-              }
-              first: ${this.pageSize}
-              offset: ${(this.currentPage - 1) * this.pageSize}
-            ) {
-              edges {
-                node {
-                  key
-                  value
-                }
-              }
+  try {
+    const first = this.pageSize + 1       // fetch one extra to know if next page exists
+    const offset = (this.currentPage - 1) * this.pageSize
+    const query = `
+      query TokenHolders($keyPrefix:String!, $first:Int!, $offset:Int!){
+        allStates(
+          filter:{
+            and:{
+              key:{ startsWith:$keyPrefix, notLike:"%:%:%" }
+              valueNumeric:{ greaterThan:"0" }
             }
           }
-        `
-        
-        const response = await axios.post(`${this.blockchain.rpc}/graphql`, { query })
-        const data = response.data.data
-        
-        this.holders = data.allStates.edges
-          .map(edge => ({
-            address: edge.node.key.split(':')[1],
-            balance: parseFloat(edge.node.value) || 0
-          }))
-          .filter(holder => holder.balance > 0)
-          .sort((a, b) => b.balance - a.balance)
-        
-      } catch (error) {
-        console.error('Error fetching holders:', error)
-        this.holders = []
+          orderBy: VALUE_NUMERIC_DESC
+          first:$first
+          offset:$offset
+        ){
+          edges{ node{ key value } }
+        }
+      }`
+    const variables = { keyPrefix: `${contractName}.balances:`, first, offset }
+
+    const response = await axios.post(`${this.blockchain.rpc}/graphql`, { query, variables })
+    const data = response && response.data && response.data.data ? response.data.data : {}
+const edges = data.allStates && data.allStates.edges ? data.allStates.edges : []
+
+    // determine if there's another page
+    this.hasMoreHolders = edges.length > this.pageSize
+
+    // take only this page
+    const pageEdges = edges.slice(0, this.pageSize)
+
+    // map to holders (with XNS display)
+    this.holders = await Promise.all(pageEdges.map(async ({ node }) => {
+      const parts = String(node.key).split(':')
+      const address = parts[1] || ""      // address is the first segment after the colon
+      const display = await this.resolveXnsName(address)
+      return {
+        address,
+        display: display || address,
+        balance: parseFloat(node.value) || 0
       }
-    },
+    }))
+  } catch (error) {
+    console.error('Error fetching holders:', error)
+    this.holders = []
+    this.hasMoreHolders = false
+  }
+},
+
     
     async fetchHolderCount(contractName) {
-      try {
-        const query = `
-          query TokenHolderCount {
-            allStates(
-              filter: { 
-                key: { startsWith: "${contractName}.balances:" }
-              }
-            ) {
-              totalCount
+  try {
+    const query = `
+      query HolderCount($prefix:String!){
+        allStates(
+          filter:{
+            and:{
+              key:{ startsWith:$prefix, notLike:"%:%:%" }
+              valueNumeric:{ greaterThan:"0" }
             }
           }
-        `
-        
-        const response = await axios.post(`${this.blockchain.rpc}/graphql`, { query })
-        const data = response.data.data
-        
-        this.tokenData.holder_count = data.allStates.totalCount || 0
-        
-      } catch (error) {
-        console.error('Error fetching holder count:', error)
-        this.tokenData.holder_count = 0
-      }
-    },
+        ){
+          totalCount
+        }
+      }`
+    const variables = { prefix: `${contractName}.balances:` }
+    const response = await axios.post(`${this.blockchain.rpc}/graphql`, { query, variables })
+    const d = response && response.data && response.data.data ? response.data.data : {}
+const total = d.allStates && typeof d.allStates.totalCount !== 'undefined'
+  ? d.allStates.totalCount
+  : 0
+this.tokenData.holder_count = total
+  } catch (error) {
+    console.error('Error fetching holder count:', error)
+    this.tokenData.holder_count = 0
+  }
+},
+
     
     formatNumber(num) {
       if (!num) return '0'
@@ -370,18 +416,17 @@ export default {
     },
     
     nextPage() {
-      if (this.holders.length >= this.pageSize) {
-        this.currentPage++
-        this.fetchHolders(this.$route.params.contract)
-      }
-    },
-    
-    prevPage() {
-      if (this.currentPage > 1) {
-        this.currentPage--
-        this.fetchHolders(this.$route.params.contract)
-      }
-    }
+  if (this.hasMoreHolders) {
+    this.currentPage++
+    this.fetchHolders(this.$route.params.contract)
+  }
+},
+prevPage() {
+  if (this.currentPage > 1) {
+    this.currentPage--
+    this.fetchHolders(this.$route.params.contract)
+  }
+}
   }
 }
 </script>
