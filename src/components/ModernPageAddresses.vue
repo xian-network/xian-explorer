@@ -186,22 +186,69 @@ export default {
         const page = parseInt(this.$route.query.page) || 1;
         this.currentPage = page;
 
-        const response = await axios.get(`${this.rpc}/richlist`, {
-          params: {
-            page: page
+        const offset = (this.currentPage - 1) * this.itemsPerPage;
+        const query = `
+          query RichList($limit: Int!, $offset: Int!) {
+            allStates(
+              filter: {and: {key: {startsWith: "currency.balances:", notLike: "%:%:%"}, valueNumeric: {greaterThan: "0"}}}
+              first: $limit
+              offset: $offset
+              orderBy: VALUE_NUMERIC_DESC
+            ) {
+              edges {
+                node {
+                  key
+                  value
+                }
+              }
+            }
           }
-        });
+        `;
 
-        // Process addresses and resolve names
-        const addressPromises = response.data.map(async (wallet) => {
-          const displayName = await execute_get_address_to_main_name(wallet.address, this.rpc);
+        const variables = {
+          limit: this.itemsPerPage,
+          offset: offset
+        };
+
+        // 1) Fetch addresses & balances from GraphQL
+        const response = await axios.post(`${this.blockchain.rpc}/graphql`, {
+          query,
+          variables
+        });
+        const edges = response.data.data.allStates.edges;
+
+        // 2) Map to simple objects
+        let addressesData = edges.map((edge) => {
+          const { key, value } = edge.node;
+          // key is something like "currency.balances:abcdef123..."
+          const address = key.split(":")[1];
           return {
-            ...wallet,
-            displayName: displayName
+            address,
+            balance: parseFloat(value).toFixed(8),
+            displayName: null
           };
         });
 
-        this.addresses = await Promise.all(addressPromises);
+        // 3) Look up each address's main name from the Name Service
+        const resolvedNames = await Promise.all(
+          addressesData.map((item) =>
+            execute_get_address_to_main_name(item.address, this.blockchain.rpc)
+          )
+        );
+
+        // 4) Insert name into the array if it's not "None"
+        addressesData = addressesData.map((item, i) => {
+          const maybeName = resolvedNames[i];
+          if (maybeName !== "None" && maybeName) {
+            item.displayName = maybeName;
+          } else {
+            item.displayName = item.address;
+          }
+          return item;
+        });
+
+        // 5) Finalize
+        this.addresses = addressesData;
       } catch (error) {
         console.error("Error fetching addresses:", error);
         this.addresses = [];
@@ -244,8 +291,9 @@ export default {
 .page-description
   font-size 1.125rem
   color rgba(255, 255, 255, 0.7)
-  margin 0
+  margin 0 auto
   max-width 600px
+  text-align center
 
 .main-content
   padding 2rem 0

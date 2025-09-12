@@ -27,40 +27,43 @@
             span Showing {{ transactions.length }} transactions
             span.page-info(v-if="currentPage > 1") (Page {{ currentPage }})
         
-        .modern-table
-          .table-header-row
-            .table-cell.time-col Time
-            .table-cell.hash-col Transaction Hash
-            .table-cell.contract-col Contract
-            .table-cell.function-col Function
-            .table-cell.fee-col Fee
-          
-          .table-row(v-for="tx in transactions" :key="tx.hash")
-            .table-cell.time-col
-              .time-display
-                .time-main {{ tx.formattedTime }}
-                .time-ago {{ getTimeAgo(tx.formattedTime) }}
+        .table-container
+          table.modern-table
+            thead
+              tr
+                th Time
+                th Transaction Hash
+                th Contract
+                th Function
+                th Fee
             
-            .table-cell.hash-col
-              .hash-display
-                router-link.tx-link(:to="`/tx/${tx.hash}`")
-                  .hash-text {{ shortenHash(tx.hash) }}
-                button.copy-btn(@click="copyToClipboard(tx.hash)")
-                  i.material-icons content_copy
-            
-            .table-cell.contract-col
-              .contract-display
-                .contract-name {{ shortenText(tx.contract) }}
-                .contract-type(v-if="getContractType(tx.contract)") {{ getContractType(tx.contract) }}
-            
-            .table-cell.function-col
-              .function-display
-                .function-name {{ shortenText(tx.function) }}
-            
-            .table-cell.fee-col
-              .fee-display
-                .xian-fee {{ tx.feeXian }} XIAN
-                .stamps {{ num.prettyInt(tx.stamps) }} stamps
+            tbody
+              tr.table-row(v-for="tx in transactions" :key="tx.hash")
+                td.time-cell
+                  .time-display
+                    .time-main {{ tx.formattedTime }}
+                    .time-ago {{ getTimeAgo(tx.formattedTime) }}
+                
+                td.hash-cell
+                  .hash-display
+                    router-link.tx-link(:to="`/tx/${tx.hash}`")
+                      .hash-text {{ shortenHash(tx.hash) }}
+                    button.copy-btn(@click="copyToClipboard(tx.hash)")
+                      i.material-icons content_copy
+                
+                td.contract-cell
+                  .contract-display
+                    .contract-name {{ shortenText(tx.contract) }}
+                    .contract-type(v-if="getContractType(tx.contract)") {{ getContractType(tx.contract) }}
+                
+                td.function-cell
+                  .function-display
+                    .function-name {{ shortenText(tx.function) }}
+                
+                td.fee-cell
+                  .fee-display
+                    .xian-fee {{ tx.feeXian }} XIAN
+                    .stamps {{ num.prettyInt(tx.stamps) }} stamps
 
       .loading-state(v-else-if="loading")
         .loading-spinner
@@ -77,7 +80,7 @@
 import axios from "axios";
 import moment from "moment";
 import num from "../scripts/num";
-import { decodeData } from "../scripts/tx";
+
 import { mapGetters } from "vuex";
 
 const maxItemsPerPage = 20;

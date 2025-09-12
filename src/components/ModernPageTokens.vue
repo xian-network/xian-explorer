@@ -107,53 +107,125 @@ export default {
   },
   computed: {
     ...mapGetters([
-      "blockchain",
-      "rpc"
+      "blockchain"
     ]),
     hasPrevPage() {
-      return this.currentPage > 1;
+      return this.offset > 0;
     },
     hasNextPage() {
       return this.contracts.length === this.itemsPerPage;
     },
     prevQuery() {
-      const prevPage = Math.max(1, this.currentPage - 1);
-      return prevPage === 1 ? {} : { page: prevPage };
+      const newOffset = Math.max(this.offset - this.itemsPerPage, 0);
+      return {
+        offset: newOffset,
+      };
     },
     nextQuery() {
-      return { page: this.currentPage + 1 };
+      const newOffset = this.offset + this.itemsPerPage;
+      return {
+        offset: newOffset,
+      };
     }
   },
-  async mounted() {
-    await this.fetchTokens();
-  },
   watch: {
-    '$route'() {
-      this.fetchTokens();
+    '$route': {
+      immediate: true,
+      handler(newRoute) {
+        let offset = newRoute.query.offset || 0;
+        this.fetchContracts(offset);
+      }
     }
   },
   methods: {
-    async fetchTokens() {
+    async fetchContracts(offset = 0) {
       this.loading = true;
-      try {
-        const page = parseInt(this.$route.query.page) || 1;
-        this.currentPage = page;
-        this.offset = (page - 1) * this.itemsPerPage;
+      this.offset = Number(offset) || 0;
 
-        const response = await axios.get(`${this.rpc}/tokens`, {
-          params: {
-            offset: this.offset,
-            limit: this.itemsPerPage
+      try {
+        // First query - get the contracts we want
+        const contractListQuery = `
+          query TokenContracts($first: Int!, $offset: Int!) {
+            allContracts(
+              first:  $first
+              offset: $offset
+              orderBy: CREATED_DESC
+              filter: { xsc0001: { equalTo: true } }
+            ) {
+              nodes { name created }
+            }
           }
+        `;
+        const { data } = await axios.post(
+          `${this.blockchain.rpc}/graphql`,
+          { query: contractListQuery, variables: {
+              first: this.itemsPerPage, offset: this.offset
+          }}
+        );
+
+        const nodes =
+          (data &&
+           data.data &&
+           data.data.allContracts &&
+           data.data.allContracts.nodes) || [];
+        if (!nodes.length) { 
+          this.contracts = []; 
+          this.loading = false;
+          return; 
+        }
+
+        // Build the list of metadata keys we need
+        const metaKeys = [];
+        nodes.forEach(({ name }) => {
+          metaKeys.push(`${name}.metadata:token_name`);
+          metaKeys.push(`${name}.metadata:token_symbol`);
         });
 
-        this.contracts = response.data.map(contract => ({
-          ...contract,
-          submissionDate: this.formatDateForDisplay(contract.submissionDate)
-        }));
+        // Second query - pull the metadata in one call
+        const metaQuery = `
+          query TokenMeta($keys:[String!]!) {
+            allStates(filter:{ key:{ in:$keys } }) {
+              edges { node { key value } }
+            }
+          }
+        `;
+        const metaResp = await axios.post(
+          `${this.blockchain.rpc}/graphql`,
+          { query: metaQuery, variables: { keys: metaKeys } }
+        );
+        const metaEdges =
+          (metaResp &&
+           metaResp.data &&
+           metaResp.data.data &&
+           metaResp.data.data.allStates &&
+           metaResp.data.data.allStates.edges) || [];
 
-        // Set JSON URL
-        this.jsonUrl = `${this.rpc}/tokens?offset=${this.offset}&limit=${this.itemsPerPage}`;
+        // Build a lookup: { con_usdc: { token_name:'USDC', ... } }
+        const metaMap = {};
+        metaEdges.forEach(({ node }) => {
+          const [contractDotMeta, field] = node.key.split(":");
+          const contract = contractDotMeta.replace(".metadata", "");
+          if (!metaMap[contract]) metaMap[contract] = {};
+          metaMap[contract][field] = node.value;
+        });
+
+        // Final combine & format
+        this.contracts = nodes.map(c => {
+          const m = metaMap[c.name] || {};
+          const display =
+            m.token_name
+              ? `${m.token_name}${m.token_symbol ? " (" + m.token_symbol + ")" : ""}`
+              : c.name;
+          return {
+            name: c.name,
+            display,
+            submissionDate: new Date(c.created).toLocaleString()
+          };
+        });
+
+        // Set JSON URL for debugging
+        this.jsonUrl = `${this.blockchain.rpc}/graphql?query=${encodeURIComponent(contractListQuery)}`;
+        
       } catch (error) {
         console.error("Error fetching tokens:", error);
         this.contracts = [];
@@ -161,12 +233,20 @@ export default {
         this.loading = false;
       }
     },
+
+    handlePageChange(newOffset) {
+      this.$router.push({ path: "/tokens", query: { offset: newOffset } });
+    },
+
+    async fetchTokens() {
+      // Legacy method - redirect to fetchContracts
+      await this.fetchContracts(this.offset);
+    },
+
     formatDate(dateString) {
       return moment(dateString).format('MMM D, YYYY [at] h:mm A');
     },
-    formatDateForDisplay(dateString) {
-      return moment(dateString).format('M/D/YYYY, h:mm:ss A');
-    },
+
     getRelativeTime(dateString) {
       return moment(dateString).fromNow();
     }
@@ -202,8 +282,9 @@ export default {
 .page-description
   font-size 1.125rem
   color rgba(255, 255, 255, 0.7)
-  margin 0
+  margin 0 auto
   max-width 600px
+  text-align center
 
 .main-content
   padding 2rem 0

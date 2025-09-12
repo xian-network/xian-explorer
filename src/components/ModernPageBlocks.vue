@@ -27,27 +27,30 @@
             span Showing {{ blocks.length }} blocks
             span.range(v-if="minHeight && maxHeight") ({{ num.prettyInt(minHeight) }} - {{ num.prettyInt(maxHeight) }})
         
-        .modern-table
-          .table-header-row
-            .table-cell.height-col Height
-            .table-cell.time-col Time
-            .table-cell.hash-col Last Commit Hash
-          
-          .table-row(v-for="block in blocks" :key="block.header.height")
-            .table-cell.height-col
-              router-link.block-link(:to="`/blocks/${block.header.height}`")
-                .block-number {{ num.prettyInt(block.header.height) }}
+        .table-container
+          table.modern-table
+            thead
+              tr
+                th Height
+                th Time
+                th Last Commit Hash
             
-            .table-cell.time-col
-              .time-display
-                .time-main {{ formatTime(block.header.time) }}
-                .time-ago {{ getTimeAgo(block.header.time) }}
-            
-            .table-cell.hash-col
-              .hash-display
-                .hash-text {{ block.header.last_commit_hash }}
-                button.copy-btn(@click="copyToClipboard(block.header.last_commit_hash)")
-                  i.material-icons content_copy
+            tbody
+              tr.table-row(v-for="block in blocks" :key="block.header.height")
+                td.height-cell
+                  router-link.block-link(:to="`/blocks/${block.header.height}`")
+                    .block-number {{ num.prettyInt(block.header.height) }}
+                
+                td.time-cell
+                  .time-display
+                    .time-main {{ formatTime(block.header.time) }}
+                    .time-ago {{ getTimeAgo(block.header.time) }}
+                
+                td.hash-cell
+                  .hash-display
+                    .hash-text {{ block.header.last_commit_hash }}
+                    button.copy-btn(@click="copyToClipboard(block.header.last_commit_hash)")
+                      i.material-icons content_copy
 
       .loading-state(v-else-if="loading")
         .loading-spinner
@@ -64,7 +67,7 @@
 import axios from "axios"
 import moment from "moment"
 import num from "../scripts/num"
-import { orderBy } from "lodash"
+
 
 import { mapGetters } from "vuex"
 import { readableDate } from "../scripts/utils"
@@ -258,81 +261,80 @@ export default {
     .range
       color var(--text-dim)
 
+.table-container
+  background rgba(255, 255, 255, 0.05)
+  border-radius 12px
+  overflow hidden
+  border 1px solid rgba(255, 255, 255, 0.1)
+
 .modern-table
-  .table-header-row
-    display grid
-    grid-template-columns 120px 200px 1fr
-    gap 1rem
-    padding 1rem 1.5rem
-    background var(--bg-table-header)
-    border-bottom 1px solid var(--border-color)
-    font-weight 600
-    font-size 0.85rem
-    text-transform uppercase
-    letter-spacing 0.5px
-    color var(--text-secondary)
-    
-    @media (max-width: 768px)
-      grid-template-columns 100px 150px 1fr
-      gap 0.5rem
-      padding 1rem
+  width 100%
+  border-collapse collapse
 
-  .table-row
-    display grid
-    grid-template-columns 120px 200px 1fr
-    gap 1rem
-    padding 1rem 1.5rem
-    border-bottom 1px solid var(--border-color)
-    transition all 0.2s ease
+  thead
+    background rgba(255, 255, 255, 0.1)
     
-    @media (max-width: 768px)
-      grid-template-columns 100px 150px 1fr
-      gap 0.5rem
-      padding 1rem
-    
-    &:hover
-      background var(--bg-hover)
-    
-    &:last-child
-      border-bottom none
+    th
+      padding 1.5rem 2rem
+      text-align left
+      font-weight 600
+      font-size 0.875rem
+      text-transform uppercase
+      letter-spacing 0.05em
+      color rgba(255, 255, 255, 0.8)
+      border-bottom 1px solid rgba(255, 255, 255, 0.1)
 
-.table-cell
-  display flex
-  align-items center
-  
-  &.height-col
-    justify-content flex-start
-  
-  &.time-col
-    justify-content flex-start
-  
-  &.hash-col
-    justify-content flex-start
-    min-width 0
+  tbody
+    .table-row
+      border-bottom 1px solid rgba(255, 255, 255, 0.05)
+      transition all 0.2s ease
+      
+      &:hover
+        background rgba(255, 255, 255, 0.05)
+      
+      &:last-child
+        border-bottom none
+
+      td
+        padding 1.5rem 2rem
+        vertical-align middle
+
+.height-cell
+  width 120px
+
+.time-cell
+  width 200px
+
+.hash-cell
+  min-width 0
 
 .block-link
   text-decoration none
-  color var(--primary)
+  color #14b8a6
   font-weight 600
   font-size 1rem
   transition color 0.2s ease
   
   &:hover
-    color var(--primary-light)
+    color #10b981
     text-decoration underline
 
 .block-number
-  font-family var(--font-mono)
+  font-family 'JetBrains Mono', monospace
 
 .time-display
+  display flex
+  flex-direction column
+  gap 0.25rem
+
   .time-main
     font-size 0.9rem
-    color var(--text-primary)
-    margin-bottom 0.25rem
+    color #ffffff
+    font-weight 500
   
   .time-ago
     font-size 0.75rem
-    color var(--text-dim)
+    color rgba(255, 255, 255, 0.5)
 
 .hash-display
   display flex
@@ -341,9 +343,9 @@ export default {
   min-width 0
   
   .hash-text
-    font-family var(--font-mono)
+    font-family 'JetBrains Mono', monospace
     font-size 0.85rem
-    color var(--text-primary)
+    color #ffffff
     overflow hidden
     text-overflow ellipsis
     white-space nowrap
@@ -355,16 +357,16 @@ export default {
   .copy-btn
     background none
     border none
-    color var(--text-dim)
+    color rgba(255, 255, 255, 0.5)
     cursor pointer
     padding 0.25rem
-    border-radius var(--border-radius)
+    border-radius 4px
     transition all 0.2s ease
     flex-shrink 0
     
     &:hover
-      color var(--primary)
-      background var(--bg-hover)
+      color #14b8a6
+      background rgba(255, 255, 255, 0.05)
     
     i
       font-size 1rem
