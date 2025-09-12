@@ -44,8 +44,10 @@
         </div>
       </div>
 
-      <!-- Token Information (if applicable) -->
-      <div v-if="contract.isToken && Object.keys(tokenData).length" class="token-section">
+      <!-- Contract Content -->
+      <div class="contract-content-inner">
+        <!-- Token Information (if applicable) -->
+        <div v-if="contract.isToken && Object.keys(tokenData).length" class="token-section">
         <div class="info-card">
           <h3 class="card-title">Token Information</h3>
           <div class="card-content">
@@ -139,6 +141,7 @@
           </div>
           <pre class="code-block"><code class="hljs python" v-html="highlightedCode"></code></pre>
         </div>
+      </div>
       </div>
     </div>
   </div>
@@ -346,7 +349,7 @@ export default {
   min-height: 100vh;
   background: linear-gradient(135deg, #0f1419 0%, #1a2332 100%);
   color: #ffffff;
-  padding: 2rem;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
 /* Loading State */
@@ -408,13 +411,24 @@ export default {
 
 /* Page Header */
 .page-header {
-  margin-bottom: 2rem;
+  background: rgba(255, 255, 255, 0.02);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 2rem 0;
 }
 
 .header-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 2rem;
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
+  align-items: center;
+}
+
+.contract-content-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
 }
 
 .page-title {
@@ -695,6 +709,27 @@ export default {
 .hljs {
   background: none !important;
   color: #abb2bf;
+}
+
+/* Text Overflow Fixes */
+.info-value, .hash-value, .address-value, .url-value, .long-text {
+  word-break: break-all;
+  overflow-wrap: break-word;
+  hyphens: auto;
+  max-width: 100%;
+}
+
+.info-row td, .info-row .info-value {
+  word-break: break-all;
+  overflow-wrap: break-word;
+  max-width: 0;
+  min-width: 0;
+}
+
+.code-block {
+  word-break: break-all;
+  overflow-wrap: break-word;
+  white-space: pre-wrap;
 }
 
 /* Responsive Design */
