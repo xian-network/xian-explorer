@@ -1080,9 +1080,7 @@ export default {
     font-size: 0.875rem;
   }
 
-  .transactions-section{
-    padding-bottom: 1rem;
-  }
+  
 
   .tokens-table th, .transactions-table th,
   .tokens-table td, .transactions-table td {
@@ -1094,6 +1092,9 @@ export default {
     gap: 1rem;
   }
 }
+.transactions-section{
+    padding-bottom: 1rem;
+  }
 </style>
 <style lang="stylus" scoped>
 .table-container

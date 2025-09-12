@@ -771,10 +771,11 @@ export default {
     gap: 1rem;
   }
 
-  .holders-section{
+  
+}
+.holders-section{
     padding-bottom: 0.5rem;
   }
-}
 </style>
 <style lang="stylus" scoped>
 .table-container
