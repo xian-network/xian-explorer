@@ -228,10 +228,26 @@ export default {
     }
   },
   computed: {
-    ...mapGetters(["config"]),
+    ...mapGetters(["blockchain"]),
     jsonUrl() {
       const contractName = this.$route.params.contract
-      return `${this.config.graphqlUrl}?query=%0A%20%20%20%20%20%20%20%20%20%20query%20ContractAndToken%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20contractByName(name%3A%20%22${contractName}%22)%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20code%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20xsc0001%0A%20%20%20%20%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%20%20%20%20%20%20allStates(filter%3A%20%7B%20key%3A%20%7B%20in%3A%20%5B%22${contractName}.metadata%3Atoken_name%22%2C%20%22${contractName}.metadata%3Atoken_symbol%22%2C%20%22${contractName}.metadata%3Atoken_website%22%2C%20%22${contractName}.metadata%3Aoperator%22%2C%20%22${contractName}.metadata%3Atotal_supply%22%5D%20%7D%20%7D)%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20edges%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20node%20%7B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20key%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20value%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%20%20%20%20%7D%0A%20%20%20%20%20%20%20%20`
+      const query = `
+        query ContractAndToken {
+          contractByName(name: "${contractName}") {
+            code
+            xsc0001
+          }
+          allStates(filter: { key: { in: ["${contractName}.metadata:token_name", "${contractName}.metadata:token_symbol", "${contractName}.metadata:token_website", "${contractName}.metadata:operator", "${contractName}.metadata:total_supply"] } }) {
+            edges {
+              node {
+                key
+                value
+              }
+            }
+          }
+        }
+      `
+      return `${this.blockchain.rpc}/graphql?query=${encodeURIComponent(query)}`
     },
     operatorDisplay() {
       if (!this.tokenData.operator) return ''
@@ -277,7 +293,7 @@ export default {
           }
         `
         
-        const response = await axios.post(this.config.graphqlUrl, { query })
+        const response = await axios.post(`${this.blockchain.rpc}/graphql`, { query })
         const data = response.data.data
         
         if (!data.contractByName) {
@@ -350,7 +366,7 @@ export default {
           }
         `
         
-        const response = await axios.post(this.config.graphqlUrl, { query })
+        const response = await axios.post(`${this.blockchain.rpc}/graphql`, { query })
         const data = response.data.data
         
         this.holders = data.allStates.edges
@@ -381,7 +397,7 @@ export default {
           }
         `
         
-        const response = await axios.post(this.config.graphqlUrl, { query })
+        const response = await axios.post(`${this.blockchain.rpc}/graphql`, { query })
         const data = response.data.data
         
         this.tokenData.holder_count = data.allStates.totalCount || 0
