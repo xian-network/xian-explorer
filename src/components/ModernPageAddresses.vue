@@ -230,6 +230,8 @@ export default {
         });
 
         // 3) Look up each address's main name from the Name Service
+        // Temporarily disabled to test if this is causing the issue
+        /*
         const resolvedNames = await Promise.all(
           addressesData.map((item) =>
             execute_get_address_to_main_name(item.address, this.blockchain.rpc)
@@ -246,6 +248,13 @@ export default {
           }
           return item;
         });
+        */
+
+        // 4) Simplified - just use address as display name for now
+        addressesData = addressesData.map((item) => {
+          item.displayName = item.address;
+          return item;
+        });
 
         // 5) Finalize
         this.addresses = addressesData;
@@ -257,7 +266,7 @@ export default {
       }
     },
     formatBalance(balance) {
-      return num(balance).format('0,0.00');
+      return num.full(balance);
     }
   }
 };
