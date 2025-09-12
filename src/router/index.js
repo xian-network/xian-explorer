@@ -3,39 +3,39 @@ import Router from "vue-router"
 
 Vue.use(Router)
 
-import Index from "../components/PageIndex"
+import Index from "../components/ModernPageIndex"
 import Search from "../components/PageSearch"
-import Blocks from "../components/PageBlocks"
-import Transactions from "../components/PageTxs"
-import Block from "../components/PageBlock"
-import Tx from "../components/PageTx"
+import Blocks from "../components/ModernPageBlocks"
+import Transactions from "../components/ModernPageTxs"
+import ModernPageBlock from "../components/ModernPageBlock"
+import ModernPageTx from "../components/ModernPageTx"
 import FullNodes from "../components/PageFullNodes"
 import FullNode from "../components/PageFullNode"
 import PageValidators from "../components/PageValidators"
 import PageValidatorsIndex from "../components/PageValidatorsIndex"
 import PageValidatorsRevoked from "../components/PageValidatorsRevoked"
 import PageValidator from "../components/PageValidator"
-import PageContracts from "../components/PageContracts"
-import PageContract from "../components/PageContract"
-import PageRichlist from "../components/PageRichlist"
-import PageAddress from "../components/PageAddress"
-import PageTokens from "../components/PageTokens"
-import PageToken from "../components/PageToken"
+import PageContracts from "../components/ModernPageContracts"
+import ModernPageContract from "../components/ModernPageContract"
+import ModernPageAddresses from "../components/ModernPageAddresses"
+import ModernPageAddress from "../components/ModernPageAddress"
+import ModernPageTokens from "../components/ModernPageTokens"
+import ModernPageToken from "../components/ModernPageToken"
 
 const routes = [
   { path: "/", component: Index },
   { path: "/search", component: Search },
   { path: "/blocks", component: Blocks },
-  { path: "/blocks/:block", name: "block", component: Block },
-  { path: "/tx/:hash", name: "tx", component: Tx }, // TODO rename path to /txs
+  { path: "/blocks/:block", name: "block", component: ModernPageBlock },
+  { path: "/tx/:hash", name: "tx", component: ModernPageTx }, // TODO rename path to /txs
   { path: "/txs", component: Transactions },
   { path: "/contracts", component: PageContracts },
-  { path: "/contracts/:contract", name: "contract", component: PageContract },
-  { path: "/tokens", component: PageTokens },
-  { path: "/tokens/:token", name: "token", component: PageToken },
+  { path: "/contracts/:contract", name: "contract", component: ModernPageContract },
+  { path: "/tokens", component: ModernPageTokens },
+  { path: "/tokens/:contract", name: "token", component: ModernPageToken },
   { path: "/nodes", component: FullNodes },
-  { path: "/addresses", component: PageRichlist },
-  { path: "/addresses/:address", name:"address", component: PageAddress },
+  { path: "/addresses", component: ModernPageAddresses },
+  { path: "/addresses/:address", name:"address", component: ModernPageAddress },
   {
     name: "node",
     path: "/nodes/:node",
@@ -71,7 +71,7 @@ const routes = [
 export default new Router({
   mode: "history",
   routes: routes,
-  scrollBehavior(to, from) {
+  scrollBehavior(to) {
     if (to.hash && to.hash.length > 0) {
       return {
         selector: to.hash

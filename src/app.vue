@@ -1,22 +1,17 @@
 <template lang="pug">
-#app
-  app-header
-  #app-content
-    router-view
-    app-footer
+modern-app
 </template>
 
 <script>
 import { mapGetters } from "vuex"
-import {  TmModalError } from "@tendermint/ui"
-import AppFooter from "./components/AppFooter"
-import AppHeader from "./components/AppHeader"
+import { TmModalError } from "@tendermint/ui"
+import ModernApp from "./components/ModernApp"
 import store from "./store/index"
+
 export default {
   name: "app",
   components: {
-    AppHeader,
-    AppFooter,
+    ModernApp,
     TmModalError
   },
   computed: {
@@ -26,11 +21,11 @@ export default {
     this.$store.dispatch("getLastBlock")
     this.$store.dispatch("subNewBlock")
     this.$store.dispatch("subRoundStep")
-    //requestInterval(1000, () => this.$store.dispatch("getConsensusState"))
     this.$store.dispatch("getStatus")
-    this.$store.dispatch("getNodes") // Reenable for Node Discovery
+    this.$store.dispatch("getNodes")
     this.$store.dispatch("getValidators")
     this.loadFaviconFromAssetsFolder()
+    this.initializeModernTheme()
   },
   methods: {
     loadFaviconFromAssetsFolder() {
@@ -41,14 +36,31 @@ export default {
         favicon.type = "image/png"
         favicon.href = require("@/assets/images/logo.png")
         document.head.appendChild(favicon)
-      }
-      else {
+      } else {
         favicon.href = require("@/assets/images/logo.png")
       }
+    },
+    
+    initializeModernTheme() {
+      // Set up modern theme variables and responsive behavior
+      this.watchWindowSize()
+      window.addEventListener('resize', this.watchWindowSize)
+    },
+    
+    watchWindowSize() {
+      let w = Math.max(
+        document.documentElement.clientWidth,
+        window.innerWidth || 0
+      )
+      
+      if (w >= 1024) {
+        this.$store.commit("SET_CONFIG_DESKTOP", true)
+        return
+      }
+      this.$store.commit("SET_CONFIG_DESKTOP", false)
     }
   },
-  store,
-  
+  store
 }
 </script>
 
