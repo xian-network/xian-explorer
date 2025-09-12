@@ -129,8 +129,6 @@ html, body
   flex 1
   width 100%
   
-  // Add some top padding for content breathing room
-  padding-top var(--space-1)
 
 // Modern Footer
 .modern-footer
