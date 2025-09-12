@@ -226,7 +226,7 @@ export default {
         window.innerWidth || 0
       );
       
-      if (w >= 1024) {
+      if (w >= 1400) {
         this.closeMobileMenu();
         this.$store.commit("SET_CONFIG_DESKTOP", true);
         return;
@@ -476,13 +476,13 @@ export default {
 // Mobile Navigation
 .mobile-nav
   position fixed
-  top 72px
+  top 0
   left 0
   right 0
   bottom 0
   background var(--bg-overlay)
   backdrop-filter blur(10px)
-  z-index var(--z-modal)
+  z-index 10000
   animation slideDown var(--transition-normal)
 
 @keyframes slideDown
@@ -496,6 +496,7 @@ export default {
 .mobile-nav-content
   background var(--bg-card)
   margin var(--space-4)
+  margin-top 88px
   border-radius var(--radius-xl)
   padding var(--space-6)
   box-shadow var(--shadow-xl)
@@ -557,7 +558,7 @@ export default {
     font-size var(--text-base)
 
 // Responsive adjustments
-@media (max-width: 1024px)
+@media (max-width: 1400px)
   .header-nav
     display none
 
