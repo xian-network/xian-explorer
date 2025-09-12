@@ -47,12 +47,12 @@ header.modern-header
           .status-label Latest Block
       
       // Mobile Menu Toggle
-      .mobile-menu-toggle(v-if="!config.desktop" @click="toggleMobileMenu")
+      .mobile-menu-toggle(@click="toggleMobileMenu")
         i.material-icons(v-if="!mobileMenuOpen") menu
         i.material-icons(v-else) close
 
   // Mobile Navigation
-  .mobile-nav(v-if="!config.desktop && mobileMenuOpen")
+  .mobile-nav(v-if="mobileMenuOpen")
     .mobile-nav-content
       .mobile-search
         input.search-input(
