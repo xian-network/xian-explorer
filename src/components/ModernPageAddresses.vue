@@ -33,9 +33,7 @@
               <i class="material-icons">chevron_right</i>
             </router-link>
           </div>
-          <div class="page-info">
-            Page {{ currentPage }}
-          </div>
+         
         </div>
 
         <!-- Addresses Table -->
@@ -96,44 +94,52 @@ import axios from "axios";
 import num from "../scripts/num";
 import { mapGetters } from "vuex";
 
+// manual aliases you used before
+const ADDRESS_ALIASES = {
+  "2e7fdde43ed628f2d8631dad8a022e26349bb3d14de056ed21dcc6d52ae5e7cc": "Dex-Trade.com",
+  "3e3aeaf504805eac1efc8e91fa42e5326fa6f6c22cbc4ee98b1f55f55aedccd5": "Bridge Wallet",
+};
 const maxItemsPerPage = 20;
-
 // Helper function for address name resolution
 async function execute_get_address_to_main_name(address, rpc) {
-  // Special cases for known addresses
-  if (address === "2e7fdde43ed628f2d8631dad8a022e26349bb3d14de056ed21dcc6d52ae5e7cc") {
-    return "Dex-Trade.com";
-  }
-  if (address === "3e3aeaf504805eac1efc8e91fa42e5326fa6f6c22cbc4ee98b1f55f55aedccd5") {
-    return "Bridge Wallet";
-  }
+  // alias fallback (like your old richlist)
+  if (ADDRESS_ALIASES[address]) return ADDRESS_ALIASES[address];
 
   try {
-    let payload = {
+    const payload = {
       sender: "",
       contract: "con_name_service_final",
       function: "get_address_to_main_name",
       kwargs: { address }
     };
 
-    let bytes = new TextEncoder().encode(JSON.stringify(payload));
-    let hex = toHexString(bytes);
+    const bytes = new TextEncoder().encode(JSON.stringify(payload));
+    const hex = toHexString(bytes);
 
-    const response = await axios.post(`${rpc}/abci_query`, {
-      path: "/custom/contracts/get",
-      data: hex,
-      prove: false
-    });
+    // use simulate_tx like on your other pages
+    const res = await fetch(`${rpc}/abci_query?path="/simulate_tx/${hex}"`);
+    const data = await res.json();
 
-    if (response.data && response.data.result && response.data.result.response) {
-      const resultData = JSON.parse(atob(response.data.result.response.value));
-      return resultData || address;
+    const b64 = data && data.result && data.result.response && data.result.response.value;
+    if (!b64 || b64 === "AA==") return "None";
+
+    let decoded;
+    try {
+      decoded = JSON.parse(atob(b64));
+    } catch (e) {
+      return "None";
     }
+
+    if (!decoded || decoded.status === 1 || !decoded.result || decoded.result === "None") {
+      return "None";
+    }
+
+    // strip stray single quotes your service sometimes returns
+    return String(decoded.result).replace(/'/g, "");
   } catch (error) {
     console.log("Error resolving address name:", error);
+    return "None";
   }
-  
-  return address;
 }
 
 function toHexString(byteArray) {
@@ -231,7 +237,7 @@ export default {
 
         // 3) Look up each address's main name from the Name Service
         // Temporarily disabled to test if this is causing the issue
-        /*
+        
         const resolvedNames = await Promise.all(
           addressesData.map((item) =>
             execute_get_address_to_main_name(item.address, this.blockchain.rpc)
@@ -248,13 +254,7 @@ export default {
           }
           return item;
         });
-        */
-
-        // 4) Simplified - just use address as display name for now
-        addressesData = addressesData.map((item) => {
-          item.displayName = item.address;
-          return item;
-        });
+        
 
         // 5) Finalize
         this.addresses = addressesData;
@@ -355,7 +355,6 @@ export default {
 .table-container
   background rgba(255, 255, 255, 0.05)
   border-radius 12px
-  overflow hidden
   border 1px solid rgba(255, 255, 255, 0.1)
 
 .modern-table
@@ -412,7 +411,7 @@ export default {
     display block
     
     &:hover .address-name
-      color #14b8a6
+      color #fff
 
 .address-info
   display flex
@@ -422,7 +421,7 @@ export default {
 .address-name
   font-weight 600
   font-size 1rem
-  color #ffffff
+  color #00d4ff
   transition color 0.2s ease
 
 .address-hash
@@ -443,7 +442,7 @@ export default {
 .balance-amount
   font-weight 700
   font-size 1.125rem
-  color #14b8a6
+  color #00d4ff
 
 .balance-currency
   font-size 0.875rem
@@ -508,7 +507,7 @@ export default {
     font-size 2rem
 
   .content-container
-    padding 0 1rem
+    padding 0 2rem
 
   .table-controls
     flex-direction column

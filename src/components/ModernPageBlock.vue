@@ -23,7 +23,6 @@
           <div class="header-main">
             <h1 class="page-title">
               Block #{{ block.header.height }}
-              <span v-if="!hasNextBlock" class="latest-badge">Latest</span>
             </h1>
             <p class="page-description">
               Block details and transaction information
@@ -77,7 +76,7 @@
           <div class="card-content">
             <div class="info-row">
               <span class="info-label">Height</span>
-              <span class="info-value">{{ block.header.height.toLocaleString() }}</span>
+              <span class="info-value">{{ block.header.height }}</span>
             </div>
             <div class="info-row">
               <span class="info-label">Timestamp</span>
@@ -94,43 +93,43 @@
           </div>
         </div>
 
-        <!-- Hash Information Card -->
-        <div class="info-card">
-          <h3 class="card-title">Hash Information</h3>
-          <div class="card-content">
-            <div class="info-row">
-              <span class="info-label">App Hash</span>
-              <span class="info-value hash-value">{{ block.header.app_hash || '—' }}</span>
-            </div>
-            <div class="info-row">
-              <span class="info-label">Last Commit Hash</span>
-              <span class="info-value hash-value">{{ block.header.last_commit_hash || '—' }}</span>
-            </div>
-            <div class="info-row">
-              <span class="info-label">Validators Hash</span>
-              <span class="info-value hash-value">{{ block.header.validators_hash || '—' }}</span>
-            </div>
-          </div>
-        </div>
+       <!-- Hash Information Card -->
+<div class="info-card">
+  <h3 class="card-title">Hash Information</h3>
+  <div class="card-content">
+    <div class="info-row full">
+      <span class="info-label">App Hash</span>
+      <span class="info-value hash-value">{{ block.header.app_hash || '—' }}</span>
+    </div>
+    <div class="info-row full">
+      <span class="info-label">Last Commit Hash</span>
+      <span class="info-value hash-value">{{ block.header.last_commit_hash || '—' }}</span>
+    </div>
+    <div class="info-row full">
+      <span class="info-label">Validators Hash</span>
+      <span class="info-value hash-value">{{ block.header.validators_hash || '—' }}</span>
+    </div>
+  </div>
+</div>
 
-        <!-- Previous Block Card -->
-        <div class="info-card" v-if="block.header.last_block_id">
-          <h3 class="card-title">Previous Block</h3>
-          <div class="card-content">
-            <div class="info-row">
-              <span class="info-label">Hash</span>
-              <span class="info-value hash-value">{{ block.header.last_block_id.hash || '—' }}</span>
-            </div>
-            <div class="info-row" v-if="block.header.last_block_id.parts">
-              <span class="info-label">Parts Total</span>
-              <span class="info-value">{{ block.header.last_block_id.parts.total || '—' }}</span>
-            </div>
-            <div class="info-row" v-if="block.header.last_block_id.parts">
-              <span class="info-label">Parts Hash</span>
-              <span class="info-value hash-value">{{ block.header.last_block_id.parts.hash || '—' }}</span>
-            </div>
-          </div>
-        </div>
+<!-- Previous Block Card -->
+<div class="info-card" v-if="block.header.last_block_id">
+  <h3 class="card-title">Previous Block</h3>
+  <div class="card-content">
+    <div class="info-row full">
+      <span class="info-label">Hash</span>
+      <span class="info-value hash-value">{{ block.header.last_block_id.hash || '—' }}</span>
+    </div>
+    <div class="info-row">
+      <span class="info-label">Parts Total</span>
+      <span class="info-value">{{ block.header.last_block_id.parts.total || '—' }}</span>
+    </div>
+    <div class="info-row full">
+      <span class="info-label">Parts Hash</span>
+      <span class="info-value hash-value">{{ block.header.last_block_id.parts.hash || '—' }}</span>
+    </div>
+  </div>
+</div>
       </div>
 
       <!-- Transactions Section -->
@@ -329,7 +328,7 @@ export default {
   min-height: 100vh;
   background: linear-gradient(135deg, #0f1419 0%, #1a2332 100%);
   color: #ffffff;
-  padding: 2rem;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
 /* Loading State */
@@ -391,7 +390,7 @@ export default {
 
 /* Page Header */
 .page-header {
-  background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
+  background: linear-gradient(135deg, rgba(20, 184, 166, 0.1) 0%, rgba(59, 130, 246, 0.1) 100%);
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   margin-bottom: 2rem;
 }
@@ -443,6 +442,7 @@ export default {
   color: #8892b0;
   font-size: 1.1rem;
   margin: 0;
+  text-align: left;
 }
 
 .json-button {
@@ -683,7 +683,6 @@ export default {
 /* Responsive Design */
 @media (max-width: 768px) {
   .modern-page-block {
-    padding: 1rem;
   }
 
   .page-title {
@@ -722,4 +721,61 @@ export default {
     padding: 0.75rem 0.5rem;
   }
 }
+/* --- Unified top-label grid (matches Tx page) --- */
+.card-content {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1rem 1.25rem;
+}
+
+/* each pair is a tile with label above value */
+.info-row {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.35rem;
+}
+
+.info-label {
+  color: #9aa4bf;
+  font-weight: 600;
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  min-width: 0;
+}
+
+.info-value {
+  color: #ffffff;
+  font-weight: 600;
+  text-align: left;      /* override old right alignment */
+  word-break: break-word;
+}
+
+/* long items span full width of the card grid */
+.info-row.full {
+  grid-column: 1 / -1;
+}
+
+/* monospace accent for hashes (kept) */
+.hash-value {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.9rem;
+  color: #00d4ff;
+}
+
+/* Make validator info align with the same pattern */
+.validator-info {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem 1.25rem;
+}
+
+/* responsive: single column inside cards */
+@media (max-width: 768px) {
+  .card-content {
+    grid-template-columns: 1fr;
+  }
+}
+
 </style>

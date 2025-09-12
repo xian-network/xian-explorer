@@ -33,10 +33,7 @@
               <i class="material-icons">chevron_right</i>
             </router-link>
           </div>
-          <div class="page-info">
-            <span v-if="blocks.length > 0">Showing {{ blocks.length }} blocks</span>
-            <span v-if="minHeight && maxHeight" class="range">({{ num.prettyInt(minHeight) }} - {{ num.prettyInt(maxHeight) }})</span>
-          </div>
+         
           <div class="json-link" v-if="jsonUrl">
             <a :href="jsonUrl" target="_blank" class="json-button">
               <i class="material-icons">code</i>
@@ -73,9 +70,7 @@
                 <td class="hash-cell">
                   <div class="hash-display">
                     <div class="hash-text">{{ block.header.last_commit_hash }}</div>
-                    <button class="copy-btn" @click="copyToClipboard(block.header.last_commit_hash)">
-                      <i class="material-icons">content_copy</i>
-                    </button>
+                    
                   </div>
                 </td>
               </tr>
@@ -327,7 +322,6 @@ export default {
 .table-container
   background rgba(255, 255, 255, 0.05)
   border-radius 12px
-  overflow hidden
   border 1px solid rgba(255, 255, 255, 0.1)
 
 .modern-table
@@ -367,15 +361,15 @@ export default {
 
 .block-link
   text-decoration none
-  color inherit
+  color #00d4ff
   
   &:hover .block-number
-    color #14b8a6
+    color #fff
 
 .block-number
-  font-size 1.1rem
+  font-size 1rem
   font-weight 600
-  color #ffffff
+  color #00d4ff
   transition color 0.2s ease
 
 .time-cell

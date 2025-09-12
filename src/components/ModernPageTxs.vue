@@ -33,15 +33,7 @@
               <i class="material-icons">chevron_right</i>
             </router-link>
           </div>
-          <div class="page-info">
-            <span v-if="transactions.length > 0">Showing {{ transactions.length }} transactions</span>
-          </div>
-          <div class="json-link" v-if="jsonUrl">
-            <a :href="jsonUrl" target="_blank" class="json-button">
-              <i class="material-icons">code</i>
-              JSON
-            </a>
-          </div>
+          
         </div>
 
         <!-- Transactions Table -->
@@ -70,16 +62,13 @@
                     <router-link :to="`/tx/${tx.hash}`" class="tx-link">
                       <div class="hash-text">{{ shortenHash(tx.hash) }}</div>
                     </router-link>
-                    <button class="copy-btn" @click="copyToClipboard(tx.hash)">
-                      <i class="material-icons">content_copy</i>
-                    </button>
+                   
                   </div>
                 </td>
                 
                 <td class="contract-cell">
                   <div class="contract-display">
                     <div class="contract-name">{{ shortenText(tx.contract) }}</div>
-                    <div v-if="getContractType(tx.contract)" class="contract-type">{{ getContractType(tx.contract) }}</div>
                   </div>
                 </td>
                 
@@ -376,7 +365,6 @@ export default {
 .table-container
   background rgba(255, 255, 255, 0.05)
   border-radius 12px
-  overflow hidden
   border 1px solid rgba(255, 255, 255, 0.1)
 
 .modern-table
@@ -438,12 +426,12 @@ export default {
     color inherit
     
     &:hover .hash-text
-      color #14b8a6
+      color #fff
   
   .hash-text
-    font-family 'Monaco', 'Menlo', 'Ubuntu Mono', monospace
-    font-size 0.85rem
-    color rgba(255, 255, 255, 0.8)
+    font-weight: 600;
+    font-size: 1rem;
+    color #00d4ff
     transition color 0.2s ease
   
   .copy-btn
@@ -494,7 +482,7 @@ export default {
 .fee-display
   .xian-fee
     font-size 0.95rem
-    color #14b8a6
+    color #ffffff
     font-weight 600
     margin-bottom 0.25rem
   

@@ -29,18 +29,12 @@
           <div class="header-main">
             <h1 class="page-title">
               {{ contract.name }}
-              <span v-if="contract.isToken" class="token-badge">Token</span>
             </h1>
             <p class="page-description">
               Smart contract details and source code
             </p>
           </div>
-          <div class="header-actions">
-            <a :href="jsonUrl" target="_blank" class="json-button">
-              <span class="material-icons">code</span>
-              JSON
-            </a>
-          </div>
+         
         </div>
       </div>
 
@@ -94,17 +88,8 @@
               <span class="info-label">Name</span>
               <span class="info-value contract-name">{{ contract.name }}</span>
             </div>
-            <div class="info-row">
-              <span class="info-label">Type</span>
-              <span class="info-value">
-                <span v-if="contract.isToken" class="contract-type token">Smart Contract (Token)</span>
-                <span v-else class="contract-type standard">Smart Contract</span>
-              </span>
-            </div>
-            <div class="info-row">
-              <span class="info-label">Language</span>
-              <span class="info-value">Python</span>
-            </div>
+            
+            
             <div class="info-row">
               <span class="info-label">Code Size</span>
               <span class="info-value">{{ formatBytes(contract.code.length) }}</span>
@@ -411,7 +396,7 @@ export default {
 
 /* Page Header */
 .page-header {
-  background: rgba(255, 255, 255, 0.02);
+  background: linear-gradient(135deg, rgba(20, 184, 166, 0.1) 0%, rgba(59, 130, 246, 0.1) 100%);
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   padding: 2rem 0;
 }
@@ -527,7 +512,6 @@ export default {
   color: #ffffff;
   font-weight: 500;
   text-align: right;
-  word-break: break-word;
 }
 
 .contract-name {
@@ -696,8 +680,6 @@ export default {
   font-family: 'JetBrains Mono', monospace;
   font-size: 0.875rem;
   line-height: 1.6;
-  white-space: pre-wrap;
-  word-break: break-word;
 }
 
 .code-container.fullscreen .code-block {
@@ -713,17 +695,12 @@ export default {
 
 /* Text Overflow Fixes */
 .info-value, .hash-value, .address-value, .url-value, .long-text {
-  word-break: break-word;
-  overflow-wrap: break-word;
   hyphens: auto;
   max-width: 100%;
 }
 
 .info-row td, .info-row .info-value {
-  word-break: break-word;
-  overflow-wrap: break-word;
-  max-width: 0;
-  min-width: 0;
+  
 }
 
 .code-block {
@@ -734,9 +711,6 @@ export default {
 
 /* Responsive Design */
 @media (max-width: 768px) {
-  .modern-page-contract {
-    padding: 1rem;
-  }
 
   .page-title {
     font-size: 2rem;
@@ -774,6 +748,8 @@ export default {
 
   .info-value {
     text-align: left;
+    text-overflow: ellipsis;
+    overflow: hidden;
   }
 
   .code-header-bar {

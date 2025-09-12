@@ -452,6 +452,7 @@ export default {
   color var(--text-muted)
   text-transform uppercase
   letter-spacing 0.05em
+  margin-top: 1px;
 
 .mobile-menu-toggle
   display flex

@@ -23,18 +23,12 @@
             <div class="header-main">
               <h1 class="page-title">
                 {{ mainNameDisplay !== '—' ? mainNameDisplay : 'Address' }}
-                <span v-if="mainNameDisplay !== '—'" class="xns-badge">XNS</span>
               </h1>
               <p class="page-description">
                 Address information, balance, and transaction history
               </p>
             </div>
-            <div class="header-actions">
-              <button @click="copyAddress" class="copy-button" :class="{ copied: addressCopied }">
-                <span class="material-icons">{{ addressCopied ? 'check' : 'content_copy' }}</span>
-                Copy Address
-              </button>
-            </div>
+            
           </div>
         </div>
       </div>
@@ -74,8 +68,8 @@
               Token Holdings
             </h3>
             <div class="card-content">
-              <div v-if="tokens.length > 0 && tokens[0].contract !== 'None'" class="tokens-table-container">
-                <table class="tokens-table">
+              <div v-if="tokens.length > 0 && tokens[0].contract !== 'None'" class="table-container">
+                <table class="modern-table">
                   <thead>
                     <tr>
                       <th>Token</th>
@@ -105,7 +99,6 @@
                       </td>
                       <td>
                         <router-link :to="{ name: 'token', params: { contract: token.contract } }" class="token-link">
-                          <span class="material-icons">open_in_new</span>
                           View Token
                         </router-link>
                       </td>
@@ -129,12 +122,12 @@
         <div class="transactions-section">
           <div class="info-card">
             <h3 class="card-title">
-              <span class="material-icons">receipt_long</span>
+              <span class="material-icons">receipt</span>
               Transaction History
             </h3>
             <div class="card-content">
-              <div v-if="transactions.length > 0" class="transactions-table-container">
-                <table class="transactions-table">
+              <div v-if="transactions.length > 0" class="table-container">
+                <table class="modern-table">
                   <thead>
                     <tr>
                       <th>Time</th>
@@ -155,7 +148,6 @@
                       <td class="hash-cell">
                         <router-link :to="`/tx/${tx.hash}`" class="hash-link">
                           {{ shortenHash(tx.hash) }}
-                          <span class="material-icons">open_in_new</span>
                         </router-link>
                       </td>
                       <td class="contract-cell">
@@ -493,7 +485,7 @@ export default {
           feeXian: this.stampRate
             ? (tx.stamps / this.stampRate).toFixed(3)
             : "—",
-          formattedTime: new Date(Number(tx.blockTime) / 1e6).toLocaleString()
+          formattedTime: new Date(Number(tx.blockTime) / 1e6).toLocaleString() ? new Date(Number(tx.blockTime) / 1e6) : null
         }));
       this.transactions = finalTxs;
       this.transactionsLoading = false;
@@ -720,7 +712,7 @@ export default {
 
 /* Page Header */
 .page-header {
-  background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
+  background: linear-gradient(135deg, rgba(20, 184, 166, 0.1) 0%, rgba(59, 130, 246, 0.1) 100%);
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   margin-bottom: 2rem;
 }
@@ -898,7 +890,6 @@ export default {
 
 .token-info {
   display: flex;
-  align-items: center;
   gap: 0.5rem;
 }
 
@@ -1001,8 +992,7 @@ export default {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-top: 2rem;
-  padding-top: 1rem;
+  padding:1rem 0.5rem;
   border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 
@@ -1100,4 +1090,52 @@ export default {
     gap: 1rem;
   }
 }
+</style>
+<style lang="stylus" scoped>
+.table-container
+  background rgba(255, 255, 255, 0.05)
+  border-radius 12px
+  overflow hidden
+  border 1px solid rgba(255, 255, 255, 0.1)
+
+.modern-table
+  width 100%
+  border-collapse collapse
+
+  thead
+    background rgba(255, 255, 255, 0.1)
+    
+    th
+      padding 1.5rem 2rem
+      text-align left
+      font-weight 600
+      font-size 0.875rem
+      text-transform uppercase
+      letter-spacing 0.05em
+      color rgba(255, 255, 255, 0.8)
+      border-bottom 1px solid rgba(255, 255, 255, 0.1)
+
+  tbody
+    .table-row
+      border-bottom 1px solid rgba(255, 255, 255, 0.05)
+      transition all 0.2s ease
+      
+      &:hover
+        background rgba(255, 255, 255, 0.05)
+      
+      &:last-child
+        border-bottom none
+
+      td
+        padding 1.5rem 2rem
+        vertical-align middle
+// Responsive Design
+@media (max-width: 768px)
+  .modern-table
+    thead th
+      padding 1rem
+      font-size 0.75rem
+    
+    tbody td
+      padding 1rem
 </style>

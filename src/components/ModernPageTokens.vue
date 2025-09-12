@@ -33,10 +33,7 @@
               <i class="material-icons">chevron_right</i>
             </router-link>
           </div>
-          <a :href="jsonUrl" target="_blank" class="json-link">
-            <i class="material-icons">code</i>
-            JSON
-          </a>
+        
         </div>
 
         <!-- Tokens Table -->
@@ -349,7 +346,6 @@ export default {
 .table-container
   background rgba(255, 255, 255, 0.05)
   border-radius 12px
-  overflow hidden
   border 1px solid rgba(255, 255, 255, 0.1)
 
 .modern-table
@@ -391,7 +387,7 @@ export default {
     display block
     
     &:hover .token-name
-      color #14b8a6
+      color #fff
 
 .token-info
   display flex
@@ -401,13 +397,12 @@ export default {
 .token-name
   font-weight 600
   font-size 1rem
-  color #ffffff
+  color #00d4ff
   transition color 0.2s ease
 
 .token-contract
   font-size 0.875rem
   color rgba(255, 255, 255, 0.5)
-  font-family 'JetBrains Mono', monospace
 
 .date-cell
   .date-info
@@ -481,7 +476,7 @@ export default {
     font-size 2rem
 
   .content-container
-    padding 0 1rem
+    padding 0 2rem
 
   .table-controls
     flex-direction column
@@ -501,8 +496,6 @@ export default {
   .token-info
     gap 0.125rem
 
-  .token-name
-    font-size 0.875rem
 
   .token-contract
     font-size 0.75rem

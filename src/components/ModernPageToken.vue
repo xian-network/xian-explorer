@@ -30,18 +30,13 @@
             <div class="header-main">
               <h1 class="page-title">
                 {{ tokenData.token_name || contract.name }}
-                <span v-if="tokenData.token_symbol" class="token-badge">{{ tokenData.token_symbol }}</span>
+                
               </h1>
               <p class="page-description">
                 Token information, markets, and holder details
               </p>
             </div>
-            <div class="header-actions">
-              <a :href="jsonUrl" target="_blank" class="json-button">
-                <span class="material-icons">code</span>
-                JSON
-              </a>
-            </div>
+            
           </div>
         </div>
       </div>
@@ -92,59 +87,7 @@
           </div>
         </div>
 
-        <!-- Markets Section -->
-        <div class="markets-section">
-          <div class="info-card">
-            <h3 class="card-title">
-              <span class="material-icons">trending_up</span>
-              Markets
-            </h3>
-            <div class="card-content">
-              <div v-if="markets && markets.length > 0" class="markets-table-container">
-                <table class="markets-table">
-                  <thead>
-                    <tr>
-                      <th>Pair</th>
-                      <th>Price (Paired Token)</th>
-                      <th>Change (24h)</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr v-for="market in markets" :key="market.pair">
-                      <td>
-                        <a :href="`https://snakexchange.org/?token0=${market.token0}&token1=${market.token1}`" 
-                           target="_blank" class="pair-link">
-                          {{ market.label }}
-                        </a>
-                        <a :href="`https://snaklytics.com/#pair=${market.pair}`" 
-                           target="_blank" class="chart-link">
-                          Chart 📈
-                        </a>
-                      </td>
-                      <td class="price-cell">
-                        {{ market.price.toFixed(6) }} {{ tokenSymbols.get(market.pairedSymbol) || market.pairedSymbol }}
-                      </td>
-                      <td class="change-cell">
-                        <span v-if="market.changePct > 0" class="change-positive">
-                          +{{ market.changePct.toFixed(2) }}%
-                        </span>
-                        <span v-else-if="market.changePct < 0" class="change-negative">
-                          {{ market.changePct.toFixed(2) }}%
-                        </span>
-                        <span v-else class="change-neutral">0.00%</span>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-              <div v-else class="no-markets">
-                <div class="no-markets-icon">📊</div>
-                <p>No markets found for this token</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
+      
         <!-- Token Holders Section -->
         <div class="holders-section">
           <div class="info-card">
@@ -153,8 +96,8 @@
               Token Holders
             </h3>
             <div class="card-content">
-              <div v-if="holders && holders.length > 0" class="holders-table-container">
-                <table class="holders-table">
+              <div v-if="holders && holders.length > 0" class="table-container">
+                <table class="modern-table">
                   <thead>
                     <tr>
                       <th>Address / XNS</th>
@@ -445,10 +388,9 @@ export default {
 
 <style scoped>
 .modern-page-token {
-  min-height: 100vh;
-  background: linear-gradient(135deg, #0f1419 0%, #1a2332 100%);
-  color: #ffffff;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      min-height: calc(100vh - 72px);
+    background: linear-gradient(135deg, #0f1419 0%, #1a2332 100%);
+    color: #fff;
 }
 
 /* Loading States */
@@ -501,7 +443,7 @@ export default {
 
 /* Page Header */
 .page-header {
-  background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
+  background: linear-gradient(135deg, rgba(20, 184, 166, 0.1) 0%, rgba(59, 130, 246, 0.1) 100%);
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   margin-bottom: 2rem;
 }
@@ -730,8 +672,8 @@ export default {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-top: 2rem;
-  padding-top: 1rem;
+  padding: 1rem 0.5rem;
+
   border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 
@@ -829,4 +771,51 @@ export default {
     gap: 1rem;
   }
 }
+</style>
+<style lang="stylus" scoped>
+.table-container
+  background rgba(255, 255, 255, 0.05)
+  border-radius 12px
+  border 1px solid rgba(255, 255, 255, 0.1)
+
+.modern-table
+  width 100%
+  border-collapse collapse
+
+  thead
+    background rgba(255, 255, 255, 0.1)
+    
+    th
+      padding 1.5rem 2rem
+      text-align left
+      font-weight 600
+      font-size 0.875rem
+      text-transform uppercase
+      letter-spacing 0.05em
+      color rgba(255, 255, 255, 0.8)
+      border-bottom 1px solid rgba(255, 255, 255, 0.1)
+
+  tbody
+    .table-row
+      border-bottom 1px solid rgba(255, 255, 255, 0.05)
+      transition all 0.2s ease
+      
+      &:hover
+        background rgba(255, 255, 255, 0.05)
+      
+      &:last-child
+        border-bottom none
+
+      td
+        padding 1.5rem 2rem
+        vertical-align middle
+// Responsive Design
+@media (max-width: 768px)
+  .modern-table
+    thead th
+      padding 1rem
+      font-size 0.75rem
+    
+    tbody td
+      padding 1rem
 </style>

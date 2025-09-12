@@ -33,15 +33,7 @@
               <i class="material-icons">chevron_right</i>
             </router-link>
           </div>
-          <div class="page-info">
-            <span v-if="contracts.length > 0">Showing {{ contracts.length }} contracts</span>
-          </div>
-          <div class="json-link" v-if="jsonUrl">
-            <a :href="jsonUrl" target="_blank" class="json-button">
-              <i class="material-icons">code</i>
-              JSON
-            </a>
-          </div>
+          
         </div>
 
         <!-- Contracts Table -->
@@ -51,8 +43,7 @@
               <tr>
                 <th>Contract Name</th>
                 <th>Submission Date</th>
-                <th>Type</th>
-                <th>Actions</th>
+               
               </tr>
             </thead>
             <tbody>
@@ -62,9 +53,7 @@
                     <router-link :to="`/contracts/${contract.name}`" class="contract-link">
                       <div class="contract-name">{{ contract.name }}</div>
                     </router-link>
-                    <button class="copy-btn" @click="copyToClipboard(contract.name)">
-                      <i class="material-icons">content_copy</i>
-                    </button>
+                    
                   </div>
                 </td>
                 
@@ -75,20 +64,9 @@
                   </div>
                 </td>
                 
-                <td class="type-cell">
-                  <div class="type-display">
-                    <div class="contract-type" :class="getContractTypeClass(contract.name)">{{ getContractType(contract.name) }}</div>
-                  </div>
-                </td>
                 
-                <td class="actions-cell">
-                  <div class="actions-display">
-                    <router-link :to="`/contracts/${contract.name}`" class="view-button">
-                      <i class="material-icons">visibility</i>
-                      View
-                    </router-link>
-                  </div>
-                </td>
+                
+                
               </tr>
             </tbody>
           </table>
@@ -248,6 +226,14 @@ export default {
 }
 </script>
 
+<style scoped>
+@media (max-width: 600px) {
+  .actions-cell{
+    width:100%!important;
+  }
+}
+</style>
+
 <style lang="stylus" scoped>
 .modern-page-contracts
   min-height calc(100vh - 72px)
@@ -344,7 +330,6 @@ export default {
 .table-container
   background rgba(255, 255, 255, 0.05)
   border-radius 12px
-  overflow hidden
   border 1px solid rgba(255, 255, 255, 0.1)
 
 .modern-table
@@ -392,13 +377,12 @@ export default {
     color inherit
     
     &:hover .contract-name
-      color #14b8a6
+      color #fff
   
   .contract-name
-    font-family 'Monaco', 'Menlo', 'Ubuntu Mono', monospace
-    font-size 0.9rem
-    color rgba(255, 255, 255, 0.9)
-    font-weight 500
+    font-weight: 600;
+    font-size: 1rem;
+    color #00d4ff
     transition color 0.2s ease
   
   .copy-btn

@@ -71,7 +71,7 @@
               <span class="info-label">Timestamp</span>
               <span class="info-value">{{ formatDate(decodedTx.txTimestamp) }}</span>
             </div>
-            <div class="info-row">
+            <div class="info-row full">
               <span class="info-label">Sender</span>
               <router-link :to="`/addresses/${decodedTx.payload.sender}`" class="info-value address-link">
                 {{ senderDisplay }}
@@ -104,14 +104,15 @@
                 <div class="stamps">{{ decodedTx.txResult.stampsUsed }} stamps</div>
               </div>
             </div>
-            <div class="info-row" v-if="decodedTx.txResult.data.result">
-              <span class="info-label">Result</span>
-              <span class="info-value result-value">{{ decodedTx.txResult.data.result }}</span>
-            </div>
             <div class="info-row">
               <span class="info-label">Signature</span>
               <span class="info-value hash-value">{{ formatHash(decodedTx.metadata.signature) }}</span>
             </div>
+            <div class="info-row full" v-if="decodedTx.txResult.data.result">
+              <span class="info-label">Result</span>
+              <span class="info-value result-value">{{ decodedTx.txResult.data.result }}</span>
+            </div>
+            
           </div>
         </div>
 
@@ -129,13 +130,7 @@
               <span class="info-label">Function</span>
               <span class="info-value function-name">{{ decodedTx.payload.function }}</span>
             </div>
-            <div class="info-row" v-if="decodedTx.payload.kwargs">
-              <span class="info-label">Arguments</span>
-              <div class="info-value">
-                <pre class="arguments-display">{{ formatArguments(decodedTx.payload.kwargs) }}</pre>
-              </div>
-            </div>
-            <div class="info-row">
+             <div class="info-row">
               <span class="info-label">Nonce</span>
               <span class="info-value">{{ decodedTx.payload.nonce }}</span>
             </div>
@@ -143,6 +138,13 @@
               <span class="info-label">Stamps Supplied</span>
               <span class="info-value">{{ decodedTx.payload.stamps_supplied.toLocaleString() }}</span>
             </div>
+            <div class="info-row full" v-if="decodedTx.payload.kwargs">
+              <span class="info-label">Arguments</span>
+              <div class="info-value">
+                <pre class="arguments-display">{{ formatArguments(decodedTx.payload.kwargs) }}</pre>
+              </div>
+            </div>
+           
           </div>
         </div>
       </div>
@@ -557,7 +559,7 @@ export default {
 
 /* Page Header */
 .page-header {
-  background: rgba(255, 255, 255, 0.02);
+  background: linear-gradient(135deg, rgba(20, 184, 166, 0.1) 0%, rgba(59, 130, 246, 0.1) 100%);
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   padding: 2rem 0;
 }
@@ -619,9 +621,7 @@ export default {
 
 /* Info Cards */
 .info-cards {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-  gap: 1.5rem;
+  display: block;
   margin-bottom: 3rem;
 }
 
@@ -631,6 +631,10 @@ export default {
   border-radius: 12px;
   padding: 1.5rem;
   backdrop-filter: blur(10px);
+}
+
+.info-card:not(:last-child) {
+  margin-bottom: 1.5rem;
 }
 
 .card-title {
@@ -666,7 +670,6 @@ export default {
   color: #ffffff;
   font-weight: 500;
   text-align: right;
-  word-break: break-word;
 }
 
 .info-value-with-copy {
@@ -808,10 +811,10 @@ export default {
   justify-content: space-between;
   align-items: center;
   transition: background-color 0.3s ease;
+  outline: unset;
 }
 
 .section-header:hover {
-  background: rgba(255, 255, 255, 0.05);
 }
 
 .section-title {
@@ -933,24 +936,16 @@ export default {
 
 /* Text Overflow Fixes */
 .info-value, .hash-value, .address-value, .url-value, .long-text {
-  word-break: break-word;
-  overflow-wrap: break-word;
   hyphens: auto;
   max-width: 100%;
 }
 
 .info-row td, .info-row .info-value {
-  word-break: break-word;
-  overflow-wrap: break-word;
-  max-width: 0;
-  min-width: 0;
 }
 
 /* Responsive Design */
 @media (max-width: 768px) {
-  .modern-page-tx {
-    padding: 1rem;
-  }
+
 
   .page-title {
     font-size: 2rem;
@@ -972,7 +967,6 @@ export default {
   }
 
   .info-cards {
-    grid-template-columns: 1fr;
   }
 
   .info-row {
@@ -994,6 +988,66 @@ export default {
   }
 
   .rewards-grid {
+    grid-template-columns: 1fr;
+  }
+}
+/* --- New compact top-label grid for card content --- */
+.card-content {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1rem 1.25rem;
+}
+
+/* each key/value pair becomes a tile */
+.info-row {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.35rem;
+  /* remove old spacing behavior */
+  justify-content: initial;
+}
+
+/* label above value */
+.info-label {
+  color: #9aa4bf;
+  font-weight: 600;
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  min-width: 0;      /* override old 120px */
+  flex-shrink: 1;    /* allow wrap */
+}
+
+/* value left-aligned */
+.info-value {
+  color: #ffffff;
+  font-weight: 600;
+  text-align: left;  /* override old right align */
+  word-break: break-word;
+}
+
+/* keep copy button inline with value, on the left */
+.info-value-with-copy {
+  justify-content: flex-start;
+}
+
+/* fee layout still stacks nicely */
+.fee-display {
+  align-items: flex-start;
+}
+
+/* long rows span the full card width */
+.info-row.full {
+  grid-column: 1 / -1;
+}
+
+/* optional: make hash/signature look tighter inside grid */
+.hash-value { font-size: 0.9rem; }
+
+/* mobile stays single-column; no changes needed, but this keeps it explicit */
+@media (max-width: 768px) {
+  .card-content {
     grid-template-columns: 1fr;
   }
 }

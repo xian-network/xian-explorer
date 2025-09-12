@@ -142,7 +142,7 @@ html, body
   padding var(--space-12) var(--space-6) var(--space-6)
   
   @media (max-width: 768px)
-    padding var(--space-8) var(--space-4) var(--space-4)
+    padding 1rem
 
 .footer-content
   display grid

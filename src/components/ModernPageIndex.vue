@@ -98,51 +98,6 @@
               .info-label 24h Volume
               .info-value {{ xianVolume24h ? `$${xianVolume24h.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "—" }}
   
-  // Recent Transactions
-  .transactions-section
-    .container
-      .section-header
-        h2.section-title Recent Transactions
-        p.section-subtitle Latest activity on the Xian network
-      
-      .transactions-card
-        .data-table-modern(v-if="lastTxs.length > 0")
-          table
-            thead
-              tr
-                th Time
-                th Transaction Hash
-                th Contract
-                th Function
-                th Fee
-            tbody
-              tr(v-for="tx in lastTxs" :key="tx.hash")
-                td
-                  .time-cell
-                    .time-value {{ tx.formattedTime }}
-                td
-                  .hash-cell
-                    router-link(:to="`/tx/${tx.hash}`" class="hash-link")
-                      | {{ shortenHash(tx.hash) }}
-                    button.copy-btn(@click="copyToClipboard(tx.hash)")
-                      i.material-icons content_copy
-                td
-                  .contract-cell {{ shortenText(tx.contract) }}
-                td
-                  .function-cell {{ shortenText(tx.function) }}
-                td
-                  .fee-cell
-                    .fee-xian {{ tx.feeXian }} XIAN
-                    .fee-stamps {{ num.prettyInt(tx.stamps) }} stamps
-        
-        .loading-state(v-else)
-          .loading-spinner
-          p Loading recent transactions...
-        
-        .view-all-link
-          router-link(to="/txs" class="btn-modern btn-secondary")
-            span View All Transactions
-            i.material-icons chevron_right
 </template>
 
 <script>

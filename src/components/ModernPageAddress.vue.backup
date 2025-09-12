@@ -723,7 +723,7 @@ export default {
 
 /* Header */
 .page-header {
-  background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
+  background: linear-gradient(135deg, rgba(20, 184, 166, 0.1) 0%, rgba(59, 130, 246, 0.1) 100%);
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   padding: 2rem 0;
 }
@@ -1014,7 +1014,7 @@ export default {
 }
 
 .modern-table tr:hover {
-  background: rgba(255, 255, 255, 0.02);
+  background: linear-gradient(135deg, rgba(20, 184, 166, 0.1) 0%, rgba(59, 130, 246, 0.1) 100%);
 }
 
 /* Transaction specific styles */
