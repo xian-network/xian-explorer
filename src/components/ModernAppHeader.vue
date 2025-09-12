@@ -78,7 +78,7 @@ header.modern-header
           i.material-icons code
           span Contracts
         router-link.mobile-nav-link(to="/tokens" active-class="active" @click="closeMobileMenu")
-          i.material-icons token
+          i.material-icons toll
           span Tokens
         router-link.mobile-nav-link(to="/addresses" active-class="active" @click="closeMobileMenu")
           i.material-icons account_balance_wallet
