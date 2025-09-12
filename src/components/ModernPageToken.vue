@@ -770,6 +770,10 @@ export default {
     flex-direction: column;
     gap: 1rem;
   }
+
+  .holders-section{
+    padding-bottom: 0.5rem;
+  }
 }
 </style>
 <style lang="stylus" scoped>

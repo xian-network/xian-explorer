@@ -1080,6 +1080,10 @@ export default {
     font-size: 0.875rem;
   }
 
+  .transactions-section{
+    padding-bottom: 1rem;
+  }
+
   .tokens-table th, .transactions-table th,
   .tokens-table td, .transactions-table td {
     padding: 0.75rem 0.5rem;
@@ -1095,7 +1099,6 @@ export default {
 .table-container
   background rgba(255, 255, 255, 0.05)
   border-radius 12px
-  overflow hidden
   border 1px solid rgba(255, 255, 255, 0.1)
 
 .modern-table
