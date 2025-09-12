@@ -527,7 +527,7 @@ export default {
   color: #ffffff;
   font-weight: 500;
   text-align: right;
-  word-break: break-all;
+  word-break: break-word;
 }
 
 .contract-name {
@@ -697,7 +697,7 @@ export default {
   font-size: 0.875rem;
   line-height: 1.6;
   white-space: pre-wrap;
-  word-break: break-all;
+  word-break: break-word;
 }
 
 .code-container.fullscreen .code-block {
@@ -713,21 +713,21 @@ export default {
 
 /* Text Overflow Fixes */
 .info-value, .hash-value, .address-value, .url-value, .long-text {
-  word-break: break-all;
+  word-break: break-word;
   overflow-wrap: break-word;
   hyphens: auto;
   max-width: 100%;
 }
 
 .info-row td, .info-row .info-value {
-  word-break: break-all;
+  word-break: break-word;
   overflow-wrap: break-word;
   max-width: 0;
   min-width: 0;
 }
 
 .code-block {
-  word-break: break-all;
+  word-break: break-word;
   overflow-wrap: break-word;
   white-space: pre-wrap;
 }

@@ -666,7 +666,7 @@ export default {
   color: #ffffff;
   font-weight: 500;
   text-align: right;
-  word-break: break-all;
+  word-break: break-word;
 }
 
 .info-value-with-copy {
@@ -734,7 +734,7 @@ export default {
   margin: 0;
   overflow-x: auto;
   white-space: pre-wrap;
-  word-break: break-all;
+  word-break: break-word;
 }
 
 /* Status Badge */
@@ -928,19 +928,19 @@ export default {
   margin: 0;
   overflow-x: auto;
   white-space: pre-wrap;
-  word-break: break-all;
+  word-break: break-word;
 }
 
 /* Text Overflow Fixes */
 .info-value, .hash-value, .address-value, .url-value, .long-text {
-  word-break: break-all;
+  word-break: break-word;
   overflow-wrap: break-word;
   hyphens: auto;
   max-width: 100%;
 }
 
 .info-row td, .info-row .info-value {
-  word-break: break-all;
+  word-break: break-word;
   overflow-wrap: break-word;
   max-width: 0;
   min-width: 0;

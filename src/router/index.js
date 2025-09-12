@@ -32,7 +32,7 @@ const routes = [
   { path: "/contracts", component: PageContracts },
   { path: "/contracts/:contract", name: "contract", component: ModernPageContract },
   { path: "/tokens", component: ModernPageTokens },
-  { path: "/tokens/:token", name: "token", component: ModernPageToken },
+  { path: "/tokens/:contract", name: "token", component: ModernPageToken },
   { path: "/nodes", component: FullNodes },
   { path: "/addresses", component: ModernPageAddresses },
   { path: "/addresses/:address", name:"address", component: ModernPageAddress },

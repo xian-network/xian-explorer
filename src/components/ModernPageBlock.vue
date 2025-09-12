@@ -18,6 +18,7 @@
     <div v-else class="block-content">
       <!-- Header -->
       <div class="page-header">
+        <div class="header-content-inner">
         <div class="header-content">
           <div class="header-main">
             <h1 class="page-title">
@@ -64,9 +65,11 @@
             <span class="material-icons">chevron_right</span>
           </div>
         </div>
+        </div>
       </div>
 
       <!-- Block Information Cards -->
+      <div class="block-content-inner">
       <div class="info-cards">
         <!-- Basic Info Card -->
         <div class="info-card">
@@ -201,6 +204,7 @@
             </div>
           </div>
         </div>
+      </div>
       </div>
     </div>
   </div>
@@ -387,7 +391,15 @@ export default {
 
 /* Page Header */
 .page-header {
+  background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   margin-bottom: 2rem;
+}
+
+.header-content-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
 }
 
 .header-content {
@@ -395,6 +407,12 @@ export default {
   justify-content: space-between;
   align-items: flex-start;
   margin-bottom: 2rem;
+}
+
+.block-content-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 2rem;
 }
 
 .page-title {
