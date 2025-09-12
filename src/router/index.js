@@ -7,9 +7,7 @@ import Index from "../components/ModernPageIndex"
 import Search from "../components/PageSearch"
 import Blocks from "../components/ModernPageBlocks"
 import Transactions from "../components/ModernPageTxs"
-import Block from "../components/PageBlock"
 import ModernPageBlock from "../components/ModernPageBlock"
-import Tx from "../components/PageTx"
 import ModernPageTx from "../components/ModernPageTx"
 import FullNodes from "../components/PageFullNodes"
 import FullNode from "../components/PageFullNode"
@@ -18,14 +16,11 @@ import PageValidatorsIndex from "../components/PageValidatorsIndex"
 import PageValidatorsRevoked from "../components/PageValidatorsRevoked"
 import PageValidator from "../components/PageValidator"
 import PageContracts from "../components/ModernPageContracts"
-import PageContract from "../components/PageContract"
 import ModernPageContract from "../components/ModernPageContract"
-import PageRichlist from "../components/PageRichlist"
 import ModernPageAddresses from "../components/ModernPageAddresses"
-import PageAddress from "../components/PageAddress"
-import PageTokens from "../components/PageTokens"
+import ModernPageAddress from "../components/ModernPageAddress"
 import ModernPageTokens from "../components/ModernPageTokens"
-import PageToken from "../components/PageToken"
+import ModernPageToken from "../components/ModernPageToken"
 
 const routes = [
   { path: "/", component: Index },
@@ -37,10 +32,10 @@ const routes = [
   { path: "/contracts", component: PageContracts },
   { path: "/contracts/:contract", name: "contract", component: ModernPageContract },
   { path: "/tokens", component: ModernPageTokens },
-  { path: "/tokens/:token", name: "token", component: PageToken },
+  { path: "/tokens/:token", name: "token", component: ModernPageToken },
   { path: "/nodes", component: FullNodes },
   { path: "/addresses", component: ModernPageAddresses },
-  { path: "/addresses/:address", name:"address", component: PageAddress },
+  { path: "/addresses/:address", name:"address", component: ModernPageAddress },
   {
     name: "node",
     path: "/nodes/:node",
@@ -76,7 +71,7 @@ const routes = [
 export default new Router({
   mode: "history",
   routes: routes,
-  scrollBehavior(to, from) {
+  scrollBehavior(to) {
     if (to.hash && to.hash.length > 0) {
       return {
         selector: to.hash

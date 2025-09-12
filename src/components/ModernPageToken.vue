@@ -1,0 +1,1161 @@
+<template>
+  <div class="modern-page-token">
+    <!-- Loading State -->
+    <div v-if="loading" class="loading-container">
+      <div class="loading-spinner"></div>
+      <p>Loading token details...</p>
+    </div>
+
+    <!-- Error State -->
+    <div v-else-if="error" class="error-container">
+      <div class="error-icon">⚠️</div>
+      <h3>Error Loading Token</h3>
+      <p>{{ error }}</p>
+      <button @click="fetchContract($route.params.token)" class="retry-button">Try Again</button>
+    </div>
+
+    <!-- Token Not Found -->
+    <div v-else-if="!contract.isToken" class="not-found-container">
+      <div class="not-found-icon">🪙</div>
+      <h3>Token Not Found</h3>
+      <p>The token "{{ $route.params.token }}" could not be found or is not a valid token contract.</p>
+    </div>
+
+    <!-- Token Content -->
+    <div v-else class="token-content">
+      <!-- Header -->
+      <div class="page-header">
+        <div class="header-content">
+          <div class="header-main">
+            <h1 class="page-title">
+              {{ tokenData.token_name || contract.name }}
+              <span class="token-badge">{{ tokenData.token_symbol || 'TOKEN' }}</span>
+            </h1>
+            <p class="page-description">
+              Token information, markets, and holder details
+            </p>
+          </div>
+          <div class="header-actions">
+            <a :href="jsonUrl" target="_blank" class="json-button">
+              <span class="material-icons">code</span>
+              JSON
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Token Information -->
+      <div v-if="Object.keys(tokenData).length" class="token-section">
+        <div class="info-card">
+          <h3 class="card-title">Token Information</h3>
+          <div class="info-grid">
+            <div v-if="tokenData.token_name" class="info-item">
+              <span class="info-label">Name</span>
+              <span class="info-value">{{ tokenData.token_name }}</span>
+            </div>
+            <div v-if="tokenData.token_symbol" class="info-item">
+              <span class="info-label">Symbol</span>
+              <span class="info-value token-symbol">{{ tokenData.token_symbol }}</span>
+            </div>
+            <div v-if="tokenData.token_website" class="info-item">
+              <span class="info-label">Website</span>
+              <span class="info-value">
+                <a href="#" @click.prevent="visitWebsite(tokenData.token_website)" class="website-link">
+                  {{ tokenData.token_website }}
+                  <span class="material-icons">open_in_new</span>
+                </a>
+              </span>
+            </div>
+            <div v-if="tokenData.operator" class="info-item">
+              <span class="info-label">Operator</span>
+              <span class="info-value">
+                <router-link :to="`/addresses/${tokenData.operator}`" class="address-link">
+                  {{ operatorDisplay }}
+                </router-link>
+              </span>
+            </div>
+            <div v-if="contract.name" class="info-item">
+              <span class="info-label">Contract</span>
+              <span class="info-value">
+                <router-link :to="`/contracts/${contract.name}`" class="contract-link">
+                  {{ contract.name }}
+                </router-link>
+              </span>
+            </div>
+            <div v-if="tokenData.total_supply" class="info-item">
+              <span class="info-label">Total Supply</span>
+              <span class="info-value supply-value">{{ formatNumber(tokenData.total_supply) }}</span>
+            </div>
+            <div v-if="tokenData.holder_count !== undefined" class="info-item">
+              <span class="info-label">Total Holders</span>
+              <span class="info-value holders-count">{{ formatNumber(tokenData.holder_count) }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Markets -->
+      <div class="markets-section">
+        <div class="info-card">
+          <h3 class="card-title">
+            <span class="material-icons">trending_up</span>
+            Markets
+          </h3>
+          <div v-if="markets.length > 0" class="markets-table-container">
+            <table class="modern-table">
+              <thead>
+                <tr>
+                  <th>Pair</th>
+                  <th>Price</th>
+                  <th>24h Change</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="m in markets" :key="m.pair" class="market-row">
+                  <td class="pair-cell">
+                    <div class="pair-info">
+                      <a :href="`https://snakexchange.org/?token0=${m.token0}&token1=${m.token1}`" 
+                         target="_blank" class="pair-link">
+                        {{ m.label }}
+                      </a>
+                      <a :href="`https://snaklytics.com/#pair=${m.pair}`" 
+                         target="_blank" class="chart-link">
+                        <span class="material-icons">show_chart</span>
+                        Chart
+                      </a>
+                    </div>
+                  </td>
+                  <td class="price-cell">
+                    <span class="price-value">{{ m.price.toFixed(6) }}</span>
+                    <span class="price-symbol">{{ tokenSymbols.get(m.pairedSymbol) || m.pairedSymbol }}</span>
+                  </td>
+                  <td class="change-cell">
+                    <span :class="['change-value', getChangeClass(m.changePct)]">
+                      {{ formatChange(m.changePct) }}
+                    </span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div v-else class="empty-state">
+            <div class="empty-icon">📊</div>
+            <p>No markets found for this token</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Holders -->
+      <div class="holders-section">
+        <div class="info-card">
+          <h3 class="card-title">
+            <span class="material-icons">people</span>
+            Token Holders
+          </h3>
+          <div v-if="holders.length > 0" class="holders-table-container">
+            <table class="modern-table">
+              <thead>
+                <tr>
+                  <th>Address / XNS</th>
+                  <th>Balance</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="h in holders" :key="h.address" class="holder-row">
+                  <td class="address-cell">
+                    <router-link :to="`/addresses/${h.address}`" class="address-link">
+                      {{ h.display }}
+                    </router-link>
+                  </td>
+                  <td class="balance-cell">
+                    <span class="balance-value">{{ parseFloat(h.balance).toFixed(8) }}</span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            
+            <!-- Pagination -->
+            <div class="pagination">
+              <button 
+                @click="prevHolders" 
+                :disabled="holdersPage === 1"
+                class="pagination-button prev-button">
+                <span class="material-icons">chevron_left</span>
+                Previous
+              </button>
+              <span class="page-info">Page {{ holdersPage }}</span>
+              <button 
+                @click="nextHolders" 
+                :disabled="!hasMoreHolders"
+                class="pagination-button next-button">
+                Next
+                <span class="material-icons">chevron_right</span>
+              </button>
+            </div>
+          </div>
+          <div v-else-if="holdersLoading" class="loading-state">
+            <div class="loading-spinner small"></div>
+            <p>Loading holders...</p>
+          </div>
+          <div v-else class="empty-state">
+            <div class="empty-icon">👥</div>
+            <p>No holders found</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Website Warning Modal -->
+    <div v-if="showWebsiteModal" class="modal-overlay" @click="cancelWebsite">
+      <div class="modal-box" @click.stop>
+        <div class="modal-header">
+          <span class="material-icons warning-icon">warning</span>
+          <h3>External Website Warning</h3>
+        </div>
+        <div class="modal-content">
+          <p>You are about to visit an external website:</p>
+          <div class="website-url">{{ websiteToVisit }}</div>
+          <p>This site may be unsafe. Please proceed with caution.</p>
+        </div>
+        <div class="modal-actions">
+          <button @click="cancelWebsite" class="cancel-button">Cancel</button>
+          <button @click="proceedWebsite" class="confirm-button">Continue</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+import { mapGetters } from "vuex"
+import axios from "axios"
+
+export default {
+  name: "modern-page-token",
+  data: () => ({
+    loading: true,
+    error: null,
+    holdersLoading: false,
+    jsonUrl: "",
+    contract: {
+      name: "",
+      code: "",
+      isToken: false
+    },
+    tokenData: {},
+    markets: [],
+    showWebsiteModal: false,
+    websiteToVisit: "",
+    operatorXnsName: "",
+    holders: [],
+    holdersPage: 1,
+    maxPairs: 1,
+    holdersPerPage: 25,
+    hasMoreHolders: false,
+    tokens: new Map(),
+    pairMap: new Map(),
+    tokenSymbols: new Map(),
+  }),
+  computed: {
+    ...mapGetters(["blockchain"]),
+    operatorDisplay() {
+      if (this.operatorXnsName) {
+        return this.operatorXnsName
+      }
+      return this.tokenData.operator || ""
+    }
+  },
+  methods: {
+    formatNumber(value) {
+      if (!value) return '0'
+      const num = parseFloat(value)
+      if (num >= 1e9) return (num / 1e9).toFixed(2) + 'B'
+      if (num >= 1e6) return (num / 1e6).toFixed(2) + 'M'
+      if (num >= 1e3) return (num / 1e3).toFixed(2) + 'K'
+      return num.toLocaleString()
+    },
+    
+    formatChange(changePct) {
+      if (changePct > 0) return `+${changePct.toFixed(2)}%`
+      if (changePct < 0) return `${changePct.toFixed(2)}%`
+      return '0.00%'
+    },
+    
+    getChangeClass(changePct) {
+      if (changePct > 0) return 'positive'
+      if (changePct < 0) return 'negative'
+      return 'neutral'
+    },
+
+    visitWebsite(url) {
+      if (!url.startsWith("http://") && !url.startsWith("https://")) {
+        url = "https://" + url;
+      }
+      if (!url) return;
+      this.websiteToVisit = url;
+      this.showWebsiteModal = true;
+    },
+
+    proceedWebsite() {
+      if (this.websiteToVisit) {
+        window.open(this.websiteToVisit, '_blank');
+      }
+      this.showWebsiteModal = false;
+      this.websiteToVisit = "";
+    },
+
+    cancelWebsite() {
+      this.showWebsiteModal = false;
+      this.websiteToVisit = "";
+    },
+
+    async fetchHoldersCount() {
+      if (!this.contract.name) return;
+
+      const query = `
+        query HolderCount($prefix:String!){
+          allStates(
+            filter:{
+              and:{
+                key:{ startsWith:$prefix, notLike:"%:%:%" }
+                valueNumeric:{ greaterThan:"0" }
+              }
+            }
+          ){
+            totalCount
+          }
+        }`;
+      const variables = { prefix: `${this.contract.name}.balances:` };
+
+      try {
+        const { data } = await axios.post(
+          `${this.blockchain.rpc}/graphql`,
+          { query, variables }
+        );
+        let count = 0;
+        if (
+          data &&
+          data.data &&
+          data.data.allStates &&
+          typeof data.data.allStates.totalCount !== "undefined"
+        ) {
+          count = data.data.allStates.totalCount;
+        }
+        this.tokenData.holder_count = count;
+      } catch (e) {
+        console.error("holder-count error", e);
+        this.tokenData.holder_count = 0;
+      }
+    },
+
+    async fetchContract(name) {
+      this.loading = true;
+      this.error = null;
+
+      const tokenKeys = [
+        `${name}.metadata:token_name`,
+        `${name}.metadata:token_symbol`,
+        `${name}.metadata:token_website`,
+        `${name}.metadata:operator`,
+        `${name}.metadata:total_supply`
+      ];
+
+      const gqlQuery = {
+        query: `
+          query ContractAndToken {
+            contractByName(name: "${name}") {
+              code
+              xsc0001
+            }
+            allStates(filter: { key: { in: [${tokenKeys.map(k => `"${k}"`).join(", ")}] } }) {
+              edges {
+                node {
+                  key
+                  value
+                }
+              }
+            }
+          }
+        `
+      };
+
+      try {
+        const res = await axios.post(`${this.blockchain.rpc}/graphql`, gqlQuery, {
+          headers: { 'Content-Type': 'application/json' }
+        });
+
+        const contractData = res.data.data.contractByName || {};
+        const stateData = res.data.data.allStates.edges || [];
+
+        this.contract.name = name;
+        this.contract.code = contractData.code || "";
+        this.contract.isToken = contractData.xsc0001 === true;
+
+        this.tokenData = {};
+        stateData.forEach(({ node }) => {
+          const key = node.key.split(":")[1];
+          this.tokenData[key] = node.value;
+        });
+
+        // If there's an operator, resolve XNS name
+        if (this.tokenData.operator) {
+          this.operatorXnsName = await this.resolveXnsName(this.tokenData.operator);
+        }
+
+        this.jsonUrl = `${this.blockchain.rpc}/graphql?query=${encodeURIComponent(gqlQuery.query)}`;
+        
+        this.loading = false;
+      } catch (err) {
+        console.error("Error fetching contract/token data:", err);
+        this.error = "Failed to load token data. Please try again.";
+        this.loading = false;
+      }
+    },
+
+    async resolveXnsName(address) {
+      try {
+        const payload = {
+          sender: "",
+          contract: "con_name_service_final",
+          function: "get_address_to_main_name",
+          kwargs: { address }
+        }
+        const bytes = new TextEncoder().encode(JSON.stringify(payload))
+        const hex = Array.from(bytes).map(x => ("00" + x.toString(16)).slice(-2)).join("")
+        const resp = await fetch(`${this.blockchain.rpc}/abci_query?path="/simulate_tx/${hex}"`)
+        const json = await resp.json()
+        if (!json.result || !json.result.response || !json.result.response.value) {
+          return ""
+        }
+
+        let decoded = JSON.parse(atob(json.result.response.value))
+        if (decoded.status !== 1 && decoded.result && decoded.result !== "None") {
+          return decoded.result.replace(/'/g, "")
+        }
+      } catch (error) {
+        console.error("Error resolving XNS name:", error)
+      }
+      return ""
+    },
+
+    async fetchHolders(page = 1) {
+      if (!this.contract.name) return;
+      this.holdersLoading = true;
+      this.holdersPage = page;
+
+      const first = this.holdersPerPage + 1;
+      const offset = (page - 1) * this.holdersPerPage;
+
+      const query = `
+        query TokenHolders($keyPrefix:String!, $first:Int!, $offset:Int!){
+          allStates(
+            filter:{
+              and:{
+                key:{ startsWith:$keyPrefix, notLike: "%:%:%" }
+                valueNumeric:{ greaterThan:"0" }
+              }
+            }
+            orderBy: VALUE_NUMERIC_DESC
+            first:$first
+            offset:$offset
+          ){
+            edges{ node{ key value } }
+          }
+        }`;
+
+      const variables = {
+        keyPrefix: `${this.contract.name}.balances:`,
+        first,
+        offset
+      };
+
+      try {
+        const { data } = await axios.post(
+          `${this.blockchain.rpc}/graphql`,
+          { query, variables }
+        );
+        const edges = data.data.allStates.edges || [];
+
+        const slice = edges.slice(0, this.holdersPerPage);
+        this.hasMoreHolders = edges.length > this.holdersPerPage;
+
+        this.holders = await Promise.all(
+          slice.map(async ({ node }) => {
+            const address = node.key.split(":")[1];
+            const xns = await this.resolveXnsName(address);
+            return {
+              address,
+              display: xns || address,
+              balance: node.value
+            };
+          })
+        );
+        this.holdersLoading = false;
+      } catch (e) {
+        console.error("holder list error", e);
+        this.holders = [];
+        this.hasMoreHolders = false;
+        this.holdersLoading = false;
+      }
+    },
+
+    nextHolders() {
+      if (this.hasMoreHolders) this.fetchHolders(this.holdersPage + 1);
+    },
+
+    prevHolders() {
+      if (this.holdersPage > 1) this.fetchHolders(this.holdersPage - 1);
+    },
+
+    async fetchMarkets() {
+      try {
+        const query = {
+          query: `query { allEvents(condition:{contract:"con_pairs",event:"PairCreated"}) { edges { node { dataIndexed data } } } }`
+        }
+        const res = await axios.post(`${this.blockchain.rpc}/graphql`, query)
+        const edges = res && res.data && res.data.data && res.data.data.allEvents && res.data.data.allEvents.edges || []
+
+        const pairs = edges.map(e => ({
+          pair: e.node && e.node.data && e.node.data.pair || null,
+          token0: e.node && e.node.dataIndexed && e.node.dataIndexed.token0,
+          token1: e.node && e.node.dataIndexed && e.node.dataIndexed.token1
+        })).filter(p => p.pair)
+
+        if (this.maxPairs > 0 && this.contract.name == "currency") {
+          pairs.sort((a, b) => a.pair.localeCompare(b.pair))
+          pairs.splice(this.maxPairs)
+        }
+
+        const related = pairs.filter(p => p.token0 === this.contract.name || p.token1 === this.contract.name)
+        const uniqueTokens = new Set(related.map(p => (p.token0 === this.contract.name ? p.token1 : p.token0)))
+
+        await this.fetchTokenSymbols([...uniqueTokens])
+
+        const result = []
+        for (const p of related) {
+          const baseIsToken0 = p.token0 === this.contract.name
+          let price = await this.getLatestPrice(p.pair, baseIsToken0)
+          if (price === 0) {
+            const inversePrice = await this.getLatestPrice(p.pair, !baseIsToken0)
+            if (inversePrice > 0) price = 1 / inversePrice
+          }
+          if (price === 0) continue
+          let price24h = await this.getHistoricalPrice(p.pair, baseIsToken0);
+          if (price24h === 0){
+            const inversePrice24h = await this.getHistoricalPrice(p.pair, !baseIsToken0);
+            if (inversePrice24h > 0) price24h = 1 / inversePrice24h;
+          }
+          const changePct = ((price - price24h) / price24h) * 100
+
+          const paired = baseIsToken0 ? p.token1 : p.token0
+          result.push({
+            pair: p.pair,
+            token0: p.token0,
+            token1: p.token1,
+            label: `${p.token0} / ${p.token1}`,
+            price,
+            pairedSymbol: paired,
+            changePct
+          })
+        }
+
+        this.markets = result
+      } catch (err) {
+        console.error("Market fetch error", err)
+        this.markets = []
+      }
+    },
+
+    async fetchTokenSymbols(contracts) {
+      if (!contracts.length) return
+      const keys = contracts.map(c => `"${c}.metadata:token_symbol"`).join(",")
+      const query = {
+        query: `query { allStates(filter:{key:{in:[${keys}]}}) { edges { node { key value } } } }`
+      }
+      try {
+        const res = await axios.post(`${this.blockchain.rpc}/graphql`, query)
+        const edges = res && res.data && res.data.data && res.data.data.allStates && res.data.data.allStates.edges || []
+        edges.forEach(({ node }) => {
+          const contract = node.key.split(".")[0]
+          this.tokenSymbols.set(contract, node.value)
+        })
+      } catch (e) {
+        console.error("Failed to fetch token symbols", e)
+      }
+    },
+
+    async getLatestPrice(pair, baseIsToken0) {
+      try {
+        const query = {
+          query: `query { allEvents(condition: {contract:"con_pairs", event:"Swap"}, filter: {dataIndexed:{contains:{pair:"${pair}"}}}, orderBy: CREATED_DESC, first: 1) { edges { node { data } } } }`
+        }
+        const res = await axios.post(`${this.blockchain.rpc}/graphql`, query)
+        const data = res && res.data && res.data.data && res.data.data.allEvents && res.data.data.allEvents.edges && res.data.data.allEvents.edges[0] && res.data.data.allEvents.edges[0].node && res.data.data.allEvents.edges[0].node.data || {}
+
+        const a0in = parseFloat(data.amount0In || 0)
+        const a1in = parseFloat(data.amount1In || 0)
+        const a0out = parseFloat(data.amount0Out || 0)
+        const a1out = parseFloat(data.amount1Out || 0)
+
+        if (baseIsToken0 && a0in > 0 && a1out > 0) return a1out / a0in
+        if (!baseIsToken0 && a1in > 0 && a0out > 0) return a0out / a1in
+
+        return 0
+      } catch (e) {
+        console.error("Price fetch failed for", pair, e)
+        return 0
+      }
+    },
+
+    async getHistoricalPrice(pair, baseIsToken0) {
+      try {
+        const now = new Date();
+        const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+        const formatted = yesterday.toISOString().replace("Z", "");
+        const query = {
+          query: `query {
+            allEvents(
+              condition: {contract:"con_pairs", event:"Swap"},
+              filter: {
+                dataIndexed: {contains: {pair: "${pair}"}},
+                created: {lessThan: "${formatted}"}
+              },
+              orderBy: CREATED_DESC,
+              first: 1
+            ) {
+              edges { node { data } }
+            }
+          }`
+        };
+        const res = await axios.post(`${this.blockchain.rpc}/graphql`, query);
+        
+        const data = res && res.data && res.data.data && res.data.data.allEvents && res.data.data.allEvents.edges && res.data.data.allEvents.edges[0] && res.data.data.allEvents.edges[0].node && res.data.data.allEvents.edges[0].node.data || {};
+
+        const a0in = parseFloat(data.amount0In || 0);
+        const a1in = parseFloat(data.amount1In || 0);
+        const a0out = parseFloat(data.amount0Out || 0);
+        const a1out = parseFloat(data.amount1Out || 0);
+
+        if (baseIsToken0 && a0in > 0 && a1out > 0) return a1out / a0in;
+        if (!baseIsToken0 && a1in > 0 && a0out > 0) return a0out / a1in;
+
+        return 0;
+      } catch (e) {
+        console.error("24h historical price fetch failed for", pair, e);
+        return 0;
+      }
+    }
+  },
+  
+  async mounted() {
+    await this.fetchContract(this.$route.params.token);
+
+    if (this.contract.isToken) {
+      this.fetchHoldersCount();
+      this.fetchHolders();
+      this.fetchMarkets();
+    }
+  }
+}
+</script>
+
+<style scoped>
+.modern-page-token {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
+  color: #ffffff;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+/* Loading States */
+.loading-container, .error-container, .not-found-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  text-align: center;
+  padding: 2rem;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(255, 255, 255, 0.1);
+  border-top: 3px solid #00d4ff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 1rem;
+}
+
+.loading-spinner.small {
+  width: 24px;
+  height: 24px;
+  border-width: 2px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.error-icon, .not-found-icon {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+}
+
+.retry-button {
+  background: linear-gradient(135deg, #00d4ff 0%, #0099cc 100%);
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  margin-top: 1rem;
+  transition: all 0.3s ease;
+}
+
+.retry-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 212, 255, 0.3);
+}
+
+/* Header */
+.page-header {
+  background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 2rem 0;
+}
+
+.header-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.page-title {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin: 0 0 0.5rem 0;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.token-badge {
+  background: linear-gradient(135deg, #00d4ff 0%, #0099cc 100%);
+  color: white;
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.page-description {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 1.125rem;
+  margin: 0;
+}
+
+.json-button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  text-decoration: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+}
+
+.json-button:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateY(-2px);
+}
+
+/* Content */
+.token-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.token-section, .markets-section, .holders-section {
+  margin-bottom: 2rem;
+}
+
+.info-card {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 16px;
+  padding: 2rem;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.card-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 0 0 1.5rem 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.card-title .material-icons {
+  color: #00d4ff;
+}
+
+/* Info Grid */
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5rem;
+}
+
+.info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.info-label {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.info-value {
+  color: white;
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+.token-symbol {
+  background: linear-gradient(135deg, #00d4ff 0%, #0099cc 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.supply-value, .holders-count {
+  color: #00d4ff;
+}
+
+.website-link, .address-link, .contract-link {
+  color: #00d4ff;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  transition: color 0.3s ease;
+}
+
+.website-link:hover, .address-link:hover, .contract-link:hover {
+  color: #33e0ff;
+}
+
+/* Tables */
+.modern-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+}
+
+.modern-table th {
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.8);
+  font-weight: 600;
+  padding: 1rem;
+  text-align: left;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.modern-table td {
+  padding: 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.modern-table tr:hover {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+/* Market specific styles */
+.pair-info {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.pair-link {
+  color: white;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.pair-link:hover {
+  color: #00d4ff;
+}
+
+.chart-link {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  color: rgba(255, 255, 255, 0.6);
+  text-decoration: none;
+  font-size: 0.875rem;
+  transition: color 0.3s ease;
+}
+
+.chart-link:hover {
+  color: #00d4ff;
+}
+
+.price-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.price-value {
+  font-weight: 600;
+  color: white;
+}
+
+.price-symbol {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.875rem;
+}
+
+.change-value.positive {
+  color: #4ade80;
+}
+
+.change-value.negative {
+  color: #f87171;
+}
+
+.change-value.neutral {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+/* Holders specific styles */
+.balance-value {
+  font-family: 'JetBrains Mono', monospace;
+  color: #00d4ff;
+}
+
+/* Pagination */
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 2rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.pagination-button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.pagination-button:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateY(-2px);
+}
+
+.pagination-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.page-info {
+  color: rgba(255, 255, 255, 0.8);
+  font-weight: 600;
+}
+
+/* Empty States */
+.empty-state, .loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem;
+  text-align: center;
+}
+
+.empty-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  opacity: 0.5;
+}
+
+/* Modal */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  backdrop-filter: blur(5px);
+}
+
+.modal-box {
+  background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
+  border-radius: 16px;
+  padding: 2rem;
+  max-width: 500px;
+  width: 90%;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.warning-icon {
+  color: #fbbf24;
+  font-size: 2rem;
+}
+
+.modal-header h3 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.modal-content p {
+  color: rgba(255, 255, 255, 0.8);
+  line-height: 1.6;
+  margin-bottom: 1rem;
+}
+
+.website-url {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 0.75rem;
+  border-radius: 8px;
+  font-family: 'JetBrains Mono', monospace;
+  word-break: break-all;
+  margin: 1rem 0;
+  color: #00d4ff;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+  margin-top: 2rem;
+}
+
+.cancel-button, .confirm-button {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.cancel-button {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+}
+
+.cancel-button:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.confirm-button {
+  background: linear-gradient(135deg, #00d4ff 0%, #0099cc 100%);
+  color: white;
+}
+
+.confirm-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 212, 255, 0.3);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .header-content {
+    flex-direction: column;
+    gap: 1rem;
+    text-align: center;
+  }
+
+  .page-title {
+    font-size: 2rem;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .token-content {
+    padding: 1rem;
+  }
+
+  .info-card {
+    padding: 1.5rem;
+  }
+
+  .info-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .modern-table {
+    font-size: 0.875rem;
+  }
+
+  .modern-table th,
+  .modern-table td {
+    padding: 0.75rem 0.5rem;
+  }
+
+  .pair-info {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .pagination {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .modal-box {
+    margin: 1rem;
+    padding: 1.5rem;
+  }
+
+  .modal-actions {
+    flex-direction: column;
+  }
+}
+</style>
