@@ -27,35 +27,38 @@
             span Showing {{ contracts.length }} contracts
             span.page-info(v-if="offset > 0") (Offset {{ offset }})
         
-        .modern-table
-          .table-header-row
-            .table-cell.name-col Contract Name
-            .table-cell.date-col Submission Date
-            .table-cell.type-col Type
-            .table-cell.actions-col Actions
-          
-          .table-row(v-for="contract in contracts" :key="contract.name")
-            .table-cell.name-col
-              .contract-display
-                router-link.contract-link(:to="`/contracts/${contract.name}`")
-                  .contract-name {{ contract.name }}
-                button.copy-btn(@click="copyToClipboard(contract.name)")
-                  i.material-icons content_copy
+        .table-container
+          table.modern-table
+            thead
+              tr
+                th Contract Name
+                th Submission Date
+                th Type
+                th Actions
             
-            .table-cell.date-col
-              .date-display
-                .date-main {{ contract.submissionDate }}
-                .date-ago {{ getTimeAgo(contract.submissionDate) }}
-            
-            .table-cell.type-col
-              .type-display
-                .contract-type(:class="getContractTypeClass(contract.name)") {{ getContractType(contract.name) }}
-            
-            .table-cell.actions-col
-              .actions-display
-                router-link.btn.btn-sm.btn-primary(:to="`/contracts/${contract.name}`")
-                  i.material-icons visibility
-                  span View
+            tbody
+              tr.table-row(v-for="contract in contracts" :key="contract.name")
+                td.name-cell
+                  .contract-display
+                    router-link.contract-link(:to="`/contracts/${contract.name}`")
+                      .contract-name {{ contract.name }}
+                    button.copy-btn(@click="copyToClipboard(contract.name)")
+                      i.material-icons content_copy
+                
+                td.date-cell
+                  .date-display
+                    .date-main {{ contract.submissionDate }}
+                    .date-ago {{ getTimeAgo(contract.submissionDate) }}
+                
+                td.type-cell
+                  .type-display
+                    .contract-type(:class="getContractTypeClass(contract.name)") {{ getContractType(contract.name) }}
+                
+                td.actions-cell
+                  .actions-display
+                    router-link.btn.btn-sm.btn-primary(:to="`/contracts/${contract.name}`")
+                      i.material-icons visibility
+                      span View
 
       .loading-state(v-else-if="loading")
         .loading-spinner
@@ -276,56 +279,55 @@ export default {
     .page-info
       color var(--text-dim)
 
+.table-container
+  background rgba(255, 255, 255, 0.05)
+  border-radius 12px
+  overflow hidden
+  border 1px solid rgba(255, 255, 255, 0.1)
+
 .modern-table
-  .table-header-row
-    display grid
-    grid-template-columns 1fr 200px 120px 120px
-    gap 1rem
-    padding 1rem 1.5rem
-    background var(--bg-table-header)
-    border-bottom 1px solid var(--border-color)
-    font-weight 600
-    font-size 0.85rem
-    text-transform uppercase
-    letter-spacing 0.5px
-    color var(--text-secondary)
-    
-    @media (max-width: 1024px)
-      grid-template-columns 1fr 180px 100px 100px
-      gap 0.75rem
-    
-    @media (max-width: 768px)
-      grid-template-columns 1fr 150px 80px 80px
-      gap 0.5rem
-      padding 1rem
+  width 100%
+  border-collapse collapse
 
-  .table-row
-    display grid
-    grid-template-columns 1fr 200px 120px 120px
-    gap 1rem
-    padding 1rem 1.5rem
-    border-bottom 1px solid var(--border-color)
-    transition all 0.2s ease
+  thead
+    background rgba(255, 255, 255, 0.1)
     
-    @media (max-width: 1024px)
-      grid-template-columns 1fr 180px 100px 100px
-      gap 0.75rem
-    
-    @media (max-width: 768px)
-      grid-template-columns 1fr 150px 80px 80px
-      gap 0.5rem
-      padding 1rem
-    
-    &:hover
-      background var(--bg-hover)
-    
-    &:last-child
-      border-bottom none
+    th
+      padding 1.5rem 2rem
+      text-align left
+      font-weight 600
+      font-size 0.875rem
+      text-transform uppercase
+      letter-spacing 0.05em
+      color rgba(255, 255, 255, 0.8)
+      border-bottom 1px solid rgba(255, 255, 255, 0.1)
 
-.table-cell
-  display flex
-  align-items center
+  tbody
+    .table-row
+      border-bottom 1px solid rgba(255, 255, 255, 0.05)
+      transition all 0.2s ease
+      
+      &:hover
+        background rgba(255, 255, 255, 0.05)
+      
+      &:last-child
+        border-bottom none
+
+      td
+        padding 1.5rem 2rem
+        vertical-align middle
+
+.name-cell
   min-width 0
+
+.date-cell
+  width 200px
+
+.type-cell
+  width 120px
+
+.actions-cell
+  width 120px
 
 .contract-display
   display flex
@@ -335,17 +337,17 @@ export default {
   
   .contract-link
     text-decoration none
-    color var(--primary)
+    color #14b8a6
     font-weight 600
     transition color 0.2s ease
     min-width 0
     
     &:hover
-      color var(--primary-light)
+      color #10b981
       text-decoration underline
     
     .contract-name
-      font-family var(--font-mono)
+      font-family 'JetBrains Mono', monospace
       font-size 0.9rem
       overflow hidden
       text-overflow ellipsis
@@ -357,32 +359,36 @@ export default {
   .copy-btn
     background none
     border none
-    color var(--text-dim)
+    color rgba(255, 255, 255, 0.5)
     cursor pointer
     padding 0.25rem
-    border-radius var(--border-radius)
+    border-radius 4px
     transition all 0.2s ease
     flex-shrink 0
     
     &:hover
-      color var(--primary)
-      background var(--bg-hover)
+      color #14b8a6
+      background rgba(255, 255, 255, 0.05)
     
     i
       font-size 0.9rem
 
 .date-display
+  display flex
+  flex-direction column
+  gap 0.25rem
+
   .date-main
     font-size 0.85rem
-    color var(--text-primary)
-    margin-bottom 0.25rem
+    color #ffffff
+    font-weight 500
     
     @media (max-width: 768px)
       font-size 0.75rem
   
   .date-ago
     font-size 0.7rem
-    color var(--text-dim)
+    color rgba(255, 255, 255, 0.5)
 
 .type-display
   .contract-type
