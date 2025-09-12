@@ -47,12 +47,12 @@ header.modern-header
           .status-label Latest Block
       
       // Mobile Menu Toggle
-      .mobile-menu-toggle(@click="toggleMobileMenu")
+      .mobile-menu-toggle(v-if="!config.desktop" @click="toggleMobileMenu")
         i.material-icons(v-if="!mobileMenuOpen") menu
         i.material-icons(v-else) close
 
   // Mobile Navigation
-  .mobile-nav(v-if="mobileMenuOpen")
+  .mobile-nav(v-if="!config.desktop && mobileMenuOpen")
     .mobile-nav-content
       .mobile-search
         input.search-input(
@@ -226,7 +226,7 @@ export default {
         window.innerWidth || 0
       );
       
-      if (w >= 1400) {
+      if (w >= 1024) {
         this.closeMobileMenu();
         this.$store.commit("SET_CONFIG_DESKTOP", true);
         return;
@@ -476,7 +476,7 @@ export default {
 // Mobile Navigation
 .mobile-nav
   position fixed
-  top 0
+  top 72px
   left 0
   right 0
   bottom 0
@@ -496,7 +496,6 @@ export default {
 .mobile-nav-content
   background var(--bg-card)
   margin var(--space-4)
-  margin-top 88px
   border-radius var(--radius-xl)
   padding var(--space-6)
   box-shadow var(--shadow-xl)
@@ -558,7 +557,7 @@ export default {
     font-size var(--text-base)
 
 // Responsive adjustments
-@media (max-width: 1400px)
+@media (max-width: 1024px)
   .header-nav
     display none
 
