@@ -176,7 +176,7 @@ export default {
 
         const contractsData = (response.data && response.data.data && response.data.data.allContracts && response.data.data.allContracts.nodes) || [];
 
-        this.contracts = contractsData.map(function(contract) {
+        this.contracts = contractsData.map((contract) => {
           return {
             name: contract.name,
             created: contract.created,

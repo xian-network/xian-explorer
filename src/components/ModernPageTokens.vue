@@ -220,7 +220,7 @@ export default {
             name: c.name,
             display,
             submissionDate: c.created,
-            formattedDate: moment.utc(c.created).local().format('MMM D, YYYY [at] h:mm A')
+            formattedDate: this.formatDate(c.created)
           };
         });
 
