@@ -122,10 +122,11 @@ export default {
   methods: {
     readableDate,
     formatTime(timeString) {
-      return new Date(timeString).toLocaleString()
+      // Parse UTC timestamp and format for display
+      return moment.utc(timeString).local().format('MMM D, YYYY [at] h:mm A')
     },
     getTimeAgo(timeString) {
-      return moment(timeString).fromNow()
+      return moment.utc(timeString).fromNow()
     },
     async copyToClipboard(text) {
       try {

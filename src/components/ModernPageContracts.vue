@@ -48,7 +48,7 @@
                 td.date-cell
                   .date-display
                     .date-main {{ contract.submissionDate }}
-                    .date-ago {{ getTimeAgo(contract.submissionDate) }}
+                    .date-ago {{ getTimeAgo(contract.created) }}
                 
                 td.type-cell
                   .type-display
@@ -117,7 +117,7 @@ export default {
   },
   methods: {
     getTimeAgo(dateString) {
-      return moment(dateString).fromNow();
+      return moment.utc(dateString).fromNow();
     },
     getContractType(contractName) {
       if (contractName.includes('dex')) return 'DEX';
@@ -179,7 +179,8 @@ export default {
         this.contracts = contractsData.map(function(contract) {
           return {
             name: contract.name,
-            submissionDate: new Date(contract.created).toLocaleString(),
+            created: contract.created,
+            submissionDate: moment.utc(contract.created).local().format('MMM D, YYYY [at] h:mm A'),
           };
         });
       } catch (error) {

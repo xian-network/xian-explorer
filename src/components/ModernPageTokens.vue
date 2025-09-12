@@ -60,7 +60,7 @@
                 </td>
                 <td class="date-cell">
                   <div class="date-info">
-                    <span class="date-primary">{{ formatDate(contract.submissionDate) }}</span>
+                    <span class="date-primary">{{ contract.formattedDate }}</span>
                     <span class="date-relative">{{ getRelativeTime(contract.submissionDate) }}</span>
                   </div>
                 </td>
@@ -219,7 +219,8 @@ export default {
           return {
             name: c.name,
             display,
-            submissionDate: new Date(c.created).toLocaleString()
+            submissionDate: c.created,
+            formattedDate: moment.utc(c.created).local().format('MMM D, YYYY [at] h:mm A')
           };
         });
 
@@ -244,11 +245,11 @@ export default {
     },
 
     formatDate(dateString) {
-      return moment(dateString).format('MMM D, YYYY [at] h:mm A');
+      return moment.utc(dateString).local().format('MMM D, YYYY [at] h:mm A');
     },
 
     getRelativeTime(dateString) {
-      return moment(dateString).fromNow();
+      return moment.utc(dateString).fromNow();
     }
   }
 };

@@ -42,7 +42,7 @@
                 td.time-cell
                   .time-display
                     .time-main {{ tx.formattedTime }}
-                    .time-ago {{ getTimeAgo(tx.formattedTime) }}
+                    .time-ago {{ getTimeAgo(tx.timestamp) }}
                 
                 td.hash-cell
                   .hash-display
@@ -128,8 +128,8 @@ export default {
     shortenText(text) {
       return text.length > 20 ? `${text.substring(0, 20)}...` : text;
     },
-    getTimeAgo(timeString) {
-      return moment(timeString).fromNow();
+    getTimeAgo(timestamp) {
+      return moment.utc(timestamp).fromNow();
     },
     getContractType(contract) {
       if (contract.includes('dex')) return 'DEX';
@@ -201,6 +201,7 @@ export default {
           const feeXian = this.stampRate
             ? (node.stamps / this.stampRate).toFixed(3)
             : "—";
+          const timestamp = Number(node.blockTime) / 1e6; // Convert microseconds to milliseconds
           return {
             hash: node.hash,
             blockHeight: node.blockHeight,
@@ -208,7 +209,8 @@ export default {
             function: node.function,
             stamps: node.stamps,
             feeXian,
-            formattedTime: new Date(Number(node.blockTime) / 1e6).toLocaleString()
+            timestamp: timestamp,
+            formattedTime: moment.utc(timestamp).local().format('MMM D, YYYY [at] h:mm A')
           };
         });
       } catch (error) {
