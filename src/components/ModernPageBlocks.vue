@@ -284,17 +284,17 @@ export default {
   align-items center
   gap 0.5rem
   padding 0.75rem 1.5rem
-  background rgba(255, 255, 255, 0.1)
-  color #ffffff
-  text-decoration none
+  background rgba(20, 184, 166, 0.1)
+  border 1px solid rgba(20, 184, 166, 0.3)
   border-radius 8px
-  border 1px solid rgba(255, 255, 255, 0.2)
-  transition all 0.2s ease
+  color #14b8a6
+  text-decoration none
   font-weight 500
-
+  transition all 0.2s ease
+  
   &:hover
-    background rgba(255, 255, 255, 0.2)
-    border-color rgba(255, 255, 255, 0.3)
+    background rgba(20, 184, 166, 0.2)
+    border-color rgba(20, 184, 166, 0.5)
     transform translateY(-1px)
 
 .page-info
@@ -311,17 +311,17 @@ export default {
     align-items center
     gap 0.5rem
     padding 0.75rem 1.5rem
-    background rgba(20, 184, 166, 0.2)
-    color #14b8a6
-    text-decoration none
+    background rgba(59, 130, 246, 0.1)
+    border 1px solid rgba(59, 130, 246, 0.3)
     border-radius 8px
-    border 1px solid rgba(20, 184, 166, 0.3)
-    transition all 0.2s ease
+    color #3b82f6
+    text-decoration none
     font-weight 500
-
+    transition all 0.2s ease
+    
     &:hover
-      background rgba(20, 184, 166, 0.3)
-      border-color rgba(20, 184, 166, 0.5)
+      background rgba(59, 130, 246, 0.2)
+      border-color rgba(59, 130, 246, 0.5)
       transform translateY(-1px)
 
 .table-container
