@@ -21,6 +21,14 @@ tm-page(title='Blocks')
             | {{ num.prettyInt(x.header.height) }}
         td {{ new Date(x.header.time).toLocaleString() }}
         td {{ x.header.last_commit_hash }}
+
+  div(slot="menu"): tm-tool-bar
+    router-link(:to="{ path: '/blocks', query: prevQuery }" v-if="hasPrevPage")
+      i.material-icons chevron_left
+      | Prev. blocks
+    router-link(:to="{ path: '/blocks', query: nextQuery }" v-if="hasNextPage")
+      | Next blocks
+      i.material-icons chevron_right
 </template>
 
 <script>

@@ -92,6 +92,35 @@
           <h3>No blocks found</h3>
           <p>Unable to load blockchain data at this time.</p>
         </div>
+
+        <!-- Table Controls -->
+        <div class="table-controls" style="margin-top: 2rem;">
+          <div class="pagination-controls">
+            <router-link 
+              v-if="hasPrevPage"
+              :to="{ path: '/blocks', query: prevQuery }" 
+              class="nav-button prev-button"
+            >
+              <i class="material-icons">chevron_left</i>
+              Previous
+            </router-link>
+            <router-link 
+              v-if="hasNextPage"
+              :to="{ path: '/blocks', query: nextQuery }" 
+              class="nav-button next-button"
+            >
+              Next
+              <i class="material-icons">chevron_right</i>
+            </router-link>
+          </div>
+         
+          <div class="json-link" v-if="jsonUrl">
+            <a :href="jsonUrl" target="_blank" class="json-button">
+              <i class="material-icons">code</i>
+              JSON
+            </a>
+          </div>
+        </div>
       </div>
     </div>
   </div>

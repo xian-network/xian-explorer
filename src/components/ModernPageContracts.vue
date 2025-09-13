@@ -86,6 +86,30 @@
           <h3>No contracts found</h3>
           <p>Unable to load contract data at this time.</p>
         </div>
+
+         <!-- Table Controls -->
+        <div class="table-controls" style="margin-top: 2rem;">
+          <div class="pagination-controls">
+            <router-link 
+              v-if="hasPrevPage"
+              :to="{ path: '/contracts', query: prevQuery }" 
+              class="nav-button prev-button"
+            >
+              <i class="material-icons">chevron_left</i>
+              Previous
+            </router-link>
+            <router-link 
+              v-if="hasNextPage"
+              :to="{ path: '/contracts', query: nextQuery }" 
+              class="nav-button next-button"
+            >
+              Next
+              <i class="material-icons">chevron_right</i>
+            </router-link>
+          </div>
+          
+        </div>
+
       </div>
     </div>
   </div>
