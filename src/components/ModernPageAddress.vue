@@ -125,6 +125,27 @@
               <span class="material-icons">receipt</span>
               Transaction History
             </h3>
+
+            <div class="tx-tabs">
+              <button
+                type="button"
+                class="tx-tab"
+                :class="{ active: activeTab === 'all' }"
+                @click="switchTab('all')"
+              >
+                All
+              </button>
+
+              <button
+                type="button"
+                class="tx-tab"
+                :class="{ active: activeTab === 'token' }"
+                @click="switchTab('token')"
+              >
+                Token transfers
+              </button>
+            </div>
+
             <div class="card-content">
               <div v-if="transactions.length > 0" class="table-container">
                 <table class="modern-table">
@@ -252,9 +273,19 @@ export default {
     transactions: [],
     page: 1,
     itemsPerPage: 10,
+
+    pagesCache: [],          // cache txs per page (array of arrays)
+    pageOffsets: [0],        // starting state-change offset per page (page 1 starts at 0)
+    hasMore: true,
+
     mainName: null,
     stampRate: null,
-    addressCopied: false
+    addressCopied: false,
+     filters: {
+    tokenOnly: false,
+    method: 'both' // 'both' | 'transfer' | 'transfer_from'
+  },
+  activeTab: 'all'
   }),
   computed: {
     ...mapGetters(["blockchain"]),
@@ -272,7 +303,9 @@ export default {
     }
   },
   async mounted() {
+    this._seenTxHashes = new Set();
     await this.loadAddressData();
+    
   },
   watch: {
     '$route.params.address': {
@@ -285,6 +318,22 @@ export default {
     }
   },
   methods: {
+    resetTxPaging() {
+    this.page = 1;
+    this.pagesCache = [];
+    this.pageOffsets = [0];
+    this.hasMore = true;
+    this._seenTxHashes = new Set();
+  },
+  // call resetTxPaging() when address or tab changes:
+  switchTab(tab) {
+    if (tab === this.activeTab) return;
+    this.activeTab = tab;
+    this.filters.tokenOnly = tab === 'token';
+    this.filters.method = 'both';
+    this.resetTxPaging();
+    this.fetchTransactions();
+  },
     async loadAddressData() {
       this.loading = true;
       this.error = null;
@@ -407,103 +456,119 @@ export default {
     },
 
     async fetchTransactions() {
-      this.transactionsLoading = true;
-      const offset = (this.page - 1) * this.itemsPerPage;
-      const fetchBatchSize = this.itemsPerPage * 2;
-      let uniqueTransactions = [];
-      let seenHashes = new Set();
-      let currentOffset = offset;
+  this.transactionsLoading = true;
 
-      while (uniqueTransactions.length < this.itemsPerPage) {
-        const query = `
-          query MyQuery($address: String!, $offset: Int!, $batchSize: Int!) {
-            allStateChanges(
-              filter: { key: { includes: $address }, txHash: { notEqualTo: "GENESIS"}}
-              first: $batchSize
-              offset: $offset
-              orderBy: CREATED_DESC
-            ) {
-              edges {
-                node {
-                  transactionByTxHash {
-                    blockTime
-                    blockHeight
-                    contract
-                    stamps
-                    success
-                    function
-                    hash
-                  }
-                }
-              }
-            }
-          }
-        `;
+  // serve from cache if we have it
+  if (this.pagesCache[this.page - 1]) {
+    this.transactions = this.pagesCache[this.page - 1];
+    this.transactionsLoading = false;
+    return;
+  }
 
-        const variables = {
-          address: this.$route.params.address,
-          offset: currentOffset,
-          batchSize: fetchBatchSize
-        };
+  var tokenOnly = this.filters && this.filters.tokenOnly;
+  var method = (this.filters && this.filters.method) || 'both';
+  var fnWanted = function (fn) {
+    var f = (fn || '').toLowerCase();
+    if (!tokenOnly) return true;
+    if (method === 'transfer') return f === 'transfer';
+    if (method === 'transfer_from' || method === 'transferfrom')
+      return f === 'transfer_from' || f === 'transferfrom';
+    return f === 'transfer' || f === 'transfer_from' || f === 'transferfrom';
+  };
 
-        const response = await axios.post(
-          this.blockchain.rpc + "/graphql",
-          {
-            query,
-            variables
-          }
-        );
+  var currentOffset = this.pageOffsets[this.page - 1] || 0;
+  var pageTxs = [];
+  var fetchBatchSize = this.itemsPerPage * (tokenOnly ? 8 : 4); // fetch deeper if token-only
 
-        const rData = response && response.data;
-        const rDataPart = rData && rData.data;
-        const allStateChanges = rDataPart && rDataPart.allStateChanges;
-        const edges = (allStateChanges && allStateChanges.edges) ? allStateChanges.edges : [];
+  // build the static part of the filter
+  var baseFilter = tokenOnly
+    ? 'filter: { and: { key: { endsWith: $address, includes: ".balances:" } }, txHash: { notEqualTo: "GENESIS" } }'
+    : 'filter: { key: { includes: $address }, txHash: { notEqualTo: "GENESIS" } }';
 
-        const newTxs = edges
-          .map(edge => {
-            return edge.node && edge.node.transactionByTxHash;
-          })
-          .filter(tx => tx && tx.hash);
+  while (pageTxs.length < this.itemsPerPage) {
+    var query =
+      'query AddressTxs($address: String!, $offset: Int!, $batchSize: Int!) { ' +
+      '  allStateChanges( ' + baseFilter + ' first: $batchSize offset: $offset orderBy: CREATED_DESC ) { ' +
+      '    edges { node { ' +
+      '      transactionByTxHash { blockTime blockHeight contract stamps success function hash } ' +
+      '    } } ' +
+      '  } ' +
+      '}';
 
-        for (let tx of newTxs) {
-          if (!seenHashes.has(tx.hash)) {
-            uniqueTransactions.push(tx);
-            seenHashes.add(tx.hash);
-          }
-        }
+    var variables = {
+      address: this.$route.params.address,
+      offset: currentOffset,
+      batchSize: fetchBatchSize
+    };
 
-        if (newTxs.length < fetchBatchSize) {
-          break;
-        }
-        currentOffset += fetchBatchSize;
-      }
+    var resp = await axios.post(this.blockchain.rpc + "/graphql", { query: query, variables: variables });
+    var respData = resp && resp.data;
+    var respInner = respData && respData.data;
+    var allStateChanges = respInner && respInner.allStateChanges;
+    var edges = (allStateChanges && allStateChanges.edges) ? allStateChanges.edges : [];
 
-      const finalTxs = uniqueTransactions
-        .slice(0, this.itemsPerPage)
-        .map(tx => ({
-          ...tx,
-          feeXian: this.stampRate
-            ? (tx.stamps / this.stampRate).toFixed(3)
-            : "—",
-          formattedTime: new Date(Number(tx.blockTime) / 1e6).toLocaleString() ? new Date(Number(tx.blockTime) / 1e6) : null
-        }));
-      this.transactions = finalTxs;
-      this.transactionsLoading = false;
-    },
+    if (!edges.length) {
+      // nothing more on server
+      this.hasMore = false;
+      break;
+    }
+
+    // process edges and count how many we *actually consumed*
+    var processedThisBatch = 0;
+    for (var i = 0; i < edges.length; i++) {
+      processedThisBatch++;
+      var tx = edges[i] && edges[i].node && edges[i].node.transactionByTxHash;
+      if (!tx || !tx.hash) continue;
+      if (!fnWanted(tx.function)) continue;
+      if (this._seenTxHashes.has(tx.hash)) continue;
+
+      this._seenTxHashes.add(tx.hash);
+      pageTxs.push(tx);
+      if (pageTxs.length === this.itemsPerPage) break;
+    }
+
+    // advance by exactly how many state-change rows we looked at
+    currentOffset += processedThisBatch;
+
+    // if server returned fewer than we asked, we reached the end
+    if (edges.length < fetchBatchSize && pageTxs.length < this.itemsPerPage) {
+      this.hasMore = false;
+      break;
+    }
+
+    if (pageTxs.length === this.itemsPerPage) {
+      this.hasMore = true; // there might be more
+      break;
+    }
+  }
+
+  var finalTxs = pageTxs.map((tx) => ({
+    ...tx,
+    feeXian: this.stampRate ? (tx.stamps / this.stampRate).toFixed(3) : "—",
+    formattedTime: new Date(Number(tx.blockTime) / 1e6)
+  }));
+
+  // cache page and remember where the next page should start
+  this.pagesCache[this.page - 1] = finalTxs;
+  this.pageOffsets[this.page] = currentOffset; // start offset for *next* page
+
+  this.transactions = finalTxs;
+  this.transactionsLoading = false;
+},
+
+
 
     nextPage() {
-      if (this.transactions.length >= this.itemsPerPage) {
-        this.page++;
-        this.fetchTransactions();
-      }
-    },
-
-    prevPage() {
-      if (this.page > 1) {
-        this.page--;
-        this.fetchTransactions();
-      }
-    },
+  if (!this.hasMore) return;
+  this.page += 1;
+  this.fetchTransactions();
+},
+prevPage() {
+  if (this.page === 1) return;
+  this.page -= 1;
+  this.transactions = this.pagesCache[this.page - 1] || [];
+  this.hasMore = true; // re-enable; we still know next offsets
+},
 
     async fetchAllTokenBalances() {
       const userAddr = this.$route.params.address;
@@ -649,6 +714,37 @@ export default {
 </script>
 
 <style scoped>
+.tx-tabs{
+  display:flex;
+  gap:.5rem;
+  margin:.25rem 0 1rem;
+  border-bottom:1px solid rgba(255,255,255,0.10);
+}
+.tx-tab{
+  appearance:none;
+  background:transparent;
+  color:#cfd6e4;
+  border:none;
+  padding:.5rem .9rem;
+  font-weight:600;
+  cursor:pointer;
+  position:relative;
+  border-top-left-radius:8px;
+  border-top-right-radius:8px;
+}
+.tx-tab:hover{ color:#ffffff; }
+.tx-tab.active{
+  color:#ffffff;
+}
+.tx-tab.active::after{
+  content:"";
+  position:absolute;
+  left:0; right:0; bottom:-1px;
+  height:3px;
+  border-radius:3px;
+  background:linear-gradient(135deg,#00d4ff 0%, #0099cc 100%);
+}
+
 .modern-page-address {
   min-height: 100vh;
   background: linear-gradient(135deg, #0f1419 0%, #1a2332 100%);
