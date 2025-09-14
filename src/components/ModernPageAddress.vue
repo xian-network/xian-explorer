@@ -329,9 +329,20 @@ export default {
   switchTab(tab) {
     if (tab === this.activeTab) return;
     this.activeTab = tab;
+
+    // drive filter
     this.filters.tokenOnly = tab === 'token';
     this.filters.method = 'both';
-    this.resetTxPaging();
+
+    // hard reset pagination & UI
+    this.page = 1;
+    this.pagesCache = [];
+    this.pageOffsets = [0];
+    this.hasMore = true;
+    this._seenTxHashes = new Set();
+    this.transactions = [];            // <- clear stale rows
+    this.transactionsLoading = true;   // <- show spinner
+
     this.fetchTransactions();
   },
     async loadAddressData() {
@@ -457,6 +468,7 @@ export default {
 
     async fetchTransactions() {
   this.transactionsLoading = true;
+  this.transactions = []; // clear visible list
 
   // serve from cache if we have it
   if (this.pagesCache[this.page - 1]) {
@@ -1074,6 +1086,10 @@ prevPage() {
 /* No Data States */
 .no-tokens, .no-transactions, .loading-tokens, .loading-transactions {
   text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   padding: 3rem 1rem;
   color: #8892b0;
 }
