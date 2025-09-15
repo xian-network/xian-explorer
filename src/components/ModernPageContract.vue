@@ -162,8 +162,37 @@
                         </button>
                       </div>
 
-                      <div v-if="runner.error" class="runner-error">⚠️ {{ runner.error }}</div>
-                      <pre v-if="runner.response" class="runner-pre">{{ pretty(runner.response) }}</pre>
+                      <div v-if="runner.response" class="runner-out">
+  <div class="out-header">
+    <span class="badge" :class="isSuccess(runner.response) ? 'ok' : 'bad'">
+      {{ isSuccess(runner.response) ? 'Success' : 'Failed' }}
+    </span>
+    <span class="muted">Stamps: {{ runner.response.stamps_used }}</span>
+  </div>
+
+  <div class="out-section" v-if="normalizeResult(runner.response) !== null">
+    <div class="out-title">Return</div>
+    <pre class="runner-pre">{{ pretty(normalizeResult(runner.response)) }}</pre>
+  </div>
+
+  <div class="out-section" v-if="runner.response.state && runner.response.state.length">
+    <div class="out-title">State (Simulated)</div>
+    <table class="state-table">
+      <thead><tr><th>Key</th><th>Value</th></tr></thead>
+      <tbody>
+        <tr v-for="(s, i) in runner.response.state" :key="i">
+          <td><code>{{ s.key }}</code></td>
+          <td><code>{{ s.value }}</code></td>
+        </tr>
+      </tbody>
+    </table>
+    <br />
+    <div class="muted">This is a read-only call — state is not persisted.</div>
+  </div>
+
+ 
+</div>
+
                     </div>
                   </div>
                 </transition>
@@ -224,7 +253,8 @@ export default {
         calling: false,
         response: null,
         error: null,
-        lastUrl: ""
+        lastUrl: "",
+        lastPayload: null            // NEW
       }
     }
   },
@@ -313,51 +343,53 @@ export default {
     },
 
     // NEW: simulate read-only call for the selected function
-    async simulateFunction() {
-      try {
-        this.runner.calling = true
-        this.runner.error = null
-        this.runner.response = null
-        this.runner.lastUrl = ""
+   async simulateFunction() {
+    try {
+      this.runner.calling = true
+      this.runner.error = null
+      this.runner.response = null
+      this.runner.lastUrl = ""
 
-        let kwargs
-        try { kwargs = this.runner.kwargsText ? JSON.parse(this.runner.kwargsText) : {} }
-        catch { throw new Error("Kwargs is not valid JSON.") }
+      var kwargs
+      try { kwargs = this.runner.kwargsText ? JSON.parse(this.runner.kwargsText) : {} }
+      catch (e) { throw new Error("Kwargs is not valid JSON.") }
 
-        const payload = {
-          sender: this.runner.sender || "",
-          contract: this.contract.name,
-          function: this.runner.meta.name,
-          kwargs
-        }
-
-        const bytes = new TextEncoder().encode(JSON.stringify(payload))
-        const hex = Array.from(bytes).map(x => ("00" + x.toString(16)).slice(-2)).join("")
-        const url = `${this.blockchain.rpc}/abci_query?path="/simulate_tx/${hex}"`
-        this.runner.lastUrl = url
-
-        const resp = await fetch(url)
-        const json = await resp.json()
-        const respObj = (json && json.result) ? json.result.response : null
-        const base64 = respObj && typeof respObj.value !== 'undefined' ? respObj.value : null
-
-        if (!base64) {
-          this.runner.response = respObj || json
-          return
-        }
-
-        const decodedStr = atob(base64)
-        try {
-          this.runner.response = JSON.parse(decodedStr)
-        } catch (e) {
-          this.runner.response = decodedStr
-        }
-      } catch (e) {
-  this.runner.error = (e && e.message) ? e.message : String(e)
-} finally {
-        this.runner.calling = false
+      var payload = {
+        sender: this.runner.sender || "",
+        contract: this.contract.name,
+        function: this.runner.meta.name,
+        kwargs: kwargs
       }
-    },
+      this.runner.lastPayload = payload   // NEW
+
+      var bytes = new TextEncoder().encode(JSON.stringify(payload))
+      var hex = Array.from(bytes).map(function (x) { return ("00" + x.toString(16)).slice(-2) }).join("")
+      var url = this.blockchain.rpc + '/abci_query?path="/simulate_tx/' + hex + '"'
+      this.runner.lastUrl = url
+
+      var resp = await fetch(url)
+      var json = await resp.json()
+      var respObj = (json && json.result) ? json.result.response : null
+      var base64 = respObj && typeof respObj.value !== 'undefined' ? respObj.value : null
+
+      if (!base64) {
+        this.runner.response = respObj || json
+        return
+      }
+
+      var decodedStr = atob(base64)
+      try {
+        this.runner.response = JSON.parse(decodedStr)
+      } catch (e) {
+        // if node returns plain text, wrap minimally
+        this.runner.response = { status: 0, result: decodedStr }
+      }
+    } catch (e) {
+      this.runner.error = (e && e.message) ? e.message : String(e)
+    } finally {
+      this.runner.calling = false
+    }
+  },
 
     // NEW: utilities
     prefillKwargs() {
@@ -365,9 +397,46 @@ export default {
       const o = {}; this.runner.meta.params.forEach(p => o[p] = "")
       this.runner.kwargsText = JSON.stringify(o, null, 2)
     },
-    pretty(v) {
-      try { return JSON.stringify(v, null, 2) } catch (e) { return String(v) }
-    },
+    // Replace your pretty() with this:
+  pretty(v) {
+    if (v === null || typeof v === 'undefined') return String(v)
+    if (typeof v === 'string') return v
+    try { return JSON.stringify(v, null, 2) } catch (e) { return String(v) }
+  },
+  // NEW: success helper
+  isSuccess(obj) {
+    return obj && obj.status === 1
+  },
+
+  // NEW: try to convert Python-ish dict strings to proper JSON objects
+  normalizeResult(obj) {
+    if (!obj) return null
+    var r = obj.result
+    if (r === undefined || r === null) return null
+    if (typeof r !== 'string') return r
+
+    var s = r.trim()
+
+    // First attempt: parse as JSON directly
+    if ((s.charAt(0) === '{' || s.charAt(0) === '[')) {
+      try { return JSON.parse(s) } catch (e) { /* continue */ }
+    }
+
+    // Second attempt: convert common Python repr -> JSON (best-effort)
+    // Replaces single quotes with double quotes and Python literals to JSON.
+    // This is conservative and works well for typical contract returns.
+    try {
+      var s2 = s
+        .replace(/'/g, '"')
+        .replace(/\bNone\b/g, 'null')
+        .replace(/\bTrue\b/g, 'true')
+        .replace(/\bFalse\b/g, 'false')
+      return JSON.parse(s2)
+    } catch (e) {
+      // Fallback: show raw string
+      return s
+    }
+  },
     async fetchContract(name) {
       try {
         this.loading = true;
@@ -1135,4 +1204,60 @@ export default {
 .fade-leave-to {
   opacity: 0;
 }
+.runner-out { margin-top: .5rem; }
+
+.out-header {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  margin-bottom: .5rem;
+}
+
+.badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: .8rem;
+  font-weight: 700;
+  border: 1px solid transparent;
+}
+.badge.ok  { background: rgba(34,197,94,.15);  color: #86efac; border-color: rgba(34,197,94,.35); }
+.badge.bad { background: rgba(239,68,68,.15);  color: #fca5a5; border-color: rgba(239,68,68,.35); }
+
+.muted { color: #8b94a7; font-size: .9rem; }
+
+.out-section { margin-top: .5rem; }
+.out-title { font-weight: 700; margin: .25rem 0 .25rem 0; color: #e7e7e7; font-size: .95rem; }
+.out-subtitle { font-weight: 600; margin: .5rem 0 .25rem 0; color: #cbd5e1; font-size: .9rem; }
+
+.state-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: .25rem;
+}
+.state-table th, .state-table td {
+  text-align: left;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  padding: .35rem .4rem;
+}
+.state-table code { white-space: pre-wrap; word-break: break-word; }
+
+.out-details summary {
+  cursor: pointer;
+  color: #9fb3c8;
+  margin-top: .4rem;
+}
+
+.runner-pre {
+  background: #141821;
+  border: 1px solid rgba(255,255,255,0.10);
+  border-radius: 8px;
+  padding: 0.75rem;
+  max-height: 360px;
+  overflow: auto;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
 </style>
