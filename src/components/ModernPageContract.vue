@@ -34,7 +34,7 @@
               Smart contract details and source code
             </p>
           </div>
-         
+
         </div>
       </div>
 
@@ -42,91 +42,136 @@
       <div class="contract-content-inner">
         <!-- Token Information (if applicable) -->
         <div v-if="contract.isToken && Object.keys(tokenData).length" class="token-section">
-        <div class="info-card">
-          <h3 class="card-title">Token Information</h3>
-          <div class="card-content">
-            <div class="info-row" v-if="tokenData.token_name">
-              <span class="info-label">Token Name</span>
-              <span class="info-value">{{ tokenData.token_name }}</span>
-            </div>
-            <div class="info-row" v-if="tokenData.token_symbol">
-              <span class="info-label">Symbol</span>
-              <span class="info-value token-symbol">{{ tokenData.token_symbol }}</span>
-            </div>
-            <div class="info-row" v-if="tokenData.total_supply">
-              <span class="info-label">Total Supply</span>
-              <span class="info-value">{{ formatNumber(tokenData.total_supply) }}</span>
-            </div>
-            <div class="info-row" v-if="tokenData.operator">
-              <span class="info-label">Operator</span>
-              <router-link :to="`/addresses/${tokenData.operator}`" class="info-value address-link">
-                {{ operatorDisplay }}
-              </router-link>
-            </div>
-            <div class="info-row" v-if="tokenData.token_website">
-              <span class="info-label">Website</span>
-              <a :href="tokenData.token_website" target="_blank" class="info-value website-link">
-                {{ tokenData.token_website }}
-              </a>
-            </div>
-            <div class="info-row">
-              <span class="info-label">Token Page</span>
-              <router-link :to="`/tokens/${contract.name}`" class="info-value token-link">
-                View Token Details
-              </router-link>
+          <div class="info-card">
+            <h3 class="card-title">Token Information</h3>
+            <div class="card-content">
+              <div class="info-row" v-if="tokenData.token_name">
+                <span class="info-label">Token Name</span>
+                <span class="info-value">{{ tokenData.token_name }}</span>
+              </div>
+              <div class="info-row" v-if="tokenData.token_symbol">
+                <span class="info-label">Symbol</span>
+                <span class="info-value token-symbol">{{ tokenData.token_symbol }}</span>
+              </div>
+              <div class="info-row" v-if="tokenData.total_supply">
+                <span class="info-label">Total Supply</span>
+                <span class="info-value">{{ formatNumber(tokenData.total_supply) }}</span>
+              </div>
+              <div class="info-row" v-if="tokenData.operator">
+                <span class="info-label">Operator</span>
+                <router-link :to="`/addresses/${tokenData.operator}`" class="info-value address-link">
+                  {{ operatorDisplay }}
+                </router-link>
+              </div>
+              <div class="info-row" v-if="tokenData.token_website">
+                <span class="info-label">Website</span>
+                <a :href="tokenData.token_website" target="_blank" class="info-value website-link">
+                  {{ tokenData.token_website }}
+                </a>
+              </div>
+              <div class="info-row">
+                <span class="info-label">Token Page</span>
+                <router-link :to="`/tokens/${contract.name}`" class="info-value token-link">
+                  View Token Details
+                </router-link>
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
-      <!-- Contract Details -->
-      <div class="contract-details">
-        <div class="info-card">
-          <h3 class="card-title">Contract Details</h3>
-          <div class="card-content">
-            <div class="info-row">
-              <span class="info-label">Name</span>
-              <span class="info-value contract-name">{{ contract.name }}</span>
-            </div>
-            
-            
-            <div class="info-row">
-              <span class="info-label">Code Size</span>
-              <span class="info-value">{{ formatBytes(contract.code.length) }}</span>
-            </div>
-          </div>
-        </div>
-      </div>
+        <!-- Contract Details -->
+        <div class="contract-details">
+          <div class="info-card">
+            <h3 class="card-title">Contract Details</h3>
+            <div class="card-content">
+              <div class="info-row">
+                <span class="info-label">Name</span>
+                <span class="info-value contract-name">{{ contract.name }}</span>
+              </div>
 
-      <!-- Source Code Section -->
-      <div class="source-code-section">
-        <div class="code-header">
-          <h2 class="section-title">Source Code</h2>
-          <div class="code-actions">
-            <button @click="copyCode" class="copy-code-button">
-              <span class="material-icons">content_copy</span>
-              Copy Code
-            </button>
-            <button @click="toggleFullscreen" class="fullscreen-button">
-              <span class="material-icons">{{ isFullscreen ? 'fullscreen_exit' : 'fullscreen' }}</span>
-              {{ isFullscreen ? 'Exit Fullscreen' : 'Fullscreen' }}
-            </button>
-          </div>
-        </div>
-        
-        <div class="code-container" :class="{ fullscreen: isFullscreen }">
-          <div class="code-header-bar">
-            <div class="code-info">
-              <span class="language-badge">Python</span>
-              <span class="line-count">{{ getLineCount() }} lines</span>
+
+              <div class="info-row">
+                <span class="info-label">Code Size</span>
+                <span class="info-value">{{ formatBytes(contract.code.length) }}</span>
+              </div>
             </div>
-            <button v-if="isFullscreen" @click="toggleFullscreen" class="close-fullscreen">
-              <span class="material-icons">close</span>
-            </button>
           </div>
-          <pre class="code-block"><code class="hljs python" v-html="highlightedCode"></code></pre>
         </div>
-      </div>
+
+        <!-- Source Code Section -->
+        <div class="source-code-section">
+          <div class="code-header">
+            <h2 class="section-title">Source Code</h2>
+            <div class="code-actions">
+              <button @click="copyCode" class="copy-code-button">
+                <span class="material-icons">content_copy</span>
+                Copy Code
+              </button>
+              <button @click="toggleFullscreen" class="fullscreen-button">
+                <span class="material-icons">{{ isFullscreen ? 'fullscreen_exit' : 'fullscreen' }}</span>
+                {{ isFullscreen ? 'Exit Fullscreen' : 'Fullscreen' }}
+              </button>
+            </div>
+          </div>
+
+          <div class="code-container" :class="{ fullscreen: isFullscreen }">
+            <div class="code-header-bar">
+              <div class="code-info">
+                <span class="language-badge">Python</span>
+                <span class="line-count">{{ getLineCount() }} lines</span>
+              </div>
+              <button v-if="isFullscreen" @click="toggleFullscreen" class="close-fullscreen">
+                <span class="material-icons">close</span>
+              </button>
+            </div>
+            <!-- NEW: line-by-line rendering with inline Run chip -->
+            <div class="code-lines">
+              <div v-for="(line, idx) in codeLines" :key="idx">
+                <div class="code-line">
+                  <code class="hljs python" v-html="highlightLine(line)"></code>
+
+                  <!-- Run chip on exported function lines -->
+                 <button
+                    v-if="exportedByLine[idx]"
+                    class="run-chip"
+                    title="Run (read-only)"
+                    @click="openRunner(idx)"
+                  >
+                    <span class="run-chip__icon" aria-hidden="true"></span>
+                    <span class="run-chip__label">Run</span>
+                  </button>
+                </div>
+
+                <transition name="fade">
+                  <div v-if="runner.visible && runner.insertAfterIdx === idx" class="inline-runner">
+                    <div class="inline-runner-header">
+                      <strong>{{ runner.meta.name }} (Read-Only Call)</strong>
+                      <button class="mini-close" @click="runner.visible = false">✕</button>
+                    </div>
+
+                    <div class="inline-runner-body">
+                      <label>Sender (optional)</label>
+                      <input v-model.trim="runner.sender" class="runner-input" placeholder="Address" />
+
+                      <label>Kwargs (JSON)</label>
+                      <textarea v-model="runner.kwargsText" class="runner-textarea" rows="6"></textarea>
+
+                      <div class="runner-actions">
+                        <button class="runner-btn" :disabled="runner.calling" @click="simulateFunction">
+                          {{ runner.calling ? 'Running…' : 'Run' }}
+                        </button>
+                      </div>
+
+                      <div v-if="runner.error" class="runner-error">⚠️ {{ runner.error }}</div>
+                      <pre v-if="runner.response" class="runner-pre">{{ pretty(runner.response) }}</pre>
+                    </div>
+                  </div>
+                </transition>
+              </div>
+            </div>
+
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -147,7 +192,10 @@ export default {
     operatorDisplay() {
       if (this.operatorXnsName) return this.operatorXnsName
       return this.formatHash(this.tokenData.operator) || ""
-    }
+    },
+    codeLines() {
+      return (this.contract.code || "").split("\n")
+    },
   },
   data() {
     return {
@@ -162,10 +210,164 @@ export default {
       tokenData: {},
       operatorXnsName: "",
       highlightedCode: "",
-      isFullscreen: false
+      isFullscreen: false,
+      // NEW: map line index -> { name, params }
+      exportedByLine: {},
+
+      // NEW: inline runner state
+      runner: {
+        visible: false,
+        insertAfterIdx: null,
+        meta: null,            // { name, params }
+        sender: "",
+        kwargsText: "{}",
+        calling: false,
+        response: null,
+        error: null,
+        lastUrl: ""
+      }
     }
   },
   methods: {
+    // NEW: highlight a single line (keeps hljs)
+    highlightLine(line) {
+      if (line === "") return "&nbsp;"
+      try { return hljs.highlight('python', line).value } catch (e) {
+        return line
+      }
+    },
+
+    // NEW: parse @export… def …() lines -> mark the line containing 'def'
+    parseExportedFunctions() {
+      const src = this.contract.code || ""
+      const lines = src.split("\n")
+      const map = {}
+      let pendingExport = false
+
+      const matchDef = (s) => s.match(/^\s*def\s+([A-Za-z_]\w*)\s*\(([^)]*)\)\s*:/)
+      const cleanParams = (sig) => {
+        if (!sig) return []
+        return sig
+          .split(",")
+          .map(s => s.trim())
+          .filter(Boolean)
+          // ignore kw-only marker and vararg markers
+          .filter(s => s !== "*" && s !== "/")
+          .map(s => {
+            // remove default part
+            const noDefault = s.replace(/=.*/, "").trim()
+            // grab bare identifier after any * or ** and before any annotation
+            const m = noDefault.match(/^\*{0,2}\s*([A-Za-z_]\w*)/)
+            return m ? m[1] : null
+          })
+          .filter(Boolean)
+          .filter(name => name !== "self" && name !== "ctx")
+      }
+      for (let i = 0; i < lines.length; i++) {
+        const L = lines[i]
+
+        // Inline decorator + def on same line
+        const inline = L.match(/@export(?:\s*\(\s*\))?.*def\s+([A-Za-z_]\w*)\s*\(([^)]*)\)\s*:/)
+        if (inline) {
+          map[i] = { name: inline[1], params: cleanParams(inline[2]) }
+          pendingExport = false
+          continue
+        }
+
+        // Decorator only
+        if (/^\s*@export(?:\s*\(\s*\))?\s*$/.test(L)) {
+          pendingExport = true
+          continue
+        }
+
+        // Next def after decorator
+        if (pendingExport) {
+          const m = matchDef(L)
+          if (m) {
+            map[i] = { name: m[1], params: cleanParams(m[2]) }
+            pendingExport = false
+            continue
+          }
+          // Keep waiting until we see a def or a blank line resets
+          if (/^\s*$/.test(L)) pendingExport = false
+        }
+      }
+
+      this.exportedByLine = map
+    },
+
+    // NEW: open inline runner under the clicked line
+    openRunner(lineIdx) {
+      const meta = this.exportedByLine[lineIdx]
+      if (!meta) return
+      this.runner.visible = true
+      this.runner.insertAfterIdx = lineIdx
+      this.runner.meta = meta
+      // prefill kwargs scaffold from params
+      const o = {}; meta.params.forEach(p => o[p] = "")
+      this.runner.kwargsText = JSON.stringify(o, null, 2)
+      this.runner.sender = ""
+      this.runner.response = null
+      this.runner.error = null
+      this.runner.lastUrl = ""
+    },
+
+    // NEW: simulate read-only call for the selected function
+    async simulateFunction() {
+      try {
+        this.runner.calling = true
+        this.runner.error = null
+        this.runner.response = null
+        this.runner.lastUrl = ""
+
+        let kwargs
+        try { kwargs = this.runner.kwargsText ? JSON.parse(this.runner.kwargsText) : {} }
+        catch { throw new Error("Kwargs is not valid JSON.") }
+
+        const payload = {
+          sender: this.runner.sender || "",
+          contract: this.contract.name,
+          function: this.runner.meta.name,
+          kwargs
+        }
+
+        const bytes = new TextEncoder().encode(JSON.stringify(payload))
+        const hex = Array.from(bytes).map(x => ("00" + x.toString(16)).slice(-2)).join("")
+        const url = `${this.blockchain.rpc}/abci_query?path="/simulate_tx/${hex}"`
+        this.runner.lastUrl = url
+
+        const resp = await fetch(url)
+        const json = await resp.json()
+        const respObj = (json && json.result) ? json.result.response : null
+        const base64 = respObj && typeof respObj.value !== 'undefined' ? respObj.value : null
+
+        if (!base64) {
+          this.runner.response = respObj || json
+          return
+        }
+
+        const decodedStr = atob(base64)
+        try {
+          this.runner.response = JSON.parse(decodedStr)
+        } catch (e) {
+          this.runner.response = decodedStr
+        }
+      } catch (e) {
+  this.runner.error = (e && e.message) ? e.message : String(e)
+} finally {
+        this.runner.calling = false
+      }
+    },
+
+    // NEW: utilities
+    prefillKwargs() {
+      if (!this.runner || !this.runner.meta) return
+      const o = {}; this.runner.meta.params.forEach(p => o[p] = "")
+      this.runner.kwargsText = JSON.stringify(o, null, 2)
+    },
+    pretty(v) {
+      try { return JSON.stringify(v, null, 2) } catch (e) { return String(v) }
+    },
     async fetchContract(name) {
       try {
         this.loading = true;
@@ -213,6 +415,9 @@ export default {
         this.highlightedCode = this.contract.code
           ? hljs.highlight('python', this.contract.code).value
           : ''
+
+        this.parseExportedFunctions()
+        this.runner.visible = false
 
         this.tokenData = {}
         stateData.forEach(({ node }) => {
@@ -320,9 +525,8 @@ export default {
     document.body.style.overflow = '';
   },
   watch: {
-    '$route'() {
-      this.fetchContract(this.$route.params.contract);
-    }
+    '$route'() { this.fetchContract(this.$route.params.contract) },
+    'contract.code'() { this.parseExportedFunctions() }
   }
 }
 </script>
@@ -358,12 +562,18 @@ export default {
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 /* Error State */
-.error-container, .not-found-container {
+.error-container,
+.not-found-container {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -372,7 +582,8 @@ export default {
   text-align: center;
 }
 
-.error-icon, .not-found-icon {
+.error-icon,
+.not-found-icon {
   font-size: 3rem;
   margin-bottom: 1rem;
 }
@@ -466,7 +677,8 @@ export default {
 }
 
 /* Sections */
-.token-section, .contract-details {
+.token-section,
+.contract-details {
   margin-bottom: 2rem;
 }
 
@@ -525,13 +737,15 @@ export default {
   font-family: 'JetBrains Mono', monospace;
 }
 
-.address-link, .token-link {
+.address-link,
+.token-link {
   color: #00d4ff;
   text-decoration: none;
   transition: color 0.3s ease;
 }
 
-.address-link:hover, .token-link:hover {
+.address-link:hover,
+.token-link:hover {
   color: #ffffff;
 }
 
@@ -588,7 +802,8 @@ export default {
   gap: 0.5rem;
 }
 
-.copy-code-button, .fullscreen-button {
+.copy-code-button,
+.fullscreen-button {
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -603,7 +818,8 @@ export default {
   border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
-.copy-code-button:hover, .fullscreen-button:hover {
+.copy-code-button:hover,
+.fullscreen-button:hover {
   background: rgba(255, 255, 255, 0.2);
   transform: translateY(-1px);
 }
@@ -694,14 +910,17 @@ export default {
 }
 
 /* Text Overflow Fixes */
-.info-value, .hash-value, .address-value, .url-value, .long-text {
+.info-value,
+.hash-value,
+.address-value,
+.url-value,
+.long-text {
   hyphens: auto;
   max-width: 100%;
 }
 
-.info-row td, .info-row .info-value {
-  
-}
+.info-row td,
+.info-row .info-value {}
 
 .code-block {
   word-break: break-word;
@@ -735,7 +954,8 @@ export default {
     justify-content: stretch;
   }
 
-  .copy-code-button, .fullscreen-button {
+  .copy-code-button,
+  .fullscreen-button {
     flex: 1;
     justify-content: center;
   }
@@ -762,5 +982,157 @@ export default {
     font-size: 0.75rem;
     padding: 1rem;
   }
+}
+
+/* Code lines container (replaces single <pre>) */
+.code-lines {
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 1rem 1.25rem;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.875rem;
+  line-height: 1.6;
+  overflow-x: auto;
+}
+
+.code-line {
+  position: relative;
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+  white-space: pre;
+  padding-right: 108px; /* ⟵ space so long lines don't sit under the chip */
+  /* important: no wrapping, keeps chip aligned */
+}
+
+.code-line+.code-line {
+  margin-top: 0.15rem;
+}
+
+.run-chip {
+  position: absolute;
+  top: 50%;
+  right: 10px;
+  transform: translateY(-50%); /* center vertically on the line */
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  color: #e7e7e7;
+  font-weight: 600;
+  font-size: 0.85rem;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.25);
+  backdrop-filter: blur(4px);
+  opacity: 0; /* hide until hover (desktop) */
+  transition: background .15s, border-color .15s, opacity .15s, transform .15s;
+}
+
+.code-line:hover .run-chip { opacity: 1; }
+.run-chip:active { transform: translateY(-50%) scale(0.98); }
+
+.run-chip__icon {
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.10);
+  border: 1px solid rgba(255,255,255,0.18);
+  display: grid;
+  place-items: center;
+  position: relative;
+}
+.run-chip__icon::before {
+  content: "";
+  width: 0; height: 0;
+  border-top: 5px solid transparent;
+  border-bottom: 5px solid transparent;
+  border-left: 8px solid #fff; /* the caret */
+  margin-left: 2px;
+}
+
+/* Inline runner popover */
+.inline-runner {
+  margin: 0.5rem 0 0.75rem 0;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 10px;
+  padding: 0.75rem;
+}
+
+.inline-runner-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: .5rem;
+}
+
+.inline-runner-body label {
+  display: block;
+  font-size: 0.8rem;
+  color: #8892b0;
+  margin-top: .5rem;
+  margin-bottom: .25rem;
+}
+
+.runner-input,
+.runner-textarea {
+  width: 100%;
+  padding: 0.55rem 0.6rem;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(0, 0, 0, 0.25);
+  color: #fff;
+}
+
+.runner-textarea {
+  resize: vertical;
+}
+
+.inline-runner .runner-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: .5rem;
+}
+
+.inline-runner .runner-btn {
+  background: linear-gradient(135deg, #00d4ff 0%, #0099cc 100%);
+  color: #0f1419;
+  font-weight: 700;
+  border: none;
+  padding: 0.5rem 0.9rem;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.inline-runner .runner-btn.small {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  font-weight: 600;
+}
+
+.mini-close {
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #fff;
+  border-radius: 6px;
+  cursor: pointer;
+  padding: 0.2rem 0.4rem;
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity .12s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
 }
 </style>
