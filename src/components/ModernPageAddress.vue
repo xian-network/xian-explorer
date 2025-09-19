@@ -304,15 +304,14 @@ export default {
   },
   async mounted() {
     this._seenTxHashes = new Set();
-    await this.loadAddressData();
     
   },
   watch: {
     '$route.params.address': {
       handler(newAddress) {
-        if (newAddress) {
-          this.loadAddressData();
-        }
+        if (!newAddress) return;
+      this.resetTxPaging();            // ensure clean slate for a new address
+      this.loadAddressData();
       },
       immediate: true
     }
