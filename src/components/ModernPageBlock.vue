@@ -316,7 +316,10 @@ export default {
     await this.fetchBlock()
   },
   watch: {
-    '$route'(to, from) {
+   /* '$route'(to, from) {
+      this.fetchBlock()
+    }*/
+    '$route'() {
       this.fetchBlock()
     }
   }
