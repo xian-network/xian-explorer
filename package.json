@@ -5,8 +5,8 @@
   "author": "Xian Org, Peng Zhong <peng@nylira.com>",
   "private": true,
   "scripts": {
-    "serve": "vue-cli-service serve --host 0.0.0.0 --port 12000",
-    "build": "vue-cli-service build",
+    "serve": "NODE_OPTIONS='--openssl-legacy-provider' vue-cli-service serve --host 0.0.0.0 --port 12000",
+    "build": "NODE_OPTIONS='--openssl-legacy-provider' vue-cli-service build",
     "lint": "vue-cli-service lint"
   },
   "dependencies": {
