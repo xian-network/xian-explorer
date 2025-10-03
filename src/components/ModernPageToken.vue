@@ -293,7 +293,7 @@ export default {
         
         // Fetch additional data
         await Promise.all([
-          this.fetchMarkets(contractName),
+          //todo this.fetchMarkets(contractName),
           this.fetchHolders(contractName),
           this.fetchHolderCount(contractName)
         ])
@@ -306,6 +306,8 @@ export default {
       }
     },
     
+   /*
+   todo:
     async fetchMarkets(contractName) {
       try {
         // This would fetch market data from DEX APIs
@@ -315,7 +317,7 @@ export default {
         console.error('Error fetching markets:', error)
         this.markets = []
       }
-    },
+    },*/
     
     async fetchHolders(contractName) {
   try {

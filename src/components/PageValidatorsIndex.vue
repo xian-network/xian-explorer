@@ -19,8 +19,8 @@ import validatorTitle from "../scripts/validatorTitle"
 import votingPower from "../scripts/votingPower"
 import votingValidators from "../scripts/votingValidators"
 import { TmListItem, TmPage } from "@tendermint/ui"
-import nacl from 'tweetnacl';
-import { encodeBase64, decodeBase64 } from 'tweetnacl-util';
+
+import {  decodeBase64 } from 'tweetnacl-util';
 
 export default {
   name: "page-validators",
