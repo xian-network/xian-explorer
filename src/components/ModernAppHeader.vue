@@ -23,6 +23,8 @@ header.modern-header
           span Contracts
         router-link.nav-link(to="/tokens" active-class="active")
           span Tokens
+        router-link.nav-link(to="/validators" active-class="active")
+          span Validators
         router-link.nav-link(to="/addresses" active-class="active")
           span Addresses
     
@@ -80,6 +82,9 @@ header.modern-header
         router-link.mobile-nav-link(to="/tokens" active-class="active" @click="closeMobileMenu")
           i.material-icons toll
           span Tokens
+        router-link.mobile-nav-link(to="/validators" active-class="active" @click="closeMobileMenu")
+          i.material-icons how_to_reg
+          span Validators
         router-link.mobile-nav-link(to="/addresses" active-class="active" @click="closeMobileMenu")
           i.material-icons account_balance_wallet
           span Addresses
