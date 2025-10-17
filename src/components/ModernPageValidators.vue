@@ -44,12 +44,8 @@
                 </td>
                 <td class="address-cell">
                   <div class="address-wrapper">
-                    <span class="address-hash">{{ getDisplayAddress(validator) }}</span>
-                    <router-link
-                      class="details-link"
-                      :to="{ name: 'address', params: { address: getRouteAddress(validator) } }"
-                    >
-                      Show Details
+                     <router-link :to="`/addresses/${getDisplayAddress(validator)}`" class="tx-link">
+                      <div class="hash-text">{{ (getDisplayAddress(validator)) }}</div>
                     </router-link>
                   </div>
                 </td>
@@ -117,7 +113,7 @@ export default {
       if (!validator) {
         return "Anonymous Validator";
       }
-
+      console.log(validator);
       if (validator.description) {
         if (typeof validator.description === "string") {
           try {
@@ -235,6 +231,38 @@ export default {
     font-size 1.25rem
     font-weight 600
     color #14b8a6
+
+
+  
+.tx-link
+  text-decoration none
+  color inherit
+  
+  &:hover .hash-text
+    color #fff
+
+.hash-text
+  font-weight: 600;
+  font-size: 1rem;
+  color #00d4ff
+  transition color 0.2s ease
+
+.copy-btn
+  background rgba(255, 255, 255, 0.1)
+  border 1px solid rgba(255, 255, 255, 0.2)
+  border-radius 6px
+  padding 0.5rem
+  color rgba(255, 255, 255, 0.7)
+  cursor pointer
+  transition all 0.2s ease
+  
+  &:hover
+    background rgba(255, 255, 255, 0.2)
+    color #ffffff
+    transform scale(1.05)
+  
+  i
+    font-size 1rem
 
 .table-container
   background rgba(255, 255, 255, 0.05)
