@@ -74,6 +74,7 @@
 </template>
 
 <script>
+import axios from "axios";
 import { mapGetters } from "vuex";
 import orderedValidators from "../scripts/orderedValidators";
 import votingValidators from "../scripts/votingValidators";
@@ -83,7 +84,8 @@ export default {
   name: "modern-page-validators",
   data() {
     return {
-      loading: true
+      loading: true,
+      monikerMap: {}
     };
   },
   computed: {
@@ -107,13 +109,126 @@ export default {
     if (!this.validators || !this.validators.length) {
       this.$store.dispatch("getValidators");
     }
+    this.fetchValidatorMonikers();
   },
   methods: {
+    async fetchValidatorMonikers() {
+      try {
+        const rpcEndpoint =
+          (this.$store.state?.blockchain?.rpc || "https://node.xian.org").replace(/\/$/, "");
+        const { data } = await axios.get(`${rpcEndpoint}/net_info`);
+        const peers = (data && data.result && data.result.peers) || [];
+        const map = {};
+        const subtle = this.getSubtleCrypto();
+
+        const tasks = peers.map(async peer => {
+          const moniker = peer?.node_info?.moniker;
+          if (!moniker) {
+            return;
+          }
+
+          const nodeId = peer?.node_info?.id;
+          const remoteIp = peer?.remote_ip;
+
+          this.addMonikerKey(map, nodeId, moniker);
+          this.addMonikerKey(map, remoteIp, moniker);
+
+          if (subtle && nodeId) {
+            try {
+              const hashed = await this.hashHexId(subtle, nodeId);
+              this.addMonikerKey(map, hashed, moniker);
+            } catch (error) {
+              console.error("Failed to hash node ID", error);
+            }
+          }
+        });
+
+        await Promise.all(tasks);
+        this.monikerMap = map;
+      } catch (error) {
+        console.error("Failed to fetch validator monikers:", error);
+      }
+    },
+    addMonikerKey(target, key, moniker) {
+      if (!key) {
+        return;
+      }
+      target[String(key).toUpperCase()] = moniker;
+    },
+    getSubtleCrypto() {
+      if (typeof window !== "undefined" && window.crypto && window.crypto.subtle) {
+        return window.crypto.subtle;
+      }
+      if (typeof self !== "undefined" && self.crypto && self.crypto.subtle) {
+        return self.crypto.subtle;
+      }
+      return null;
+    },
+    async hashHexId(subtle, hexId) {
+      const normalized = (hexId || "").replace(/[^0-9a-fA-F]/g, "");
+      if (!normalized) {
+        return null;
+      }
+
+      const bytePairs = normalized.match(/.{1,2}/g) || [];
+      const bytes = new Uint8Array(bytePairs.map(pair => parseInt(pair, 16)));
+      const digestBuffer = await subtle.digest("SHA-256", bytes);
+      const digestArray = Array.from(new Uint8Array(digestBuffer));
+      return digestArray
+        .map(b => b.toString(16).padStart(2, "0"))
+        .join("")
+        .slice(0, 40)
+        .toUpperCase();
+    },
+    getValidatorMonikerCandidates(validator) {
+      const candidates = new Set();
+      if (!validator) {
+        return [];
+      }
+
+      const pushCandidate = value => {
+        if (value) {
+          candidates.add(String(value).toUpperCase());
+        }
+      };
+
+      pushCandidate(validator.address);
+      pushCandidate(validator.node_id);
+      pushCandidate(validator.nodeId);
+      pushCandidate(validator.operator_address);
+      pushCandidate(validator.owner);
+      pushCandidate(validator.consensus_address);
+      pushCandidate(validator.moniker);
+      pushCandidate(validator.remote_ip);
+
+      if (validator.node_info && validator.node_info.id) {
+        pushCandidate(validator.node_info.id);
+      }
+
+      try {
+        const displayAddress = this.getDisplayAddress(validator);
+        if (displayAddress) {
+          pushCandidate(displayAddress.slice(0, 40));
+          pushCandidate(displayAddress);
+        }
+      } catch (error) {
+        // ignore errors during address decoding
+      }
+
+      return Array.from(candidates);
+    },
     getMoniker(validator) {
       if (!validator) {
         return "Anonymous Validator";
       }
-      console.log(validator);
+
+      const candidates = this.getValidatorMonikerCandidates(validator);
+      for (const candidate of candidates) {
+        if (candidate && this.monikerMap[candidate]) {
+          return this.monikerMap[candidate];
+        }
+      }
+
       if (validator.description) {
         if (typeof validator.description === "string") {
           try {
