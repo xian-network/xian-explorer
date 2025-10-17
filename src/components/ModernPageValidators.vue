@@ -44,10 +44,10 @@
                 </td>
                 <td class="address-cell">
                   <div class="address-wrapper">
-                    <span class="address-hash">{{ getAddress(validator) }}</span>
+                    <span class="address-hash">{{ getDisplayAddress(validator) }}</span>
                     <router-link
                       class="details-link"
-                      :to="{ name: 'address', params: { address: getAddress(validator) } }"
+                      :to="{ name: 'address', params: { address: getRouteAddress(validator) } }"
                     >
                       Show Details
                     </router-link>
@@ -81,6 +81,7 @@
 import { mapGetters } from "vuex";
 import orderedValidators from "../scripts/orderedValidators";
 import votingValidators from "../scripts/votingValidators";
+import { decodeBase64 } from "tweetnacl-util";
 
 export default {
   name: "modern-page-validators",
@@ -142,12 +143,28 @@ export default {
 
       return "Anonymous Validator";
     },
-    getAddress(validator) {
+    getDisplayAddress(validator) {
+      if (!validator || !validator.pub_key || !validator.pub_key.value) {
+        return "";
+      }
+
+      try {
+        return this.encodeHex(decodeBase64(validator.pub_key.value));
+      } catch (error) {
+        return this.getRouteAddress(validator);
+      }
+    },
+    getRouteAddress(validator) {
       if (!validator) {
         return "";
       }
 
       return validator.owner || validator.address || "";
+    },
+    encodeHex(byteArray) {
+      return Array.from(byteArray)
+        .map(byte => byte.toString(16).padStart(2, "0"))
+        .join("");
     }
   }
 };
