@@ -14,45 +14,84 @@
     <div class="main-content">
       <div class="content-container">
         <!-- Table Controls -->
-        <div class="table-controls" v-if="!loading && activeValidators.length">
+        <div class="table-controls" v-if="!loading && totalValidators">
           <div class="page-info">
             <span class="info-label">Active Validators</span>
-            <span class="info-value">{{ activeValidators.length }}</span>
+            <span class="info-value">{{ totalValidators }}</span>
+            <span v-if="totalPages > 1" class="range">Showing {{ pageRangeStart }} - {{ pageRangeEnd }}</span>
+          </div>
+          <div class="pagination-controls" v-if="totalPages > 1">
+            <router-link
+              v-if="hasPrevPage"
+              :to="{ path: '/validators', query: prevQuery }"
+              class="nav-button prev-button"
+            >
+              <i class="material-icons">chevron_left</i>
+              Previous
+            </router-link>
+            <router-link
+              v-if="hasNextPage"
+              :to="{ path: '/validators', query: nextQuery }"
+              class="nav-button next-button"
+            >
+              Next
+              <i class="material-icons">chevron_right</i>
+            </router-link>
           </div>
         </div>
 
         <!-- Validators Table -->
-        <div class="table-container" v-if="!loading && activeValidators.length">
-          <table class="modern-table">
-            <thead>
-              <tr>
-                <th>Moniker</th>
-                <th>Address</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr
-                v-for="validator in activeValidators"
-                :key="validator.owner || validator.address"
-                class="table-row"
+        <template v-if="!loading && totalValidators">
+          <div class="table-container">
+            <table class="modern-table">
+              <thead>
+                <tr>
+                  <th>Address</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr
+                  v-for="validator in displayedValidators"
+                  :key="validator.owner || validator.address"
+                  class="table-row"
+                >
+                  <td class="address-cell">
+                    <div class="address-wrapper">
+                      <span class="validator-status">Active Validator</span>
+                      <router-link
+                        :to="`/addresses/${getDisplayAddress(validator)}`"
+                        class="tx-link"
+                      >
+                        <div class="hash-text">{{ getDisplayAddress(validator) }}</div>
+                      </router-link>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="table-controls bottom-controls" v-if="totalPages > 1">
+            <div class="pagination-controls">
+              <router-link
+                v-if="hasPrevPage"
+                :to="{ path: '/validators', query: prevQuery }"
+                class="nav-button prev-button"
               >
-                <td class="validator-cell">
-                  <div class="validator-info">
-                    <span class="validator-moniker">{{ getMoniker(validator) }}</span>
-                    <span class="validator-status">Active Validator</span>
-                  </div>
-                </td>
-                <td class="address-cell">
-                  <div class="address-wrapper">
-                     <router-link :to="`/addresses/${getDisplayAddress(validator)}`" class="tx-link">
-                      <div class="hash-text">{{ (getDisplayAddress(validator)) }}</div>
-                    </router-link>
-                  </div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+                <i class="material-icons">chevron_left</i>
+                Previous
+              </router-link>
+              <router-link
+                v-if="hasNextPage"
+                :to="{ path: '/validators', query: nextQuery }"
+                class="nav-button next-button"
+              >
+                Next
+                <i class="material-icons">chevron_right</i>
+              </router-link>
+            </div>
+          </div>
+        </template>
 
         <!-- Loading State -->
         <div v-else-if="loading" class="loading-state">
@@ -74,7 +113,6 @@
 </template>
 
 <script>
-import axios from "axios";
 import { mapGetters } from "vuex";
 import orderedValidators from "../scripts/orderedValidators";
 import votingValidators from "../scripts/votingValidators";
@@ -85,21 +123,63 @@ export default {
   data() {
     return {
       loading: true,
-      monikerMap: {},
-      monikerFetchInFlight: false,
-      monikerRpcSource: ""
+      itemsPerPage: 20,
+      currentPage: 1,
+      hasRequestedValidators: false
     };
   },
   computed: {
-    ...mapGetters(["validators", "blockchain"]),
-    rpcEndpoint() {
-      const blockchainState = this.blockchain || {};
-      const rpc = blockchainState.rpc || "https://node.xian.org";
-      return rpc.replace(/\/$/, "");
-    },
+    ...mapGetters(["validators"]),
     activeValidators() {
       const list = votingValidators(this.validators || []);
       return orderedValidators(list);
+    },
+    totalValidators() {
+      return this.activeValidators.length;
+    },
+    totalPages() {
+      if (!this.totalValidators) {
+        return 1;
+      }
+      return Math.max(1, Math.ceil(this.totalValidators / this.itemsPerPage));
+    },
+    hasPrevPage() {
+      return this.totalValidators > 0 && this.currentPage > 1;
+    },
+    hasNextPage() {
+      return this.totalValidators > 0 && this.currentPage < this.totalPages;
+    },
+    prevQuery() {
+      if (!this.hasPrevPage) {
+        return this.buildQueryForPage(1);
+      }
+      return this.buildQueryForPage(this.currentPage - 1);
+    },
+    nextQuery() {
+      if (!this.hasNextPage) {
+        return this.buildQueryForPage(this.totalPages);
+      }
+      return this.buildQueryForPage(this.currentPage + 1);
+    },
+    displayedValidators() {
+      if (!this.totalValidators) {
+        return [];
+      }
+      const start = (this.currentPage - 1) * this.itemsPerPage;
+      const end = start + this.itemsPerPage;
+      return this.activeValidators.slice(start, end);
+    },
+    pageRangeStart() {
+      if (!this.totalValidators) {
+        return 0;
+      }
+      return (this.currentPage - 1) * this.itemsPerPage + 1;
+    },
+    pageRangeEnd() {
+      if (!this.totalValidators) {
+        return 0;
+      }
+      return Math.min(this.pageRangeStart + this.itemsPerPage - 1, this.totalValidators);
     }
   },
   watch: {
@@ -107,184 +187,96 @@ export default {
       immediate: true,
       handler(newValue) {
         if (Array.isArray(newValue)) {
+          const hasData = newValue.length > 0;
+          if (!hasData && !this.hasRequestedValidators) {
+            return;
+          }
           this.loading = false;
+          this.ensurePageWithinRange();
         }
       }
     },
-    "blockchain.rpc": {
+    "$route.query.page": {
       immediate: true,
-      handler(newValue, oldValue) {
-        if (!newValue || newValue === oldValue) {
-          return;
-        }
-        this.fetchValidatorMonikers();
+      handler() {
+        this.syncPageFromRoute();
       }
     }
   },
   mounted() {
     if (!this.validators || !this.validators.length) {
-      this.$store.dispatch("getValidators");
-    }
-    this.fetchValidatorMonikers();
-  },
-  methods: {
-    async fetchValidatorMonikers() {
-      const rpcEndpoint = this.rpcEndpoint;
-      if (!rpcEndpoint) {
-        return;
-      }
-
-      if (this.monikerFetchInFlight) {
-        return;
-      }
-
-      if (this.monikerRpcSource === rpcEndpoint && Object.keys(this.monikerMap).length) {
-        return;
-      }
-
-      this.monikerFetchInFlight = true;
-      try {
-        const { data } = await axios.get(`${rpcEndpoint}/net_info`);
-        const peers = (data && data.result && data.result.peers) || [];
-        const map = {};
-        const subtle = this.getSubtleCrypto();
-
-        const tasks = peers.map(async peer => {
-          const nodeInfo = peer && peer.node_info;
-          const moniker = nodeInfo && nodeInfo.moniker;
-          if (!moniker) {
-            return;
-          }
-
-          const nodeId = nodeInfo && nodeInfo.id;
-          const remoteIp = peer && peer.remote_ip;
-
-          this.addMonikerKey(map, nodeId, moniker);
-          this.addMonikerKey(map, remoteIp, moniker);
-
-          if (subtle && nodeId) {
-            try {
-              const hashed = await this.hashHexId(subtle, nodeId);
-              this.addMonikerKey(map, hashed, moniker);
-            } catch (error) {
-              console.error("Failed to hash node ID", error);
-            }
+      this.hasRequestedValidators = true;
+      this.$store
+        .dispatch("getValidators")
+        .finally(() => {
+          if (this.loading) {
+            this.loading = false;
+            this.ensurePageWithinRange();
           }
         });
-
-        await Promise.all(tasks);
-        this.monikerMap = map;
-        this.monikerRpcSource = rpcEndpoint;
-      } catch (error) {
-        console.error("Failed to fetch validator monikers:", error);
-      } finally {
-        this.monikerFetchInFlight = false;
+    } else {
+      this.loading = false;
+      this.ensurePageWithinRange();
+    }
+  },
+  methods: {
+    buildQueryForPage(page) {
+      const query = { ...this.$route.query };
+      if (page <= 1) {
+        delete query.page;
+      } else {
+        query.page = String(page);
       }
+      return query;
     },
-    addMonikerKey(target, key, moniker) {
-      if (!key) {
+    replacePageInRoute(page) {
+      const targetQuery = this.buildQueryForPage(page);
+      const currentPageParam = this.$route.query.page;
+      const targetPageParam = targetQuery.page;
+      if (
+        (currentPageParam || "") === (targetPageParam || "") &&
+        Object.keys(targetQuery).length === Object.keys(this.$route.query).length
+      ) {
         return;
       }
-      target[String(key).toUpperCase()] = moniker;
+      this.$router.replace({ query: targetQuery });
     },
-    getSubtleCrypto() {
-      if (typeof window !== "undefined" && window.crypto && window.crypto.subtle) {
-        return window.crypto.subtle;
+    parsePageValue(pageValue) {
+      const parsed = Number.parseInt(pageValue, 10);
+      if (Number.isNaN(parsed) || parsed < 1) {
+        return 1;
       }
-      if (typeof self !== "undefined" && self.crypto && self.crypto.subtle) {
-        return self.crypto.subtle;
-      }
-      return null;
+      return parsed;
     },
-    async hashHexId(subtle, hexId) {
-      const normalized = (hexId || "").replace(/[^0-9a-fA-F]/g, "");
-      if (!normalized) {
-        return null;
-      }
-
-      const bytePairs = normalized.match(/.{1,2}/g) || [];
-      const bytes = new Uint8Array(bytePairs.map(pair => parseInt(pair, 16)));
-      const digestBuffer = await subtle.digest("SHA-256", bytes);
-      const digestArray = Array.from(new Uint8Array(digestBuffer));
-      return digestArray
-        .map(b => b.toString(16).padStart(2, "0"))
-        .join("")
-        .slice(0, 40)
-        .toUpperCase();
+    getNormalizedPage(pageNumber) {
+      const totalPages = Math.max(1, this.totalPages);
+      return Math.min(Math.max(pageNumber, 1), totalPages);
     },
-    getValidatorMonikerCandidates(validator) {
-      const candidates = new Set();
-      if (!validator) {
-        return [];
+    syncPageFromRoute() {
+      const pageParam = this.$route.query.page;
+      const parsed = this.parsePageValue(pageParam);
+      const normalized = this.loading ? parsed : this.getNormalizedPage(parsed);
+      if (this.currentPage !== normalized) {
+        this.currentPage = normalized;
       }
-
-      const pushCandidate = value => {
-        if (value) {
-          candidates.add(String(value).toUpperCase());
-        }
-      };
-
-      pushCandidate(validator.address);
-      pushCandidate(validator.node_id);
-      pushCandidate(validator.nodeId);
-      pushCandidate(validator.operator_address);
-      pushCandidate(validator.owner);
-      pushCandidate(validator.consensus_address);
-      pushCandidate(validator.moniker);
-      pushCandidate(validator.remote_ip);
-
-      if (validator.node_info && validator.node_info.id) {
-        pushCandidate(validator.node_info.id);
+      if (this.loading) {
+        return;
       }
-
-      try {
-        const displayAddress = this.getDisplayAddress(validator);
-        if (displayAddress) {
-          pushCandidate(displayAddress.slice(0, 40));
-          pushCandidate(displayAddress);
-        }
-      } catch (error) {
-        // ignore errors during address decoding
+      const targetParam = normalized > 1 ? String(normalized) : undefined;
+      if ((pageParam || undefined) !== targetParam) {
+        this.replacePageInRoute(normalized);
       }
-
-      return Array.from(candidates);
     },
-    getMoniker(validator) {
-      if (!validator) {
-        return "Anonymous Validator";
+    ensurePageWithinRange() {
+      const normalized = this.getNormalizedPage(this.currentPage);
+      if (normalized !== this.currentPage) {
+        this.currentPage = normalized;
       }
-
-      const candidates = this.getValidatorMonikerCandidates(validator);
-      for (const candidate of candidates) {
-        if (candidate && this.monikerMap[candidate]) {
-          return this.monikerMap[candidate];
-        }
+      const pageParam = this.$route.query.page;
+      const targetParam = normalized > 1 ? String(normalized) : undefined;
+      if ((pageParam || undefined) !== targetParam) {
+        this.replacePageInRoute(normalized);
       }
-
-      if (validator.description) {
-        if (typeof validator.description === "string") {
-          try {
-            const parsed = JSON.parse(validator.description);
-            if (parsed && parsed.moniker) {
-              return parsed.moniker;
-            }
-          } catch (error) {
-            // ignore parsing errors and continue with other fallbacks
-          }
-        } else if (validator.description.moniker) {
-          return validator.description.moniker;
-        }
-      }
-
-      if (validator.moniker) {
-        return validator.moniker;
-      }
-
-      if (validator.description_moniker) {
-        return validator.description_moniker;
-      }
-
-      return "Anonymous Validator";
     },
     getDisplayAddress(validator) {
       if (!validator || !validator.pub_key || !validator.pub_key.value) {
@@ -361,6 +353,9 @@ export default {
   flex-wrap wrap
   gap 1rem
 
+.bottom-controls
+  margin-top 2rem
+
 .page-info
   display flex
   align-items baseline
@@ -378,6 +373,32 @@ export default {
     font-size 1.25rem
     font-weight 600
     color #14b8a6
+
+  .range
+    font-size 0.85rem
+    color rgba(255, 255, 255, 0.6)
+
+.pagination-controls
+  display flex
+  gap 0.5rem
+
+.nav-button
+  display flex
+  align-items center
+  gap 0.5rem
+  padding 0.75rem 1.5rem
+  background rgba(20, 184, 166, 0.1)
+  border 1px solid rgba(20, 184, 166, 0.3)
+  border-radius 8px
+  color #14b8a6
+  text-decoration none
+  font-weight 500
+  transition all 0.2s ease
+
+  &:hover
+    background rgba(20, 184, 166, 0.2)
+    border-color rgba(20, 184, 166, 0.5)
+    transform translateY(-1px)
 
 
   
@@ -448,19 +469,6 @@ export default {
         padding 1.5rem 2rem
         vertical-align middle
 
-.validator-cell
-  width 320px
-
-.validator-info
-  display flex
-  flex-direction column
-  gap 0.35rem
-
-.validator-moniker
-  font-size 1rem
-  font-weight 600
-  color #ffffff
-
 .validator-status
   font-size 0.75rem
   text-transform uppercase
@@ -474,6 +482,7 @@ export default {
   display flex
   flex-direction column
   gap 0.5rem
+  align-items flex-start
 
 .address-hash
   font-family 'Monaco', 'Menlo', 'Ubuntu Mono', monospace
@@ -591,9 +600,6 @@ export default {
       font-size 0.75rem
     tbody td
       padding 1rem
-
-  .validator-cell
-    width auto
 
   .address-wrapper
     gap 0.35rem
