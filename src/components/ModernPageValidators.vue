@@ -114,21 +114,23 @@ export default {
   methods: {
     async fetchValidatorMonikers() {
       try {
-        const rpcEndpoint =
-          (this.$store.state?.blockchain?.rpc || "https://node.xian.org").replace(/\/$/, "");
+        const storeState = (this.$store && this.$store.state) || {};
+        const blockchainState = storeState.blockchain || {};
+        const rpcEndpoint = ((blockchainState && blockchainState.rpc) || "https://node.xian.org").replace(/\/$/, "");
         const { data } = await axios.get(`${rpcEndpoint}/net_info`);
         const peers = (data && data.result && data.result.peers) || [];
         const map = {};
         const subtle = this.getSubtleCrypto();
 
         const tasks = peers.map(async peer => {
-          const moniker = peer?.node_info?.moniker;
+          const nodeInfo = peer && peer.node_info;
+          const moniker = nodeInfo && nodeInfo.moniker;
           if (!moniker) {
             return;
           }
 
-          const nodeId = peer?.node_info?.id;
-          const remoteIp = peer?.remote_ip;
+          const nodeId = nodeInfo && nodeInfo.id;
+          const remoteIp = peer && peer.remote_ip;
 
           this.addMonikerKey(map, nodeId, moniker);
           this.addMonikerKey(map, remoteIp, moniker);
