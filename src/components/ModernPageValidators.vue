@@ -5,7 +5,7 @@
       <div class="header-content">
         <h1 class="page-title">Validators</h1>
         <p class="page-description">
-          Active validators securing the Xian blockchain. Browse validator monikers and addresses without exposing IP information.
+          Active validators securing the Xian blockchain.
         </p>
       </div>
     </div>
