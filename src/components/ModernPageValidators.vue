@@ -85,11 +85,18 @@ export default {
   data() {
     return {
       loading: true,
-      monikerMap: {}
+      monikerMap: {},
+      monikerFetchInFlight: false,
+      monikerRpcSource: ""
     };
   },
   computed: {
-    ...mapGetters(["validators"]),
+    ...mapGetters(["validators", "blockchain"]),
+    rpcEndpoint() {
+      const blockchainState = this.blockchain || {};
+      const rpc = blockchainState.rpc || "https://node.xian.org";
+      return rpc.replace(/\/$/, "");
+    },
     activeValidators() {
       const list = votingValidators(this.validators || []);
       return orderedValidators(list);
@@ -103,6 +110,15 @@ export default {
           this.loading = false;
         }
       }
+    },
+    "blockchain.rpc": {
+      immediate: true,
+      handler(newValue, oldValue) {
+        if (!newValue || newValue === oldValue) {
+          return;
+        }
+        this.fetchValidatorMonikers();
+      }
     }
   },
   mounted() {
@@ -113,22 +129,35 @@ export default {
   },
   methods: {
     async fetchValidatorMonikers() {
+      const rpcEndpoint = this.rpcEndpoint;
+      if (!rpcEndpoint) {
+        return;
+      }
+
+      if (this.monikerFetchInFlight) {
+        return;
+      }
+
+      if (this.monikerRpcSource === rpcEndpoint && Object.keys(this.monikerMap).length) {
+        return;
+      }
+
+      this.monikerFetchInFlight = true;
       try {
-        const rpcEndpoint =
-          (this.$store.state?.blockchain?.rpc || "https://node.xian.org").replace(/\/$/, "");
         const { data } = await axios.get(`${rpcEndpoint}/net_info`);
         const peers = (data && data.result && data.result.peers) || [];
         const map = {};
         const subtle = this.getSubtleCrypto();
 
         const tasks = peers.map(async peer => {
-          const moniker = peer?.node_info?.moniker;
+          const nodeInfo = peer && peer.node_info;
+          const moniker = nodeInfo && nodeInfo.moniker;
           if (!moniker) {
             return;
           }
 
-          const nodeId = peer?.node_info?.id;
-          const remoteIp = peer?.remote_ip;
+          const nodeId = nodeInfo && nodeInfo.id;
+          const remoteIp = peer && peer.remote_ip;
 
           this.addMonikerKey(map, nodeId, moniker);
           this.addMonikerKey(map, remoteIp, moniker);
@@ -145,8 +174,11 @@ export default {
 
         await Promise.all(tasks);
         this.monikerMap = map;
+        this.monikerRpcSource = rpcEndpoint;
       } catch (error) {
         console.error("Failed to fetch validator monikers:", error);
+      } finally {
+        this.monikerFetchInFlight = false;
       }
     },
     addMonikerKey(target, key, moniker) {
