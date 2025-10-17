@@ -33,7 +33,7 @@
             <tbody>
               <tr
                 v-for="validator in activeValidators"
-                :key="validator.address"
+                :key="validator.owner || validator.address"
                 class="table-row"
               >
                 <td class="validator-cell">
@@ -44,12 +44,12 @@
                 </td>
                 <td class="address-cell">
                   <div class="address-wrapper">
-                    <span class="address-hash">{{ validator.address }}</span>
+                    <span class="address-hash">{{ getAddress(validator) }}</span>
                     <router-link
                       class="details-link"
-                      :to="{ name: 'validator', params: { validator: validator.owner } }"
+                      :to="{ name: 'address', params: { address: getAddress(validator) } }"
                     >
-                      View Details
+                      Show Details
                     </router-link>
                   </div>
                 </td>
@@ -113,7 +113,41 @@ export default {
   },
   methods: {
     getMoniker(validator) {
-      return (validator.description && validator.description.moniker) || "Anonymous Validator";
+      if (!validator) {
+        return "Anonymous Validator";
+      }
+
+      if (validator.description) {
+        if (typeof validator.description === "string") {
+          try {
+            const parsed = JSON.parse(validator.description);
+            if (parsed && parsed.moniker) {
+              return parsed.moniker;
+            }
+          } catch (error) {
+            // ignore parsing errors and continue with other fallbacks
+          }
+        } else if (validator.description.moniker) {
+          return validator.description.moniker;
+        }
+      }
+
+      if (validator.moniker) {
+        return validator.moniker;
+      }
+
+      if (validator.description_moniker) {
+        return validator.description_moniker;
+      }
+
+      return "Anonymous Validator";
+    },
+    getAddress(validator) {
+      if (!validator) {
+        return "";
+      }
+
+      return validator.owner || validator.address || "";
     }
   }
 };
