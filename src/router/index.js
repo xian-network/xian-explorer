@@ -11,8 +11,7 @@ import ModernPageBlock from "../components/ModernPageBlock"
 import ModernPageTx from "../components/ModernPageTx"
 import FullNodes from "../components/PageFullNodes"
 import FullNode from "../components/PageFullNode"
-import PageValidators from "../components/PageValidators"
-import PageValidatorsIndex from "../components/PageValidatorsIndex"
+import ModernPageValidators from "../components/ModernPageValidators"
 import PageValidatorsRevoked from "../components/PageValidatorsRevoked"
 import PageValidator from "../components/PageValidator"
 import PageContracts from "../components/ModernPageContracts"
@@ -43,22 +42,8 @@ const routes = [
   },
 
   // VALIDATORS
-  {
-    path: "/validators",
-    component: PageValidators,
-    children: [
-      {
-        path: "/",
-        name: "validators",
-        component: PageValidatorsIndex
-      },
-      {
-        path: ":validator",
-        name: "validator",
-        component: PageValidator
-      }
-    ]
-  },
+  { path: "/validators", name: "validators", component: ModernPageValidators },
+  { path: "/validators/:validator", name: "validator", component: PageValidator },
 
   // REVOKED
   {
